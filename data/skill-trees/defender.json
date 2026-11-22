@@ -1,6 +1,6 @@
 {
   "class": "defender",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "a",
@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Iron Morning",
-        "text": "On your first turn of each battle, gain a shield worth 10% of your armor.",
+        "text": "On your first turn of each battle, gain a shield worth 1.5% of your armor.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -56,7 +56,7 @@
             "once": true,
             "do": [
               {
-                "shield": 0.1,
+                "shield": 0.015,
                 "of": "armor"
               }
             ]
@@ -149,7 +149,7 @@
   "nodes": {
     "0.f1": {
       "name": "Braced Stance",
-      "text": "Bulwark Aura on you +6% of your armor per rank if you did not Move last turn.",
+      "text": "Bulwark Aura on you +1% of your armor per rank if you did not Move last turn.",
       "src": "A:V1:0.f1",
       "fx": [
         {
@@ -161,7 +161,7 @@
             "notMovedLastTurn": true
           },
           "mod": {
-            "auraPct": 0.06
+            "auraPct": 0.01
           },
           "rank": true
         }
@@ -169,14 +169,14 @@
     },
     "0.f2": {
       "name": "Drilled Ranks",
-      "text": "Bulwark Aura also gives allies magic armor equal to 5% of your armor per rank.",
+      "text": "Bulwark Aura also gives allies magic armor equal to 0.75% of your armor per rank.",
       "src": "A:V3:0.f3",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "aura": {
-            "magicPct": 0.05
+            "magicPct": 0.0075
           },
           "rank": true
         }
@@ -184,7 +184,7 @@
     },
     "0.f3": {
       "name": "Tight Formation",
-      "text": "Bulwark Aura +2% of your armor per rank for each ally in it.",
+      "text": "Bulwark Aura +0.25% of your armor per rank for each ally in it.",
       "src": "A:V3:0.r",
       "fx": [
         {
@@ -195,7 +195,7 @@
             "alliesInAura": true
           },
           "mod": {
-            "auraPct": 0.02
+            "auraPct": 0.0025
           },
           "rank": true
         }
@@ -203,7 +203,7 @@
     },
     "0.n0": {
       "name": "Shield Brothers",
-      "text": "At battle start, allies in Bulwark Aura gain a shield worth 5% of your max HP.",
+      "text": "At battle start, allies in Bulwark Aura gain a shield worth 0.75% of your max HP.",
       "src": "A:V3:0.n0",
       "fx": [
         {
@@ -212,7 +212,7 @@
           "on": "battleStart",
           "do": [
             {
-              "shield": 0.05,
+              "shield": 0.0075,
               "of": "ownerMaxHp",
               "to": "auraAllies"
             }
@@ -222,7 +222,7 @@
     },
     "0.r": {
       "name": "Weathered",
-      "text": "Bulwark Aura on you +3% of your armor per rank against area skills.",
+      "text": "Bulwark Aura on you +0.5% of your armor per rank against area skills.",
       "src": "A:V1:0.r",
       "fx": [
         {
@@ -234,7 +234,7 @@
             "incomingArea": true
           },
           "mod": {
-            "auraPct": 0.03
+            "auraPct": 0.005
           },
           "rank": true
         }
@@ -242,7 +242,7 @@
     },
     "0.ea": {
       "name": "Rooted Stance",
-      "text": "Each turn in a row you do not Move, Bulwark Aura on you +5% of your armor (up to +20%).",
+      "text": "Each turn in a row you do not Move, Bulwark Aura on you +0.75% of your armor (up to +3%).",
       "src": "A:V1:0.ea",
       "fx": [
         {
@@ -258,7 +258,7 @@
             }
           },
           "mod": {
-            "auraPct": 0.05
+            "auraPct": 0.0075
           }
         }
       ]
@@ -298,14 +298,14 @@
     },
     "0.fa": {
       "name": "Anchored Stone",
-      "text": "Bulwark Aura on you is 50% stronger, but you can never Move.",
+      "text": "Bulwark Aura on you is 8% stronger, but you can never Move.",
       "src": "A:V1:0.fa",
       "fx": [
         {
           "k": "passive",
           "f": "selfPct",
           "op": "mul",
-          "v": 0.5
+          "v": 0.08
         },
         {
           "k": "hook",
@@ -377,14 +377,14 @@
     },
     "1.f1": {
       "name": "Deep Stomp",
-      "text": "Tremor Slam's Hobble lasts 1 turn longer, 8% chance per rank.",
+      "text": "Tremor Slam's Hobble lasts 1 turn longer, 1.25% chance per rank.",
       "src": "A:V2:1.f1",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:slow",
-          "procChance": 0.08,
+          "procChance": 0.0125,
           "mod": {
             "turns": 1
           },
@@ -394,7 +394,7 @@
     },
     "1.f2": {
       "name": "Shockwave",
-      "text": "Tremor Slam has 6% increased power per rank against enemies already Hobbled.",
+      "text": "Tremor Slam has 1% increased power per rank against enemies already Hobbled.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -404,7 +404,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.01
           },
           "rank": true
         }
@@ -412,7 +412,7 @@
     },
     "1.f3": {
       "name": "Ringing Earth",
-      "text": "Tremor Slam has a 3% chance per rank to Stun each enemy hit for 1 turn.",
+      "text": "Tremor Slam has a 0.5% chance per rank to Stun each enemy hit for 1 turn.",
       "src": "A:V2:1.f3",
       "fx": [
         {
@@ -422,31 +422,31 @@
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.03
+              "chance": 0.005
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.06
+              "chance": 0.01
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.09
+              "chance": 0.015
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.12
+              "chance": 0.02
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.15
+              "chance": 0.025
             }
           ]
         }
@@ -454,7 +454,7 @@
     },
     "1.n0": {
       "name": "Rolling Quake",
-      "text": "Tremor Slam also hits the row behind for 25% damage, without Hobbled.",
+      "text": "Tremor Slam also hits the row behind for 4% damage, without Hobbled.",
       "src": "A:V2:1.n0",
       "fx": [
         {
@@ -463,7 +463,7 @@
           "on": "hit",
           "do": [
             {
-              "strike": 0.25,
+              "strike": 0.04,
               "to": "behind"
             }
           ]
@@ -472,7 +472,7 @@
     },
     "1.r": {
       "name": "Fault Strike",
-      "text": "Each Stun from Tremor Slam gives 2 MP per rank.",
+      "text": "Each Stun from Tremor Slam gives 1 MP per rank.",
       "src": "A:V2:1.r",
       "fx": [
         {
@@ -483,7 +483,7 @@
           "rank": true,
           "do": [
             {
-              "mp": 2
+              "mp": 1
             }
           ]
         }
@@ -491,7 +491,7 @@
     },
     "1.ea": {
       "name": "Skull Rattler",
-      "text": "Tremor Slam has a 10% chance to Stun each enemy that is already Hobbled.",
+      "text": "Tremor Slam has a 1.5% chance to Stun each enemy that is already Hobbled.",
       "src": "A:V2:1.ea",
       "fx": [
         {
@@ -504,7 +504,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.015
             }
           }
         }
@@ -592,7 +592,7 @@
     },
     "1.mb": {
       "name": "Sinking Earth",
-      "text": "Enemies on quaking ground take 15% STR damage at the start of their turn.",
+      "text": "Enemies on quaking ground take 2.5% STR damage at the start of their turn.",
       "src": "A:V2:1.mb",
       "fx": [
         {
@@ -600,7 +600,7 @@
           "sel": "ground:quaking_ground",
           "f": "power",
           "op": "add",
-          "v": 0.15,
+          "v": 0.025,
           "needs": "1.eb"
         }
       ]
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Bellow",
-      "text": "Taunt breaks after 2% more of your max HP lost per rank (30% → 36%).",
+      "text": "Taunt breaks after 0.25% more of your max HP lost per rank (30% → 30.75%).",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -637,14 +637,14 @@
           "sel": "taunt",
           "f": "breakRatio",
           "op": "add",
-          "v": 0.02,
+          "v": 0.0025,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Second Breath",
-      "text": "When your Taunt ends, heal 4% of your max HP per rank.",
+      "text": "When your Taunt ends, heal 0.75% of your max HP per rank.",
       "src": "A:V1:2.r",
       "fx": [
         {
@@ -655,7 +655,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.04
+              "heal": 0.0075
             }
           ]
         }
@@ -663,7 +663,7 @@
     },
     "2.f3": {
       "name": "Thick Skull",
-      "text": "Taunt gives you a shield worth 4% of your max HP per rank.",
+      "text": "Taunt gives you a shield worth 0.75% of your max HP per rank.",
       "src": "A:V1:2.f3",
       "fx": [
         {
@@ -673,7 +673,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.04
+              "shield": 0.0075
             }
           ]
         }
@@ -701,7 +701,7 @@
     },
     "2.r": {
       "name": "Rally Cry",
-      "text": "While you Taunt, allies take 1% less damage per rank (10% less → 13% less).",
+      "text": "While you Taunt, allies take 0.25% less damage per rank (10% less → 10.75% less).",
       "src": "A:V3:2.f1",
       "fx": [
         {
@@ -709,7 +709,7 @@
           "sel": "taunt",
           "f": "allyDamageMult",
           "op": "add",
-          "v": -0.01,
+          "v": -0.0025,
           "rank": true
         }
       ]
@@ -813,7 +813,7 @@
     },
     "2.mb": {
       "name": "Refused to Fall",
-      "text": "When your Taunt breaks, its cooldown drops by 1 and you gain a shield worth 5% of your armor.",
+      "text": "When your Taunt breaks, its cooldown drops by 1 and you gain a shield worth 0.75% of your armor.",
       "src": "A:V1:2.mb",
       "fx": [
         {
@@ -828,7 +828,7 @@
               "cd": "taunt"
             },
             {
-              "shield": 0.05,
+              "shield": 0.0075,
               "of": "armor"
             }
           ]
@@ -868,14 +868,14 @@
     },
     "3.f1": {
       "name": "Interlocked",
-      "text": "Close Ranks gives guarded allies armor equal to 6% of your armor per rank.",
+      "text": "Close Ranks gives guarded allies armor equal to 1% of your armor per rank.",
       "src": "A:V3:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "guard": {
-            "armorPct": 0.06
+            "armorPct": 0.01
           },
           "rank": true
         }
@@ -883,7 +883,7 @@
     },
     "3.f2": {
       "name": "Shield Chain",
-      "text": "Close Ranks gives guarded allies a shield worth 10% of your armor per rank.",
+      "text": "Close Ranks gives guarded allies a shield worth 1.5% of your armor per rank.",
       "src": "A:V3:3.f2",
       "fx": [
         {
@@ -894,7 +894,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.1,
+              "shield": 0.015,
               "of": "ownerArmor",
               "to": "target"
             }
@@ -904,14 +904,14 @@
     },
     "3.f3": {
       "name": "Linked Plates",
-      "text": "Damage Close Ranks shares to you is 4% lower per rank.",
+      "text": "Damage Close Ranks shares to you is 0.75% lower per rank.",
       "src": "A:V1:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "heal",
           "on": "guardShare",
-          "mul": -0.04,
+          "mul": -0.0075,
           "rank": true
         }
       ]
@@ -932,7 +932,7 @@
     },
     "3.r": {
       "name": "Linked Shields",
-      "text": "Close Ranks gives you a shield worth 3% of your armor per rank for each guarded ally.",
+      "text": "Close Ranks gives you a shield worth 0.5% of your armor per rank for each guarded ally.",
       "src": "A:V1:3.r",
       "fx": [
         {
@@ -943,7 +943,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.03,
+              "shield": 0.005,
               "of": "ownerArmor"
             }
           ]
@@ -952,7 +952,7 @@
     },
     "3.ea": {
       "name": "Hold Their Weight",
-      "text": "Close Ranks shares 65% of the damage instead of 50%.",
+      "text": "Close Ranks shares 52.5% of the damage instead of 50%.",
       "src": "A:V1:3.ea",
       "fx": [
         {
@@ -960,13 +960,13 @@
           "sel": "guard",
           "f": "share",
           "op": "set",
-          "v": 0.65
+          "v": 0.525
         }
       ]
     },
     "3.eb": {
       "name": "Shield Toss",
-      "text": "Close Ranks also gives each guarded ally a shield worth 12% of your armor.",
+      "text": "Close Ranks also gives each guarded ally a shield worth 2% of your armor.",
       "src": "A:V1:3.eb",
       "fx": [
         {
@@ -976,7 +976,7 @@
           "status": "guard",
           "do": [
             {
-              "shield": 0.12,
+              "shield": 0.02,
               "of": "ownerArmor",
               "to": "target"
             }
@@ -1001,7 +1001,7 @@
     },
     "3.fa": {
       "name": "Chained to Them",
-      "text": "Close Ranks shares 80%, but you cannot Move or Taunt while it lasts.",
+      "text": "Close Ranks shares 55%, but you cannot Move or Taunt while it lasts.",
       "src": "A:V1:3.fa",
       "fx": [
         {
@@ -1009,7 +1009,7 @@
           "sel": "guard",
           "f": "share",
           "op": "set",
-          "v": 0.8
+          "v": 0.55
         },
         {
           "k": "hook",
@@ -1099,7 +1099,7 @@
     },
     "4.u2": {
       "name": "Bitter Knuckles",
-      "text": "Fist Crush deals 12% increased damage against enemies that hit you since your last turn.",
+      "text": "Fist Crush deals 2% increased damage against enemies that hit you since your last turn.",
       "src": "B:V4:4.u2",
       "fx": [
         {
@@ -1109,7 +1109,7 @@
             "targetHitMeSinceMyTurn": true
           },
           "mod": {
-            "powerMul": 0.12
+            "powerMul": 0.02
           }
         }
       ]
@@ -1139,7 +1139,7 @@
     },
     "4.r1": {
       "name": "Plated Gauntlet",
-      "text": "Fist Crush's armor scaling 5% → 8% of Armor.",
+      "text": "Fist Crush's armor scaling 5% → 5.5% of Armor.",
       "src": "B:V5:4.u1",
       "fx": [
         {
@@ -1147,13 +1147,13 @@
           "sel": "bonusScale:armor",
           "f": "pct",
           "op": "set",
-          "v": 0.08
+          "v": 0.055
         }
       ]
     },
     "4.r2": {
       "name": "Heavier Fall",
-      "text": "Fist Crush deals 1% increased damage for each 2 points of your armor above 40.",
+      "text": "Fist Crush deals 0.25% increased damage for each 2 points of your armor above 40.",
       "src": "B:V5:4.u2",
       "fx": [
         {
@@ -1166,14 +1166,14 @@
             }
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.0025
           }
         }
       ]
     },
     "4.r3": {
       "name": "Iron Meteor",
-      "text": "Fist Crush's armor scaling rises to 15% of Armor, but it strikes 2 enemies.",
+      "text": "Fist Crush's armor scaling rises to 6.5% of Armor, but it strikes 2 enemies.",
       "src": "B:V5:4.u3",
       "fx": [
         {
@@ -1181,7 +1181,7 @@
           "sel": "bonusScale:armor",
           "f": "pct",
           "op": "set",
-          "v": 0.15
+          "v": 0.065
         },
         {
           "k": "skill",
@@ -1206,7 +1206,7 @@
     },
     "4.d2": {
       "name": "Can Opener",
-      "text": "Fist Crush deals 1% increased damage per point of the target's armor.",
+      "text": "Fist Crush deals 0.25% increased damage per point of the target's armor.",
       "src": "B:V5:4.d2",
       "fx": [
         {
@@ -1216,7 +1216,7 @@
             "targetArmor": 1
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.0025
           }
         }
       ]

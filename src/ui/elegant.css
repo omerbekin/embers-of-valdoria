@@ -320,26 +320,6 @@ html.short {
   box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 18px 40px rgba(0, 0, 0, 0.6);
 }
 
-.el-panel.corners::before,
-.el-panel.corners::after {
-  content: '';
-  position: absolute;
-  top: -5px;
-  width: calc(9 * var(--u, 1px));
-  height: calc(9 * var(--u, 1px));
-  transform: rotate(45deg);
-  background: #140e09;
-  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.7);
-}
-
-.el-panel.corners::before {
-  left: -5px;
-}
-
-.el-panel.corners::after {
-  right: -5px;
-}
-
 /* --- Başlıklar --- */
 .el-title {
   display: flex;

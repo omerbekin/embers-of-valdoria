@@ -156,7 +156,7 @@ describe('Faz 4b: Defender', () => {
     expect(procs(b, 'defender:1.ma')).toBe(1);
     const mp = evs.filter((e) => e.type === 'mpRegen' && e.cause === 'defender:1.r');
     expect(mp.length).toBeGreaterThanOrEqual(1);
-    expect(mp[0]!.type === 'mpRegen' && mp[0]!.amount).toBe(Math.min(4, me.maxMp));
+    expect(mp[0]!.type === 'mpRegen' && mp[0]!.amount).toBe(Math.min(2 * num('defender', '1.r', '0.do.0.mp'), me.maxMp)); // rank 2 x veriden MP
   });
 
   it('Bastion Cry (Faz 4c): Taunt gelince gerçek Fortified durumu (süresiz, kaynağı düğüm); alınan hasar durumdan -%50', () => {

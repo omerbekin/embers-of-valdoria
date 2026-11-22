@@ -34,6 +34,7 @@
         },
         {
           "id": "rest",
+          "closer": true,
           "label": "Just rest",
           "hint": "Make camp as usual.",
           "result": "You nod to the shepherds and make camp beside them."
@@ -79,6 +80,7 @@
         },
         {
           "id": "leave",
+          "closer": true,
           "label": "Leave",
           "hint": "Walk away with nothing.",
           "result": "You leave the witch to her pot. Her laughter follows you into the reeds."

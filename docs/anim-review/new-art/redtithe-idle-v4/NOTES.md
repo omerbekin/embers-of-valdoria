@@ -1,0 +1,46 @@
+﻿## Tur 1 — idle1.png
+
+- Dosya: `idle1.png`; ham çıktı: `raw/idle1-raw-1.png`.
+- Kullanılan istem: “Edit the supplied image, preserving the entire original sprite and canvas exactly except the rear (left side) forearm and fist. Keep shoulder, upper arm and rolled red sleeve cuff fixed; elbow remains at (160,160), directly below cuff. Bend the rear elbow naturally: a pale linen bandaged forearm with red cross marks extends forward-right and down 35–40 degrees, in front of the pouch, to an empty clenched fist centered at (215,205), approximately 25 by 24 pixels. Preserve bare skin between cuff and bandage, straight wrist, continuous anatomical limb, thumb on top, grip tunnel axis pointing upward and slightly forward, about 35 degrees clockwise from vertical. Remove the old hanging forearm and fist beside the left thigh, restoring transparent background or braid there. Keep front arm and fist completely unchanged. No weapon, object, extra limb, effects, text, shadow or background. Preserve all other pixels, pose, proportions, painterly style, lighting, colors and 450x412 transparent canvas.”
+- Değişiklik: Temel görsel düzenlenerek arka ön kol öne ve aşağı yönlendirildi; eski sarkan kol kaldırıldı. Compose ile yalnız tanımlı bölge aktarıldı.
+- Gözlem: Yumruk merkezi yaklaşık (198, 202); ön kol sağa ve aşağı yaklaşık 40–45° yöneliyor. Kavrama ekseni yaklaşık 40° saat yönünde; yumruk ayrıntısı küçük olduğundan açı belirsiz.
+- Compose çıktısı: `{"out":"docs/anim-review/new-art/redtithe-idle-v4/idle1.png","scale":0.3456,"offset":[98,24],"fitCost":9.7,"roi":{"x0":96,"y0":152,"x1":246,"y1":248},"pixelsTakenFromEdit":4716,"outsideRoiDiff":0}`
+
+## Tur 2 — idle1.png
+
+- Dosya: `idle1.png`; ham çıktı: `raw/idle1-raw-2.png`.
+- Kullanılan istem: “Edit the supplied original image only. Preserve the entire original sprite and 450x412 transparent canvas exactly except the rear (left-side) forearm and fist. Keep shoulder, upper arm and the entire rolled red sleeve cuff absolutely unchanged, including fabric at (165–175,155–165); bending begins below the cuff. Elbow remains at (160,160). From there extend the pale linen bandaged forearm with red cross marks forward-right and down 35–40 degrees, about 70 pixels to an empty clenched fist centered at (215,205), in front of pouch and belt. Fist same size as original, about 27 pixels wide, thumb on top, grip tunnel axis pointing up and slightly forward about 35 degrees clockwise from vertical. Straight wrist and natural continuous elbow, bare skin between cuff and bandage. Remove the old hanging forearm and fist beside the left thigh, restoring transparent background or braid. Preserve body pixels around (190–201,152–175), and keep front arm and fist unchanged. No weapon, object, extra limb, effects, text, shadow or background. Preserve all other pixels, pose, proportions, painterly style, lighting and colors.”
+- Değişiklik: Özgün karede arka ön kol ve yumruk öne ve aşağı yönlendirildi; eski sarkan kol kaldırıldı. Compose ile düzenleme bölgesi aktarıldı.
+- Gözlem: Yumruk merkezi yaklaşık (203, 201); ön kol sağa ve aşağı yaklaşık 43° yöneliyor. Kavrama ekseni yaklaşık 40° saat yönünde; küçük ayrıntı nedeniyle tahminidir.
+- Compose çıktısı: `{"out":"docs/anim-review/new-art/redtithe-idle-v4/idle1.png","scale":0.3469,"offset":[98,23],"fitCost":12.13,"roi":{"x0":96,"y0":152,"x1":246,"y1":248},"pixelsTakenFromEdit":5479,"outsideRoiDiff":0}`
+
+## Tur 3 — idle1.png
+
+- Dosya: `idle1.png`; ham çıktı: `raw/idle1-raw-3.png`.
+- Kullanılan istem: “Edit this original game sprite, changing ONLY the rear left-side forearm and fist. Keep shoulder, upper arm, rolled red sleeve cuff and elbow at (160,160) fixed. Bend naturally: bandaged forearm extends forward-right and down 35–40 degrees in front of pouch, to an empty clenched fist near (215,205), about 25 by 24 pixels, thumb on top, grip axis up and forward 35 degrees clockwise from vertical. Straight wrist, continuous limb, pale linen with red crosses and bare skin below cuff. Remove old hanging forearm and fist completely, including faint stray pixels, preserving braid and transparent background. Preserve exactly the gold embroidered belt pendant pattern and color at (215–240,211–247), and every other detail, particularly front arm and fist. No weapon, object, extra limb, text, effects or shadow. Preserve original 450x412 transparent composition and painterly style.”
+- Değişiklik: Temel görselin arka ön kolu ve yumruğu yeniden düzenlendi; eski sarkan kolun kaldırılması ve kemer sarkacının korunması istendi. Compose ile bölge aktarıldı.
+- Gözlem: Yumruk merkezi yaklaşık (198, 200); ön kol sağa ve aşağı yaklaşık 40° yöneliyor. Kavrama ekseni yaklaşık 40° saat yönünde; küçük ayrıntı nedeniyle tahminidir.
+- Compose çıktısı: `{"out":"docs/anim-review/new-art/redtithe-idle-v4/idle1.png","scale":0.3444,"offset":[98,23],"fitCost":11.68,"roi":{"x0":96,"y0":152,"x1":246,"y1":248},"pixelsTakenFromEdit":6022,"outsideRoiDiff":0}`
+
+## Tur 4 — idle1.png
+
+- Dosya: `idle1.png`; ham çıktı: `raw/idle1-raw-4.png`.
+- Kullanılan istem: “Edit this original 450x412 game sprite. Change ONLY the rear arm forearm and fist on the left of the image. Keep the shoulder, upper arm and rolled red sleeve cuff exactly fixed, with elbow at (160,160). From this elbow extend the pale linen forearm with red cross bandages forward to the right and down at 35–40 degrees, for about 70 pixels elbow to fist center. Place the empty clenched fist centered at (215,205), in front of belt and vials, about 25 by 24 pixels, thumb on top, grip tunnel axis upwards and slightly forward, 35 degrees clockwise from vertical. Straight wrist, natural continuous elbow, bare skin between cuff and bandage. Remove old hanging forearm and fist beside left thigh entirely, restoring transparent background or braid there. Keep pouch, belt vials and red sash exactly as in original wherever not occluded by new arm. Keep front arm and fist, face, hair, body and every other detail unchanged, with identical pose, palette, scale and painterly style. No weapon, object, extra limb, text, effects or ground shadow.”
+- Değişiklik: Özgün karede arka ön kol ve yumruk öne yönlendirildi, eski sarkan kol kaldırıldı; compose ile ilgili bölge aktarıldı.
+- Gözlem: Yumruk merkezi yaklaşık (204, 187); ön kol sağa ve aşağı yaklaşık 32° yöneliyor. Kavrama ekseni yaklaşık 40° saat yönünde; küçük ayrıntı nedeniyle tahminidir.
+- Compose çıktısı: `{"out":"docs/anim-review/new-art/redtithe-idle-v4/idle1.png","scale":0.3458,"offset":[98,25],"fitCost":6.77,"roi":{"x0":96,"y0":152,"x1":246,"y1":248},"pixelsTakenFromEdit":4434,"outsideRoiDiff":0}`
+
+## Denetim (content-designer, 2026-11-21; Sol puanından bağımsız)
+Yöntem: taban = oyundaki `assets/poses/antimage-v2/idle1.png` (`refs/base-idle1.png`). Terra tabanı image-edit ile düzenledi; `compose.mjs` düzenlemeyi tabana hizalar ve YALNIZ ROI (x96-245, y152-247; dirsek altı arka önkol + kese/kemer önü) içindeki değişen pikselleri alır. Dört turda ROI dışı fark 0 (yüz, saç, kıyafet, ön kol, omuzlar, üst kol, bacaklar bire bir bugünkü kare). Her turu yeniden compose ettim, Terra'nın dosyasıyla bayt bayt aynı.
+6x/8x kırpımla bakılanlar: manşet-dirsek ek yeri (y151/152 renk sıçraması tabandaki komşu satır kadar), eski önkol izi (sol uyluk yanı temiz, yalnız örgü ucu), yumruk boyu (bugünkü yumrukla aynı ölçekte ~25 px), bilek düzlüğü.
+- R1: iki kol kesintisiz, omuzlar bugünkü; önkol ~64 px, eğim ~45°, eksen ~45 (bandın kenarı). Kese üst yarısı önkolun arkasında kalıyor. Temiz.
+- R2: kesintisiz; yumruk kese kapağının üstünde, soldaki şişe yumruk arkasında. Temiz.
+- R3: kesintisiz; bandajın üst kenarında hafif sarımsı leke, ek yeri öbürlerinden belirgin. Zayıf.
+- R4: kesintisiz; eğim ~30°, eksen ~30 (bandın ortası), en net parmak/boğum. Önkol kısa (~52 px; bugün ~71) ama izleyiciye doğru kısalma gibi okunuyor; yumruk altında şişe dipleri görünüyor.
+Sol dört tura da 5 verdi (geçmedi): gerekçe önkol kısalığı (R3, R4) ve ROI içinde kese/şişe/kuşak piksellerinin değişmesi; kol kopukluğu bulmadı.
+
+## Düzeltme (content-designer, denetim sonrası)
+- Fark maskesi boyanınca görüldü: `turlar/` (Sol'un gördüğü) karelerde ROI içinde kese (R1-R3), kuşak paneli şeritleri (R2, R3) ve kemer tokası (R3) da düzenlemeden gelmişti. `compose.mjs --fist x,y` eklendi: maske iki kapsülle (dirsek (160,156) -> eski yumruk (130,230) ve dirsek -> yeni yumruk, yarıçap 17) sınırlanır. Ham çıktılardan yeniden birleştirildi: `final/idle1-r1..r4.png` (Sol bunları görmedi; `turlar/` ve `idle1.png` (= R4) döngünün çıktısı olarak duruyor).
+- Önkol boyu (kol kıvrımı merkezi (160,156) -> yumruk merkezi, göz ölçümü ±3 px): bugün ~75; R1 ~59, R2 ~64, R3 ~55, R4 ~56. Hepsi kısa; R2 %85, R1 %79 (önkol izleyiciye doğru çapraz geldiği için kısalma gibi okunuyor), R3/R4 ~%73.
+- Sonuç: R2 öneri, R1 yedek (kol/omuz bağlantısı temiz, yumruk bugünkü boyda, eski kol izi yok; çekince önkol %15-20 kısa). R3 elendi (bandaj üstünde sarı leke, kısa), R4 elendi (en kısa önkol, yumruk altında kesik şişe dipleri). Eksen değerleri (R1 ~45, R2 ~40, R4 ~30) Terra/Sol tahmini, ölçülmedi.
+- Karşılaştırma: `karsilastirma.png` (Today / R2 / R1; oyun boyu + arka kol 4x), `karsilastirma-elenen.png` (R3, R4).

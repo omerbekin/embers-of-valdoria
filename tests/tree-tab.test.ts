@@ -1,4 +1,5 @@
 // Gear > Tree sekmesinin DOM'suz mantığı (src/ui/tree-tab-model.ts, tree-tab-layout.ts): bekleyen puan akışı, yön kilidi, Confirm / Reset, respec bedeli.
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TREE_RULES, treeOf } from '../src/progression/skill-tree-data';
 import { rankOf, spent } from '../src/progression/skill-tree';
@@ -13,6 +14,7 @@ import {
   makeSession,
   nodeOf,
   nodeStatus,
+  perRankTotal,
   pendingCount,
   removePending,
   resetPending,
@@ -20,7 +22,7 @@ import {
   stripState,
   treeTabEnabled,
 } from '../src/ui/tree-tab-model';
-import { buildCols, link, deadStub, tierSpans, COL_AT, HIT_GOAL } from '../src/ui/tree-tab-layout';
+import { buildCols, buildOne, ONE_K, link, deadStub, tierSpans, COL_AT, HIT_GOAL } from '../src/ui/tree-tab-layout';
 
 const hero = (level: number, extra: Partial<TreeHero> = {}): TreeHero => ({ id: 'h1', class: 'warrior', level, skillPoints: level - 1, ...extra });
 const rules = TREE_RULES;
@@ -238,5 +240,44 @@ describe('Tree sekmesi: sütun yerleşimi (V1 Columns)', () => {
     expect(link({ x: 0, y: 0 }, { x: 4, y: 20 })).toBe('M0,0 C0,10 4,10 4,20');
     expect(link({ x: 0, y: 0 }, { x: 20, y: 4 })).toBe('M0,0 C10,0 10,4 20,4');
     expect(deadStub({ x: 10, y: 10 }, 5)).toMatch(/^M10,15 V24/);
+  });
+});
+
+describe('Telefon tek sütun düzeni (buildOne)', () => {
+  const L = buildOne({ W: 249, H: 275, uW: 200, uH: 189 }, rules);
+  it('her düğüm kimliği için konum ve dokunma kutusu var; kutular en az 44 px (sıra aralığı elveriyorsa)', () => {
+    for (let i = 0; i < rules.rows; i++) for (const d of rules.rowShape) expect(L.pos[`${i}.${d.id}`]).toBeTruthy();
+    for (const arm of rules.ult.arms) for (let s = 1; s <= rules.ult.levels.length; s++) expect(L.hit[`${rules.rows}.${arm}${s}`]!.h).toBe(HIT_GOAL);
+    for (const k of Object.keys(L.hit)) expect(Math.min(L.hit[k]!.w, L.hit[k]!.h)).toBeGreaterThanOrEqual(HIT_GOAL);
+  });
+  it('düğüm görseli mockup A ölçüsünden küçük (ONE_K) ve sıra aralığına sığar', () => {
+    expect(L.sz.F).toBeLessThan(34);
+    expect(L.sz.F).toBeCloseTo(34 * ONE_K, 0);
+    expect(L.sz.V).toBeLessThanOrEqual(L.pitch * 0.92 + 0.1);
+  });
+});
+
+describe('Ipucu "Now / Next rank" satırları: bozuk noktalama yok', () => {
+  it('tüm ağaçlarda her düğüm metni her rank için ",." ".." çift boşluk içermez, virgülle bitmez', () => {
+    const dir = 'data/skill-trees';
+    let n = 0;
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.json') && !x.startsWith('_'))) {
+      const j = JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8')) as { nodes: Record<string, { text?: string }> };
+      for (const [k, nd] of Object.entries(j.nodes)) {
+        if (!nd.text) continue;
+        for (let r = 1; r <= 6; r++) {
+          const out = perRankTotal(nd.text, r);
+          if (out === null) continue;
+          n++;
+          for (const line of [`Now (rank ${r}): ${out}`, `Next rank (${r}): ${out}`]) {
+            expect(line, `${f} ${k}`).not.toMatch(/,\s*[.;!?]|(?<!\.)\.\.(?!\.)|\s{2}|,\s*$/);
+          }
+        }
+      }
+    }
+    expect(n).toBeGreaterThan(50);
+  });
+  it('"per rank" atılınca virgül kalmaz', () => {
+    expect(perRankTotal('Tithe Cut gives 0.2 more blood per MP it tears out, per rank.', 1)).toBe('Tithe Cut gives 0.2 more blood per MP it tears out.');
   });
 });

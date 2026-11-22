@@ -22,8 +22,10 @@ export const RELAY_PING_MS = 20_000;
 export const RELAY_SILENCE_MS = 50_000;
 
 export interface MatchResult {
+  /** Kazanan taraf; null = kazanansız (beraberlik, bağlantı hatası, desync). */
   winner: NetSide | null;
-  reason: 'battle' | 'forfeit' | 'left' | 'failed' | 'desync';
+  /** 'draw': iki takım aynı anda bitti (Ömer 2026-11-21, form r39; motor winner 'draw'). */
+  reason: 'battle' | 'draw' | 'forfeit' | 'left' | 'failed' | 'desync';
 }
 
 export type SessionEvent =
@@ -596,7 +598,7 @@ export class MpSession {
 
   private checkWinner(): void {
     const w = this.lockstep?.battle.winner;
-    if (w && !this.result) this.finish({ winner: w, reason: 'battle' });
+    if (w && !this.result) this.finish(w === 'draw' ? { winner: null, reason: 'draw' } : { winner: w, reason: 'battle' });
   }
 
   private finish(result: MatchResult): void {

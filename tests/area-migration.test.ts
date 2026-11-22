@@ -37,13 +37,13 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
   tremor_slam: { owner: 'defender', area: { shape: 'row' } },
   piercing_arrow: { owner: 'archer', area: { shape: 'column', stages: 'row' } },
   arrow_rain: { owner: 'archer', area: { shape: 'rect', rows: 3, cols: 3 } },
-  // drain_field (Ley Brand 3x3) çıktı: Redtithe Blood Brand tek hedef (2026-11-17)
+  // drain_field (Ley Brand 3x3) çıktı: Redtithe Blood Brand tek hedef (2026-11-17); Ömer 2026-11-21 form r40: yeniden alan, rect 2x2 (ADDED_LATER)
 };
 
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
 const ownedByMob = (id: string) => Object.values(content.mobs).some((m) => m.skills.includes(id)) || Object.values(content.summons).some((m) => m.skills.includes(id));
 const ownedByBoss = (id: string) => Object.values(content.bosses).some((b) => b.skills.includes(id));
-const ADDED_LATER = ['rejuvenate', 'x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind', 'thunderpeal']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376); thunderpeal: Vesper (row, 2026-10-28)
+const ADDED_LATER = ['rejuvenate', 'x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind', 'thunderpeal', 'drain_field']; // drain_field: Redtithe Blood Brand (rect 2x2, Ömer 2026-11-21 form r40); withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376); thunderpeal: Vesper (row, 2026-10-28)
 
 describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki tahta, her anchor', () => {
   for (let R = 1; R <= fm.rows; R++)

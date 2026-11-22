@@ -1,0 +1,21 @@
+{
+ "name": "redtithe-idle-v4",
+ "outDir": "docs/anim-review/new-art/redtithe-idle-v4",
+ "rules": "docs/anim-review/new-art/redtithe-idle-v4/PROMPT.md",
+ "maxRounds": 4,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "idle1",
+   "file": "idle1.png",
+   "refs": [
+    "docs/anim-review/new-art/redtithe-idle-v4/refs/base-idle1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/redtithe-idle-v4/refs/base-idle1.png"
+   ],
+   "task": "Image 1 is ALWAYS the untouched base (today's in-game frame). If more images are given, the LAST one is only the previous attempt: look at it to see what went wrong, but EDIT image 1, not the previous attempt. Steps: (1) Use the built-in image tool in EDIT mode with image 1 as the input image; ask it to change ONLY the rear (left-side) forearm and fist as described in the rules (elbow stays under the rolled red sleeve cuff at about (160,160); forearm goes forward-right and down 35-40 degrees in front of the pouch; same-size empty clenched fist at about (215,205), thumb on top, grip axis up-forward ~35 degrees; the old hanging forearm and fist beside the left thigh disappear; everything else pixel-identical in look). (2) Copy the generated PNG to docs/anim-review/new-art/redtithe-idle-v4/raw/idle1-raw-<round>.png (round number from 'Tur'). (3) Run exactly: node docs/anim-review/new-art/redtithe-idle-v4/compose.mjs docs/anim-review/new-art/redtithe-idle-v4/raw/idle1-raw-<round>.png docs/anim-review/new-art/redtithe-idle-v4/idle1.png . This script aligns the edit to the base and takes ONLY the changed rear-forearm area, so the rest stays today's pixels; it must print outsideRoiDiff 0. Do not hand-paint or post-process idle1.png in any other way. (4) In NOTES.md write the compose output line, the approximate fist centre, forearm direction and grip axis angle (0 = up, clockwise).",
+   "checkRules": "- Image 1 is the candidate, image 2 is today's in-game frame (the base). Only the REAR (left-side) forearm and fist may differ; face, hair, braid, clothing, belt items, front arm, rear upper arm and sleeve cuff, legs, palette, scale and position must match image 2.\n- ARM RULES (any one failing = first line KALDI and PUAN at most 5):\n  a) Each arm is ONE continuous limb from shoulder to fist: no gap, no sideways offset, no colour or outline jump at the rear sleeve cuff / elbow seam. Zoom into the cuff-elbow join and the wrist.\n  b) Rear elbow bends forward like a real elbow; rear wrist straight and in line with the forearm; forearm keeps a natural length (about as long as in image 2).\n  c) Rear fist is an empty clenched fist the same size as the fists in image 2 (about 25 px wide); not bigger, not smaller.\n  d) No floating, detached, duplicated or leftover limb: nothing remains of the old hanging forearm/fist beside the left thigh, no third hand, no ghost or halo pixels there.\n  e) Rear forearm slants forward-right and down; rear fist in front of the pouch/belt; its grip axis (perpendicular to the forearm through the finger tunnel, thumb side up) points up and slightly forward, 15-50 degrees clockwise from straight up.\n  f) Front arm and fist identical to image 2.\n- Nothing covers the face; a 70 px dagger on the rear grip axis would not cross the face.\n- Real transparent background, no halo, no checkerboard, no ground shadow.\n- In your answer give as numbers: rear fist centre (x,y), rear grip axis angle, rear fist width in px vs image 2 fist width."
+  }
+ ]
+}

@@ -202,6 +202,7 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
     releasePoseTextures(scene);
     canvas = paintAtlas(W, H, items, s, def, pick, src);
   }
+  keepThrowItem(scene, pick, src.off); // ikinci el hançerinin uçuş kopyası (Tithe Cut), kaynaklar bırakılmadan önce
   src.free(); // geçici kare kesimleri (atlaslar savaş kurulunca releasePoseSources ile bırakılır)
   if (!canvas) return null;
   const tex = scene.textures.addCanvas(key, canvas);
@@ -212,6 +213,32 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
   }
   tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
   return { key, density: s, realW, realH };
+}
+
+/** İkinci el hançerinin uçuş dokusunun anahtarı (`keepThrowItem`; tonlu çizim tona göre ayrı). */
+export const throwItemKey = (o: { family: string; look: string; tone?: string }): string => `posethrow:${o.family}.${o.look}${o.tone ? `~${o.tone}` : ''}`;
+
+/**
+ * İkinci el HANÇERİNİN (yalnız `daggers` ailesi) pişirmedeki çiziminin (nadirlik tonu dahil) kalıcı kopyası: Redtithe Tithe Cut ön el hançerini
+ * fırlatır, uçan hançer eldekinin birebir aynısı olsun (Lead 2026-11-21, Ömer "kusurları düzelt"). Kaynak silah dokuları (`poseweapon:*`) savaş
+ * kurulunca bırakıldığı için uçuşta okunamazdı. Tek küçük doku (hançer çizimi başına bir kez); kalkan / öteki aileler kopyalanmaz. Yeni savaşın
+ * preload'unda atlaslarla birlikte bırakılır (`isReleasablePoseTexture`), atlas yeniden pişerken yeniden yazılır.
+ */
+function keepThrowItem(scene: Phaser.Scene, pick: WeaponPick | null, off: CanvasImageSource | null): void {
+  const o = pick?.offhand;
+  if (!o || !off || o.family !== 'daggers') return;
+  const key = throwItemKey(o);
+  if (scene.textures.exists(key)) return;
+  const w = (off as HTMLImageElement).naturalWidth || (off as { width: number }).width;
+  const h = (off as HTMLImageElement).naturalHeight || (off as { height: number }).height;
+  if (!w || !h) return;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  if (!ctx) return freeCanvas(c);
+  ctx.drawImage(off, 0, 0, w, h);
+  if (!scene.textures.addCanvas(key, c)) freeCanvas(c);
 }
 
 /**

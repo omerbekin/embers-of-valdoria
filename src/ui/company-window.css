@@ -5,8 +5,8 @@
   background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--g-edge);
   box-shadow: 0 0 0 3px rgba(8,6,4,.7), 4px 12px 0 rgba(0,0,0,.3), 0 22px 50px rgba(0,0,0,.55); }
 .cw-x { position: absolute; top: 8px; right: 8px; z-index: 3; }
-.cw-cn { position: absolute; width: max(4px, calc(8 * var(--u))); height: max(4px, calc(8 * var(--u))); background: #140e09; border: 1px solid rgba(217,178,106,.7); transform: rotate(45deg); }
-.cw-cn.tl { left: -5px; top: -5px; } .cw-cn.tr { right: -5px; top: -5px; } .cw-cn.bl { left: -5px; bottom: -5px; } .cw-cn.br { right: -5px; bottom: -5px; }
+/* köşe süsü: .cw-win üç noktası (corner-dots.ts) */
+.cw-cn { display: none; }
 .cw-ttl { position: absolute; left: 0; right: 0; top: calc(30 * var(--u)); height: calc(48 * var(--u)); display: flex; align-items: center; justify-content: center; gap: max(30px, calc(22 * var(--u))); margin: 0;
   font: 600 max(calc(16px * var(--tx, 1)), calc(40 * var(--u) * var(--tx, 1))) / 1 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; }
 .cw-ttl span { background: linear-gradient(180deg, #fbe7b0 0%, #c7984f 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); padding-left: .14em; }

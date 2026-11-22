@@ -74,7 +74,7 @@ describe('Faz 2c: veri', () => {
     const am = only('antimage', { '1.v': 1, '1.fa': 1 })!;
     const ms = am.skills!.mana_burn!;
     expect(ms.effects[0]!.type).toBe('dispel');
-    expect(ms.effects.some((e) => e.type === 'damage')).toBe(false);
+    expect(ms.effects.some((e) => e.type === 'damage')).toBe(true); // tur 4: Drained Dry hasarı silmez, yarıya indirir
     const dr = only('druid', { '3.fb': 1 }, 3)!;
     const rj = dr.skills!.rejuvenate!;
     expect(rj.cooldown).toBe(4);
@@ -86,12 +86,13 @@ describe('Faz 2c: veri', () => {
     expect(heals[0]!.power).toBeCloseTo(0.675 * 2.25 * (1 + barHeal), 5);
   });
 
-  it('Drained Dry: Mana Steal yakımı %50 artar (taban x 1,5), hasar yok; yakım tam sayıya yuvarlanır', () => {
+  it('Drained Dry: Mana Steal yakımı veriden artar (tur 4: x2), hasar yarıya iner; yakım tam sayıya yuvarlanır', () => {
     const am = only('antimage', { '1.fa': 1 })!;
     const base = (content.skills.mana_burn!.effects.find((e) => e.type === 'manaBurn') as { amount: number }).amount;
     const burn = am.skills!.mana_burn!.effects.find((e) => e.type === 'manaBurn') as { amount: number };
-    expect(burn.amount).toBe(Math.round(base * 1.5)); // derleyici tam sayıya yuvarlar
-    expect(am.skills!.mana_burn!.effects.some((e) => e.type === 'damage')).toBe(false);
+    expect(burn.amount).toBe(Math.round(base * (1 + fxOf('antimage', '1.fa', 1).v))); // derleyici tam sayıya yuvarlar; oran veriden
+    const baseDmg = content.skills.mana_burn!.effects.find((e) => e.type === 'damage') as { power: number };
+    expect((am.skills!.mana_burn!.effects.find((e) => e.type === 'damage') as { power: number }).power).toBeCloseTo(baseDmg.power * (1 + fxOf('antimage', '1.fa', 0).v), 6);
     expect(burnAmountFor({ type: 'manaBurn', amount: burn.amount }, { mp: 100, maxMp: 100 })).toBe(burn.amount);
   });
 
@@ -106,14 +107,14 @@ describe('Faz 2c: veri', () => {
     const t = only('druid', { '0.fa': 1 }, 0)!;
     const e = t.passive!.effect as { status?: string; power: number; turns: number; dotTurns?: number };
     expect(e.status).toBeUndefined();
-    expect(e.power).toBeCloseTo(0.2145, 9); // 0,165 x 1,3 (taban 2026-11-20 form r34: 0,15 -> 0,165)
+    expect(e.power).toBeCloseTo(0.165 * (1 + fxOf('druid', '0.fa').v), 9); // taban 0,165 (2026-11-20 form r34) x ağaç oranı (veriden)
     expect(e.turns).toBe(3);
     expect(e.dotTurns).toBe(4);
   });
 
   it('Gaunt Frame: maks can -%20, Vampiric Bite %70', () => {
     const t = only('undead', { '0.fa': 1 });
-    expect((t!.passive!.effect as { ratio: number }).ratio).toBe(0.7);
+    expect((t!.passive!.effect as { ratio: number }).ratio).toBe(fxOf('undead', '0.fa').v); // sayı veriden
     const plain = make({ 0: 'undead' }, { 0: 'mage' });
     const tree = make({ 0: 'undead' }, { 0: 'mage' }, withTree(0, t));
     expect(P(tree).maxHp).toBe(Math.round(P(plain).maxHp * 0.8));
@@ -208,7 +209,7 @@ describe('Faz 2c: Anti-Mage', () => {
       E(b).mp = E(b).maxMp;
       const ev = cast(b, P(b), 'mana_burn', E(b)).find((e) => e.type === 'manaBurn') as { amount: number } | undefined;
       if (!ev) return false;
-      expect(ev.amount).toBe(7 + Math.round(E(b).maxMp * 0.09)); // Ömer 2026-11-08: düz 10 -> 8 -> 7
+      expect(ev.amount).toBe(7 + Math.round(E(b).maxMp * 3 * fxOf('antimage', '1.f3').v)); // Ömer 2026-11-08: düz 10 -> 8 -> 7; yüzde veriden
       return true;
     });
   });
@@ -269,7 +270,7 @@ describe('Faz 2c: Anti-Mage', () => {
 
 describe('Faz 2c: Cutthroat, Hexer, Undead', () => {
   it('Far Toss: Blind uzatma yalnızca arka sıradaki düşmana (zar 1 iken)', () => {
-    const t = withTree(0, only('cutthroat', { '3.f1': 7 })); // 0.15 x 7 > 1
+    const t = withTree(0, only('cutthroat', { '3.f1': Math.ceil(1 / fxOf('cutthroat', '3.f1').procChance) })); // şans x rank >= 1 (şans veriden)
     const b = make({ 0: 'cutthroat' }, { 0: 'mage', 9: 'mage' }, t);
     const front = cast(b, P(b), 'smoke_bomb', E(b));
     expect(statusEv(front, E(b).uid, 'blinded')?.turns).toBe(2);
@@ -333,11 +334,11 @@ describe('Faz 2c: Cutthroat, Hexer, Undead', () => {
 
   it('Blood Oath / Iron Oath / Crimson Covenant: bağa bağlı guard, %60 pay, süresiz bağ', () => {
     const t = only('undead', { '3.mb': 1, '3.fb': 1, '3.v': 1 });
-    expect((t!.passive!.effect as { ratio: number }).ratio).toBeCloseTo(0.4, 9);
+    expect((t!.passive!.effect as { ratio: number }).ratio).toBeCloseTo(0.5 * (1 + fxOf('undead', '3.fb', 1).v), 9); // Iron Oath bedeli veriden
     const b = make({ 0: 'undead', 1: 'warrior' }, { 0: 'mage' }, withTree(0, t));
     cast(b, P(b), 'dark_bond', P(b, 1));
     const g = P(b, 1).statuses.find((s) => s.kind === 'guard');
-    expect(g?.share).toBeCloseTo(0.6, 9);
+    expect(g?.share).toBeCloseTo(fxOf('undead', '3.fb').v, 9); // pay veriden
     expect(g?.bond).toBe(true);
     const bond = P(b, 1).statuses.find((s) => s.kind === 'dark_bond');
     expect(bond?.permanent).toBe(true);
@@ -355,7 +356,7 @@ describe('Faz 2c: Defender', () => {
     const b = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '0.fa': 1 })));
     const base = P(b).stats.armor;
     expect(armorOf(plain, P(plain)) - base).toBeCloseTo(base * 0.4, 6);
-    expect(armorOf(b, P(b)) - base).toBeCloseTo(base * 0.6, 6);
+    expect(armorOf(b, P(b)) - base).toBeCloseTo(base * 0.4 * (1 + fxOf('defender', '0.fa').v), 6); // oran veriden
     expect(b.canUseGlobal(P(b).uid, 'move').ok).toBe(false);
   });
 
@@ -377,14 +378,14 @@ describe('Faz 2c: Defender', () => {
     const run = (skill: string) => {
       const b = make({ 0: 'defender' }, { 0: 'warrior' }, withTree(0, only('defender', { '0.r': 3 })), 2);
       P(b).hp = P(b).maxHp = 99999;
-      E(b).stats.str = 400;
+      E(b).stats.str = 4000; // küçük yüzde (ağaç ayarı 2026-11-21) görünsün
       const evs = cast(b, E(b), skill, P(b));
       return hitDamage(evs, P(b).uid);
     };
     const plain = (skill: string) => {
       const b = make({ 0: 'defender' }, { 0: 'warrior' }, {}, 2);
       P(b).hp = P(b).maxHp = 99999;
-      E(b).stats.str = 400;
+      E(b).stats.str = 4000;
       return hitDamage(cast(b, E(b), skill, P(b)), P(b).uid);
     };
     expect(run('melee_attack')).toBe(plain('melee_attack'));

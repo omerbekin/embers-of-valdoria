@@ -42,7 +42,9 @@ describe("Blood Tithe (Spellbreaker's Instinct kuralı)", () => {
     expect(INSTINCT.type).toBe('spellbreakerInstinct');
     expect(INSTINCT.advance).toBe(0);
     expect(INSTINCT.bloodAdvance).toBeGreaterThan(0);
-    expect(describePassive(pas, P(make({ 0: 'antimage' }, { 0: 'mage' })).stats, content.formulas)).toContain(`${Math.round(INSTINCT.bloodAdvance! * 100)}%`);
+    // Ömer 2026-11-21 form r40: dolu bar kayması = advance + bloodAdvance + bloodAdvancePerDex x DEX (kahramanın statından)
+    const st = P(make({ 0: 'antimage' }, { 0: 'mage' })).stats;
+    expect(describePassive(pas, st, content.formulas)).toContain(`up to ${Math.round((INSTINCT.advance + INSTINCT.bloodAdvance! + INSTINCT.bloodAdvancePerDex! * st.dex) * 100)}% of a turn at a full bar`);
   });
 
   it("MP'li düşman skill'i AM'in dostuna: AM'in sayacı eşik x advance öne, pasif olayı", () => {

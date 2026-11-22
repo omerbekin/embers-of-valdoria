@@ -5,7 +5,7 @@ import cinematicsJson from '../../data/campaign/cinematics.json';
 import { classes, encounterUnit } from '../engine/content';
 import { findNode } from './graph';
 import { isDone, mapOf, nextStep, nodeCleared } from './state';
-import type { CampaignMap, CampaignState } from './types';
+import type { CampaignMap, CampaignState, CrownChoice } from './types';
 
 /** Satır: `speaker` = narrator | leader | konuşan anahtarı (`_speakers`) | boss / mob id. */
 export interface CinematicLine {
@@ -21,12 +21,18 @@ export type CinematicTrigger =
   | { on: 'campaignStart' }
   | { on: 'victory'; node: string }
   | { on: 'firstArrival'; node: string }
-  | { on: 'beforeBattle'; node: string };
+  | { on: 'beforeBattle'; node: string }
+  /** Harita bitti (sonraki adım 'complete'); `crownChoice` verilmişse yalnız o seçimle (Harita 3 kapanış sineması, Mend / Quench dalı). */
+  | { on: 'mapComplete'; map: string; crownChoice?: CrownChoice };
 export interface CinematicDef {
   trigger: CinematicTrigger;
   scenes: CinematicScene[];
   /** Son kapanış kartı (morvane_falls: campaign.json > texts.complete ile aynı metin). */
   endCard?: string;
+  /** Başlık (yoksa tetik düğümünün adı, düğümsüzse haritanın adı). Harita 3 kapanışında dalın başlığı. */
+  title?: string;
+  /** Bitince jenerik ekranı (data/credits.json) açılır (Harita 3 kapanışı; bağlantı CampaignMapScene). */
+  credits?: boolean;
 }
 export interface CinematicSpeaker {
   name: string;
@@ -75,6 +81,7 @@ const onMap = (map: CampaignMap, nodeId: string): boolean => !!findNode(map, nod
  * - 'map': harita bir sonraki adımı kurarken (CampaignMapScene.advance). campaignStart = kahraman seçimi beklerken (sefer başı, ilk savaştan
  *   önce); victory = düğümde duruluyor ve düğümün savaşı kazanılmış (ganimet ekranından sonra, haritaya dönüşte); firstArrival = düğümde
  *   duruluyor ve düğümün adımları henüz bitmemiş (ör. Forward Camp: tüccar açılmadan önce).
+ *   mapComplete = harita bitti (sonraki adım 'complete'; Harita 3: Mend or Quench seçildikten sonra, seçimin dalı `crownChoice`).
  * - 'beforeBattle': bulunulan düğümün savaşı başlamak üzere (devriye ve duraklatılmış savaşın sürdürülmesi hariç).
  * Her sinematik seferde bir kez (görüldü işareti `done` listesinde).
  */
@@ -94,13 +101,16 @@ export function dueCinematic(s: CampaignState, when: 'map' | 'beforeBattle'): st
       if (t.node === s.at && onMap(map, t.node) && isDone(s, t.node, 'battle')) return id;
     } else if (t.on === 'firstArrival') {
       if (t.node === s.at && onMap(map, t.node) && !nodeCleared(s, t.node)) return id;
+    } else if (t.on === 'mapComplete') {
+      if (s.mapId === t.map && (!t.crownChoice || s.crownChoice === t.crownChoice) && nextStep(s).kind === 'complete') return id;
     }
   }
   return null;
 }
 
-/** Sinematik başlığı: tetik düğümünün adı (King's Bridge...), düğümsüzse haritanın adı. */
+/** Sinematik başlığı: verideki `title`, yoksa tetik düğümünün adı (King's Bridge...), düğümsüzse haritanın adı. */
 export function cinematicTitle(id: string, map: CampaignMap): string {
+  if (CINEMATICS[id]?.title) return CINEMATICS[id]!.title!;
   const t = CINEMATICS[id]?.trigger;
   const n = t && 'node' in t ? findNode(map, t.node) : undefined;
   return n?.name ?? map.title;

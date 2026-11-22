@@ -482,6 +482,39 @@ html .gr-shop .gr-bb-row.gr-wplates {
   display: none;
 }
 
+/* telefon (Ömer 2026-11-20): silah özelliği satırı "..." ile kesilmesin; Power yanında sığmazsa özellik kendi satırına iner */
+html.short .gr-ledger .gr-leaf-hero .gp-l2 {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+html.short .gr-ledger .gr-leaf-hero .gp-tx {
+  gap: 0;
+  line-height: 1.05;
+}
+
+html.short .gr-ledger .gr-leaf-hero .gp-aff {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  flex: 0 1 auto;
+}
+
+/* plakanın alt kenarına değmesin: iki satırlı (Power + özellik) silah plakasında dikey boşluk ve satır aralığı sıkılır, metin ortalanır */
+html.short .gr-ledger .gr-leaf-hero .gr-slot.gr-plate {
+  padding-top: 3px;
+  padding-bottom: 5px;
+}
+
+html.short .gr-ledger .gr-leaf-hero .gp-tx {
+  justify-content: center;
+  line-height: 1;
+}
+
+html.short .gr-ledger .gr-leaf-hero .gp-l2 {
+  line-height: 1.05;
+}
+
 /* kısa / orta ekran (html.compact <= 720px yükseklik): sıkı yapı, yazılar küçük, çipler satırı tek satır */
 html.compact .gr-ledger .gr-leaf-hero {
   gap: 4px;

@@ -1,5 +1,5 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=antimage: v3 (kadin, hancer firlatan) govde sayfalari, 2026-10-18. EL KURALI: main = SAG el (arkadaki / resimde soldaki kol), off = SOL el. Eller kapali yumruk (hancer tutar). spin1c (one-handed satir 2 sutun 4) kaynakta isaret poz (yanlis), Anti-Mage skilleri spin kullanmaz. Eski v2 kaynaklari: antimage-v2-old/.",
+  "_not": "tools/make-poses-v2.mjs --class=antimage: v3 (kadin, hancer firlatan) govde sayfalari, 2026-10-18. EL KURALI: main = SAG el (arkadaki / resimde soldaki kol), off = SOL el. Eller kapali yumruk (hancer tutar). spin1c (one-handed satir 2 sutun 4) kaynakta isaret poz (yanlis), Anti-Mage skilleri spin kullanmaz. Eski v2 kaynaklari: antimage-v2-old/. twin_stab (2026-11-22): Exsanguinate cift saplama ek pozu; Codex image-edit ile cizildi ve elle kuruldu (docs/anim-review/new-art/redtithe-poses-v1/make-twin-stab*.mjs, fit.py, install.py). DIKKAT: 22 poz da elle kuruldu; bu sinif icin make-poses-v2 calistirmak onlari eski sayfalardan ezer.",
   "holes": true,
   "noMirror": [
     "idle1",
@@ -267,6 +267,18 @@
         1405,
         880
       ]
+    },
+    "twin_stab": {
+      "main": [
+        1155,
+        533
+      ],
+      "off": [
+        1212,
+        430
+      ],
+      "angle": 90,
+      "offAngle": 90
     }
   },
   "narrowSeeds": {
@@ -360,5 +372,8 @@
         775
       ]
     }
+  },
+  "extraRef": {
+    "twin_stab": "thrust2"
   }
 }

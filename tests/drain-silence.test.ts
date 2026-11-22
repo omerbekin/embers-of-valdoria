@@ -28,7 +28,8 @@ const unitDef = (id: string): CombatantDef => (content.summons[id] ?? content.cl
 
 function arena(party: [string, number][], enemies: [string, number][], mode: 'test' | 'turns' = 'test', seed = 1, skills: Record<string, SkillDef> = {}): Battle {
   const base = content.battleSetup('random-battle', seed, mode, { party: [], enemies: [] }, false);
-  return new Battle({ ...base, skills: { ...base.skills, drain_field: LEGACY, ...skills }, party: party.map(([id]) => unitDef(id)), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) });
+  // 1000 örnekli ölçümler tek savaşta: The First Fire's Verdict (100 hamle sonrası vuruşlar) burada kapalı
+  return new Battle({ ...base, firstFire: undefined, skills: { ...base.skills, drain_field: LEGACY, ...skills }, party: party.map(([id]) => unitDef(id)), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) });
 }
 /** Kimse ölmez, Lucky Escape / Resilience yok. */
 function tough(b: Battle, hp = 50000): Battle {

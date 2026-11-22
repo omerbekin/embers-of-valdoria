@@ -148,6 +148,8 @@ export interface DamageTags {
   ground?: string;
   /** origin 'status': hasarı veren durum (wound / bleed / poison / burn), varsa. */
   statusId?: string;
+  /** Motorun damageType alanı; yalnız 'pure' (The First Fire's Verdict: element yok) sayı rengini değiştirir. */
+  damageType?: string;
 }
 
 export type DamageSourceKind = 'skill' | 'ground' | 'status' | 'self';
@@ -203,9 +205,11 @@ const STATUS_ELEMENT: Record<string, string> = { poison: 'nature', burn: 'fire',
 
 /**
  * Hasar rakamının rengi: elementin rengi (ikon da kelime de yok; şiddet yalnızca boyutla). Zemin / durum tiki kendi elementini alır
- * (yanma = ateş, zehir = doğa), element yoksa fiziksel renk. `elementColors` = data/battle-layout.json > colors.element.
+ * (yanma = ateş, zehir = doğa), element yoksa fiziksel renk. `elementColors` = data/battle-layout.json > colors.element; pure hasar `pureHex` (colors.damagePure).
  */
-export function damageNumberHex(t: DamageTags, elementColors: Record<string, string>): string {
+export function damageNumberHex(t: DamageTags, elementColors: Record<string, string>, pureHex?: string): string {
+  // pure hasar (element yok): fiziksel / büyü renginden ayrı beyaz-altın (data/battle-layout.json > colors.damagePure)
+  if (t.damageType === 'pure' && pureHex) return pureHex;
   const src = damageSourceKind(t);
   let el: string | undefined;
   if (src === 'ground' && t.ground) el = GROUND_ELEMENT[t.ground];

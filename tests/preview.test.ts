@@ -4,6 +4,7 @@ import { oldLayoutSetup } from './range-helpers';
 import { Battle, attributePower, content, describeClass, describeSkill, describeStat, nominalBurn, previewSkill } from '../src/engine';
 import type { BattleEvent, SkillDef, StatKind } from '../src/engine';
 import { installLegacySkill, installLegacySkills } from './legacy-skills';
+import { shieldSplit } from '../src/engine/battle';
 
 installLegacySkills();
 
@@ -97,8 +98,13 @@ describe('önizleme: hasar', () => {
     b.get(E_WARRIOR)!.shield = soak;
     const shielded = previewSkill(b, WARRIOR, 'power_strike', E_WARRIOR)[0]!.damage!;
     expect(shielded.avg).toBe(bare.avg);
+    // Kalkan ham hasar kuralı (Ömer 2026-11-21): kalkan ham hasara (avg / keep) çarpar; zırhlı hedefte kalkan biter, kalanı zırhla cana
+    expect(shielded.keep).toBeLessThan(1);
+    const sp = shieldSplit({ shield: soak, magicShield: 0 }, bare.avg, false, 1, shielded.keep);
     expect(shielded.absorbed).toBe(soak);
-    expect(shielded.hpLoss).toBe(bare.hpLoss - soak);
+    expect(sp.shieldUsed).toBe(soak);
+    expect(shielded.hpLoss).toBe(bare.hpLoss - (bare.avg - sp.rest));
+    expect(shielded.hpLoss).toBeGreaterThan(bare.hpLoss - soak); // eski kuralda kalkan soak kadar azaltmalı hasar durdururdu
     b.get(E_WARRIOR)!.shield = 1000;
     const wall = previewSkill(b, WARRIOR, 'power_strike', E_WARRIOR)[0]!.damage!;
     expect(wall.hpLoss).toBe(0);

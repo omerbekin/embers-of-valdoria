@@ -1024,7 +1024,7 @@ export interface UnitSummary {
 
 /** Savaş sonu özeti (saf): kazanan (bitmediyse null), oynanan tur sayısı ve her birim. */
 export interface BattleSummary {
-  winner: Side | null;
+  winner: BattleWinner | null;
   turnsTaken: number;
   units: UnitSummary[];
   /** Oyuncu tarafında Valor varsa: kalan Valor ve kusursuz zafer (bu savaşta hiçbir dost düşmedi; savaşa ceset girenler sayılmaz). */
@@ -1322,7 +1322,7 @@ export type SkillEffectKind =
    * `count` yoksa hepsi; varsa en uzun süreliler önce (eşitlikte önce uygulanan). statuses.json'da `dispellable: false` olanlar silinmez.
    * Olay: her silinen için `statusEnd { dispelled: true, source, cause: skill id }`.
    */
-  | { type: 'dispel'; status: 'debuff' | 'buff'; count?: number; /** Yalnızca bu durumlar silinir (ağaç: Steady Them, Mercy Stroke). */ kinds?: StatusKind[]; /** true: kullanıcının kendisinden siler (Clean Slate). */ self?: boolean; /** Faz 2c (Prying Blade): adaylardan seed'li RASTGELE seçim (yoksa en uzun süreli önce). */ random?: boolean }
+  | { type: 'dispel'; status: 'debuff' | 'buff'; count?: number; /** Yalnızca bu durumlar silinir (ağaç: Steady Them, Mercy Stroke). */ kinds?: StatusKind[]; /** true: kullanıcının kendisinden siler (Clean Slate). */ self?: boolean; /** Faz 2c (Prying Blade): adaylardan seed'li RASTGELE seçim (yoksa en uzun süreli önce). */ random?: boolean; /** Purging Ward (r35): hedeflerden yalnız canı en düşük dost (Battle.lowestHpAllyOf). */ lowestHp?: boolean }
   /**
    * Karanlık bağ (Dark Bond): kullanıcı ile hedef dost arasında `turns` (kullanıcının kendi turları) sürecek bağ kurar. Bağ sürerken kullanıcının
    * her lifesteal kazancının (skill lifesteal'i ve soulDrain pasifi; çağrılarının hasarından gelen dahil) `ratio` katı bağlı dosta da şifa olur
@@ -1383,6 +1383,8 @@ export type SkillEffectKind =
       statuses?: GroundStatus[];
       /** Faz 5a (Sea of Fire): zemin alanın dört yönden değdiği hücrelere de yayılır (aynı tahta). */
       treeWide?: 'touch';
+      /** Ölçüm işareti: treeWide'ı veren ağaç düğümü (zemin gerçekten genişleyince treeProc; sonuç değişmez). */
+      treeWideNode?: string;
     }
   /** Kullanıcı kendine maks canının `ratio` kadarını hasar verir (canı en az 1 kalır). */
   | { type: 'selfDamage'; ratio: number }
@@ -1673,7 +1675,7 @@ export interface SkillDef {
    * pattern 'row' (YALNIZCA target 'single_ally'; Close Ranks, Ömer 2026-10-20): seçilen dostun sırasındaki (alan şekli 'row') diğer canlı dostlar
    * (kullanıcı HARİÇ) da hedef olur; menzile yalnızca seçilen dost bakar. Etkiler (ör. guard) hepsine uygulanır.
    */
-  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind' | 'lane' | 'armor'; mult?: number; jumps?: number };
+  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind' | 'lane' | 'armor'; mult?: number; jumps?: number; /** Ölçüm işareti: yan vuruşu veren ağaç düğümü (yan hedef vurulunca treeProc; sonuç değişmez). */ treeNode?: string };
   /** Harita 3 gezgin moblar: yakın dövüş erişiminin istisnası (bkz. ReachRule; Battle.reachOpens / reachDenied). Yalnız single_enemy. */
   reachRule?: ReachRule;
   /**
@@ -1789,7 +1791,7 @@ export interface BoltOutcome {
   arcs: Array<{ uid: string; damage: number }>;
   /** Patlayan zeminli hücreler ve patlamanın birim başına hasarı. */
   shatters: Array<{ board: Side; slot: number; reaction: string; label: string; /** Tepkiyen zemin türü (hücrede birden çok şimşek zemini olabilir). */ ground?: string }>;
-  shards: Array<{ uid: string; damage: number }>;
+  shards: Array<{ uid: string; damage: number; /** Kalkan ham hasar kuralı: ilk parçanın savunma oranı (tickKeep). */ keep?: number }>;
   /** Shocked hedefler (yalnız isabet edilen; Ömer 2026-11-15: yayılma yok): stun = suda / ıslak olduğu için Shocked yerine wetInto (Electrocuted). */
   shocks: Array<{ uid: string; stun: boolean }>;
   /** Islak devre (Ömer 2026-11-15): iletimin çıktığı sıvı hücre (arcs'taki her birime bir kıvılcım). */
@@ -1933,6 +1935,11 @@ export type DamageOrigin = 'skill' | 'ground' | 'status' | 'self';
 export type BattleMode = 'turns' | 'test';
 
 export type Side = 'party' | 'enemy';
+/**
+ * Savaşın sonucu: kazanan taraf ya da 'draw' (beraberlik). Beraberlik yalnızca çok oyunculu maçta, iki taraf aynı anda bitince gelir
+ * (Ömer 2026-11-21, form r39; BattleSetup.drawOnMutualEnd). Tek oyunculu savaşta aynı anda bitiş = oyuncu kaybeder ('enemy').
+ */
+export type BattleWinner = Side | 'draw';
 
 /**
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
@@ -2570,7 +2577,7 @@ type BattleEventBody =
       cells?: number[];
       /** Yalnızca aşamalı alan skill'inde: aşamalar sırayla (dizin = sonraki olaylardaki `stage`); her aşamanın hücreleri ve hedefleri. */
       stages?: AreaStage[];
-      /** area_any skill'inde alanın atıldığı tahta (kendi ya da karşı taraf); diğer alan skill'lerinde hep karşı tahta (alan yok). */
+      /** area_any skill'inde alanın atıldığı tahta (kendi ya da karşı taraf); Electrocuted alanında kendi tahtası (form r39); diğer alan skill'lerinde hep karşı tahta (alan yok). */
       board?: Side;
       /**
        * requiresOpenBehind (Backstab): kullanıcının GÖRSEL olarak ışınlandığı hücre (hedefin hemen arkası) ve tahtası; `from` kullanıcının
@@ -2607,8 +2614,11 @@ type BattleEventBody =
       origin?: DamageOrigin;
       /** Hasarın elementi (skill etkisinin `element`'i ya da yer etkisinin elementi; yoksa 'physical'). */
       element?: Element;
-      /** Fiziksel / büyü (zırh türü). */
-      damageType?: 'physical' | 'magic';
+      /**
+       * Fiziksel / büyü (zırh türü). 'pure' (Ömer 2026-11-21): element yok, zırh / büyü zırhı / kalkan / azaltma / kaçınma / zayıflık / tepkime yok;
+       * bugün yalnız The First Fire's Verdict vuruşu (cause 'first_fire'). Arayüz sayı rengini bundan seçebilir.
+       */
+      damageType?: 'physical' | 'magic' | 'pure';
       /** origin 'ground': yer etkisi türü (data/grounds.json anahtarı: poison | burning | holy_fire) ve örnek kimliği (ground olayındaki id). */
       ground?: string;
       groundId?: string;
@@ -2769,6 +2779,15 @@ type BattleEventBody =
    * reinforce: Break the Totem takviyesi düşman tahtasına geldi (dalga değil: önceki birimler kalır; sahne görünüm kurar).
    */
   | { type: 'round'; round: number }
+  /**
+   * The First Fire's Verdict (Ömer 2026-11-21, form r40 + r41; data/battle-rules.json > firstFire): uzayan savaşa ceza. `firstFireWarn` = tetikten
+   * `movesLeft` hamle önce uyarı (`warning` 'first' = ilk uyarı, 'final' = son uyarı; arayüz metni "The First Fire grows impatient"); `firstFireStart` =
+   * kural başladı (`firstSide`: vuruş çiftinde önce vurulan takım, savaşta bir kez seed'li zarla); `firstFireStrike` = tur sonu vuruşu (`target` rastgele
+   * yaşayan birim, `amount` saf hasar; ardından origin 'status' cause 'first_fire' hasar olayı), `round` = kuralın kaçıncı turu (1'den).
+   */
+  | { type: 'firstFireWarn'; warning: 'first' | 'final'; movesLeft: number; triggerAt: number }
+  | { type: 'firstFireStart'; firstSide: Side; damage: number }
+  | { type: 'firstFireStrike'; target: string; side: Side; amount: number; round: number }
   | { type: 'objective'; objective: BattleObjective['type']; state: 'progress' | 'done' | 'failed'; current?: number; goal?: number }
   | { type: 'reinforce'; combatants: Combatant[]; queue: string[] }
   /** M-N3 Tidewater Urn devrildi: `actor` (bitişik kahraman) kendi tahtasının `row` sırasını (hücreleri `slots`) su bastı; `left` kalan kullanım. Ardından 'ground'. */
@@ -2807,7 +2826,7 @@ type BattleEventBody =
   | { type: 'sermonStart'; actor: string; rounds: number; goal: number }
   | { type: 'sermonEnd'; actor: string; outcome: 'broken' | 'done' }
   | { type: 'kingHears'; actor: string; skill: string }
-  | { type: 'battleEnd'; winner: Side };
+  | { type: 'battleEnd'; winner: BattleWinner };
 
 /**
  * Dalgalı savaşta sonraki bir dalganın kurulumu (BattleSetup.waves[i]; ilk dalga BattleSetup.enemies'tir). enemies / enemySlots / enemyUnits
@@ -2823,6 +2842,19 @@ export interface WaveSetup {
  * Karşılaşma kuralları (Harita 2-3 savaş katmanı; maps-2-3.md M-A, B3, M-I, M-J; veri data/battle-rules.json, çözümleme content.resolveBattleRules).
  * Verilmezse savaş birebir eskisi (olay yok, rastgele sayı aynı).
  */
+/**
+ * The First Fire's Verdict kuralı (data/battle-rules.json > firstFire; content.battleSetup her savaşa verir). Sayılar veriden: `afterMoves` hamleden
+ * SONRA (turnsTaken > afterMoves) başlar; `warnFirst` / `warnFinal` hamle önce uyarı; vuruş hasarı `damage`, her tur sonu (iki takıma da vurulunca) +`damageStep`.
+ */
+export interface FirstFireRule {
+  name: string;
+  afterMoves: number;
+  warnFirst: number;
+  warnFinal: number;
+  damage: number;
+  damageStep: number;
+}
+
 export interface BattleRules {
   /** M-A: savaş boyunca geçerli tek koşul (Tide). */
   condition?: BattleCondition;

@@ -13,7 +13,7 @@ import hcEncountersJson from '../../data/campaign/hollow-crown-encounters.json';
 import hcEventsJson from '../../data/campaign/hollow-crown-events.json';
 // Harita 2 yan içerik (A1 Wayshrines, B1 Salvage Dive; maps-2-3.md 9)
 import sideJson from '../../data/campaign/side-content.json';
-import type { CampaignConfig, CampaignMap, EncounterDef, Faction, StoneOath, UnitMods } from './types';
+import type { CampaignConfig, CampaignMap, CrownChoice, EncounterDef, Faction, StoneOath, UnitMods } from './types';
 import type { StatusKind } from '../engine/types';
 import { RARITY_IDS, type RarityId } from '../progression/items';
 
@@ -88,6 +88,8 @@ export interface EventChoice {
   quest?: string;
   /** A5: "Walk away": olay bitmez, pencere kapanır, kafile yola çıkabilir; sonra dönülür (state.ts > canWithdraw). */
   walkAway?: boolean;
+  /** Boş "çık" seçeneği (Leave / Not yet / Just rest): pencerede kart olarak görünmez; pencerenin X'i (ve Esc) bu seçeneği seçer (olayı bugünkü gibi tamamlar; Ömer 2026-11-21, form r39). */
+  closer?: boolean;
   /** M-L: seçenek tarafı seçer (bir kez, geri alınmaz; src/campaign/reach.ts). */
   faction?: Faction;
   /** M-L: seçenek yalnız bu tarafta (ya da listedeki taraflarda) görünür ('none' = taraf seçilmemişken). Yoksa herkese. */
@@ -98,6 +100,8 @@ export interface EventChoice {
   light?: boolean;
   /** Harita 3 Hall of Oaths: Stone Oath seçimi (bir kez, geri alınmaz; CampaignState.stoneOath; src/campaign/hollow-crown.ts). */
   stoneOath?: StoneOath;
+  /** Harita 3 bitiş olayı (Mend or Quench): seçim kayda yazılır (CampaignState.crownChoice; kapanış sinemasının dalı). Mekanik etkisi yok. */
+  crownChoice?: CrownChoice;
   /** Bir sonraki savaşın başında takıma konan durum (The White Dark "Wait it out": Chilled 2 tur; CampaignState.pendingStatus). */
   nextBattleStatus?: { status: StatusKind; turns: number };
   /** Tek hediye item (var olan hediye yolu, loot.ts > grantGift): nadirlik + isteğe bağlı yuva süzgeci (ör. relic = offhand). */

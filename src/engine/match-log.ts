@@ -63,8 +63,8 @@ export interface MoveRecord {
   ai?: AiExplanation | { none: true };
   events: string[];
   post: { self: UnitSnap; targets: UnitSnap[] };
-  /** Hamleden sonra savaş bitti mi (kazanan taraf). */
-  winner?: 'party' | 'enemy';
+  /** Hamleden sonra savaş bitti mi (kazanan taraf ya da 'draw': çok oyunculu aynı anda bitiş). */
+  winner?: 'party' | 'enemy' | 'draw';
 }
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
@@ -126,7 +126,7 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.actor)} rage ${e.delta >= 0 ? '+' : ''}${e.delta} (now ${e.after}/${e.max})${e.cause === 'hurt' ? ' [Berserker: hurt]' : ''}`;
     case 'damage':
       if (e.luckyEscape) return `${L(e.source)} -> ${L(e.target)}: killing blow IGNORED (Lucky Escape), 0 dmg${e.redirected ? ' (guard redirect)' : ''}, hp ${e.hpAfter}${e.shieldAfter ? `, shield ${e.shieldAfter}` : ''}${e.magicShieldAfter ? `, mshield ${e.magicShieldAfter}` : ''}`;
-      return `${L(e.source)} -> ${L(e.target)}: ${e.amount} dmg${e.absorbed ? ` (+${e.absorbed} absorbed)` : ''}${e.crit ? ' CRIT' : ''}${e.redirected ? ' (guard redirect)' : ''}${e.status === 'wither' ? ' [wither tick]' : e.status === 'omen' ? ' [DOOM]' : e.status ? ` [${e.status}]` : ''}, hp ${e.hpAfter}${e.shieldAfter ? `, shield ${e.shieldAfter}` : ''}${e.magicShieldAfter ? `, mshield ${e.magicShieldAfter}` : ''}`;
+      return `${L(e.source)} -> ${L(e.target)}: ${e.amount} dmg${e.absorbed ? ` (+${e.absorbed} absorbed)` : ''}${e.damageType === 'pure' ? ' PURE' : ''}${e.crit ? ' CRIT' : ''}${e.redirected ? ' (guard redirect)' : ''}${e.status === 'wither' ? ' [wither tick]' : e.status === 'omen' ? ' [DOOM]' : e.status ? ` [${e.status}]` : ''}, hp ${e.hpAfter}${e.shieldAfter ? `, shield ${e.shieldAfter}` : ''}${e.magicShieldAfter ? `, mshield ${e.magicShieldAfter}` : ''}`;
     case 'omen':
       return e.cause === 'transfer' ? `${L(e.target)} +omen ${e.delta} (Ill Omen) [${e.stacks}/${e.max}]` : `${L(e.source)} -> ${L(e.target)}: +omen ${e.delta}${e.crit ? ' (crit)' : ''} [${e.stacks}/${e.max}]`;
     case 'doom':
@@ -229,6 +229,13 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return e.index === 0 ? `WAVE 1/${e.total}` : `WAVE ${e.index + 1}/${e.total} ARRIVES: ${e.combatants.map((c) => unitLabel(c)).join(', ') || 'no units'}`;
     case 'round':
       return `ROUND ${e.round} (battle turn)`;
+    // The First Fire's Verdict (form r40 + r41)
+    case 'firstFireWarn':
+      return `FIRST FIRE ${e.warning === 'first' ? 'warning' : 'final warning'}: ${e.movesLeft} moves left (starts after move ${e.triggerAt})`;
+    case 'firstFireStart':
+      return `FIRST FIRE'S VERDICT begins: ${e.firstSide} side is struck first, ${e.damage} damage`;
+    case 'firstFireStrike':
+      return `FIRST FIRE round ${e.round}: strikes ${L(e.target)} for ${e.amount} pure damage`;
     case 'objective':
       return `OBJECTIVE ${e.objective.toUpperCase()} ${e.state.toUpperCase()}${e.current !== undefined ? ` ${e.current}${e.goal !== undefined ? `/${e.goal}` : ''}` : ''}`;
     case 'reinforce':
@@ -284,7 +291,7 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
     case 'light':
       return `${e.lit ? 'FIELD LIT' : 'DARK AGAIN'} (${e.cause})${e.until !== undefined ? ` until round ${e.until}` : ''}`;
     case 'battleEnd':
-      return `BATTLE END: ${e.winner} wins`;
+      return e.winner === 'draw' ? 'BATTLE END: draw (both sides fell at once)' : `BATTLE END: ${e.winner} wins`;
   }
 }
 
@@ -499,7 +506,7 @@ export class MatchLog {
       '# MATCH LOG (format v1; see docs/design/match-log.md)',
       `game: ${[m.version && `v${m.version}`, m.builtAt && `built ${m.builtAt}`, m.commit && `commit ${m.commit}`].filter(Boolean).join(', ') || 'unknown build'}`,
       `seed: ${b.seed} | mode: ${b.mode} | teams: party ${party} vs enemy ${enemy} | turn threshold ${b.formulas.turn.threshold}${m.note ? ` | ${m.note}` : ''}`,
-      `status: ${b.winner ? `finished, winner ${b.winner}` : 'in progress'} | moves recorded: ${this.moves.length}${truncatedNote}`,
+      `status: ${b.winner ? (b.winner === 'draw' ? 'finished, draw' : `finished, winner ${b.winner}`) : 'in progress'} | moves recorded: ${this.moves.length}${truncatedNote}`,
       'legend: P0/E3 = side + team index, name after ":"; cN = formation cell (row*3+lane, 0 = front); ar = armor; cd = cooldown in own turns; ctr = turn counter (acts at threshold); st = statuses name:turns. AI candidates: dmg = expected damage x hit chance summed over ALL hit foes; net = value - cost; score = the own score of the winning priority rule; * chosen, - not chosen, x blocked by an ai hint / MP reserve',
       '',
       '## ROSTER (start of match; derived stats already include attributes/primary/passives)',
@@ -537,7 +544,7 @@ export class MatchLog {
 
   private summary(): string {
     const b = this.battle;
-    const lines = ['## RESULT', b.winner ? `winner: ${b.winner} | total moves: ${b.turnsTaken}` : `battle still in progress | moves so far: ${b.turnsTaken}`];
+    const lines = ['## RESULT', b.winner ? `${b.winner === 'draw' ? 'result: draw' : `winner: ${b.winner}`} | total moves: ${b.turnsTaken}` : `battle still in progress | moves so far: ${b.turnsTaken}`];
     lines.push('per unit (damage dealt to enemies / damage taken / healing done; summons credited to owner):');
     for (const c of b.combatants.filter((x) => !x.summoned)) {
       lines.push(`  ${unitLabel(c)}: dealt ${this.dealt.get(c.uid) ?? 0}, taken ${this.taken.get(c.uid) ?? 0}, healed ${this.healed.get(c.uid) ?? 0}, hp ${c.hp}/${c.maxHp}${c.hp <= 0 ? ' (dead)' : ''}`);
@@ -556,7 +563,7 @@ export class MatchLog {
     if (m.startEffects.length > 0) out.push(`  between moves (turn-start effects, debug actions): ${m.startEffects.join(' | ')}`);
     if (m.ai) out.push(...formatAi(m.ai, compact));
     out.push(`result: ${m.events.length > 0 ? m.events.join(' | ') : '(no events)'}`);
-    out.push(`after: ${unitText(m.post.self, true)}${m.post.targets.length > 0 ? ` ;; ${m.post.targets.map(afterText).join(' ; ')}` : ''}${m.winner ? ` ;; BATTLE OVER: ${m.winner} wins` : ''}`);
+    out.push(`after: ${unitText(m.post.self, true)}${m.post.targets.length > 0 ? ` ;; ${m.post.targets.map(afterText).join(' ; ')}` : ''}${m.winner ? (m.winner === 'draw' ? ' ;; BATTLE OVER: draw' : ` ;; BATTLE OVER: ${m.winner} wins`) : ''}`);
     return out.join('\n');
   }
 }

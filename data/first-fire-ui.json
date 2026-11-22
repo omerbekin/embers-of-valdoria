@@ -1,0 +1,14 @@
+{
+  "_not": "The First Fire's Verdict arayüz metinleri (oyun içi, İngilizce). Sayılar data/battle-rules.json > firstFire'dan: {dmg} = sıradaki vuruş hasarı. Motor kuralı değil; yalnızca ekran yazısı (src/game/first-fire-ui.ts).",
+  "warnFirst": "The First Fire grows impatient",
+  "warnFinal": "The First Fire is about to pass judgment",
+  "start": "The First Fire's Verdict",
+  "startSub": "Every turn it strikes one unit on each side",
+  "badge": "First Fire",
+  "tipKind": "Battle rule",
+  "tipRows": [
+    "The battle has dragged on. Every turn the First Fire strikes one random unit on each side with pure damage: armor, shields and dodge do nothing.",
+    "The strike grows by {step} each turn, so end the fight quickly."
+  ],
+  "tipNext": "Next strike: {dmg}"
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONFIG, companySuggestionFor, getMap, newCampaign, debugTeleport, nextStep, suggestCompanion, type CompanySuggestCfg } from '../src/campaign';
+import { CONFIG, companySuggestionFor, recommendReasons, getMap, newCampaign, debugTeleport, nextStep, suggestCompanion, type CompanySuggestCfg } from '../src/campaign';
 import { classes } from '../src/engine/content';
 
 const cfg = CONFIG.companySuggest;
@@ -109,5 +109,25 @@ describe('birden çok öneri + dizilim / hasar türü satırı (Ömer 2026-11-07
     expect(heroTraits('warrior')).toBe('Front row · Physical damage');
     expect(heroTraits('mage')).toBe('Back row · Magic damage');
     expect(heroTraits('archer')).toBe('Back row · Physical damage');
+  });
+});
+
+describe('Recommended satırının nedeni (recommendReasons; Ömer 2026-11-21)', () => {
+  it('ön saf eksik: ön saf adaylarının hepsi ön saf gerekçesini taşır', () => {
+    const r = recommendReasons(sug(['mage']));
+    expect(Object.keys(r)).toEqual(['warrior', 'defender', 'paladin', 'skald']);
+    expect(new Set(Object.values(r))).toEqual(new Set([cfg.lines.front]));
+  });
+  it('ön saf dolu, arka saf eksik: gerekçe arka saf; ön saf adayı satırı yok', () => {
+    const r = recommendReasons(sug(['warrior']));
+    expect(Object.keys(r)).toEqual(['archer', 'mage', 'hexer', 'vesper']);
+    expect(Object.values(r).every((l) => l === cfg.lines.back)).toBe(true);
+    expect(r['warrior']).toBeUndefined();
+  });
+  it('ön ve arka dolu: gerekçe besleyen; öneri yoksa boş (satırda ipucu çıkmaz)', () => {
+    const r = recommendReasons(sug(['warrior', 'archer']));
+    expect(r).toEqual({ druid: cfg.lines.feed, paladin: cfg.lines.feed });
+    expect(recommendReasons(sug(['warrior', 'archer', 'druid']))).toEqual({});
+    expect(recommendReasons(null)).toEqual({});
   });
 });

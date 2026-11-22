@@ -44,12 +44,13 @@ import { lockInput, unlockInput } from './input-lock';
 import { statIconUrl } from './stat-tips';
 import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
+import { hasMiscImage, miscIconName } from './misc-icons';
 import { hasUiImage, uiIconName, type UiIconKind } from './ui-icons';
 import type { Stats } from '../engine';
 import { avatarUrl, className, heroMarks, renderLedgerPage } from './character-panel';
 import { mountCloseButton } from './nav-close';
 import { showHandoverToast } from './handover-toast';
-import { showElToast } from './el-toast';
+import { showBottomWarn } from './bottom-warn';
 import { renderInventory, snapBagRows } from './inventory';
 import { clearBagMenus, installBagMenuDismiss, visibleByKind, type BagBarOpts, type BagMenu } from './bag-bar';
 import { itemTipNodes, itemVsNode, type ItemTipAction, type ItemTipHero } from './item-tip';
@@ -61,6 +62,7 @@ import { heroOath, oathMinusText, oathPlusText } from '../campaign/oath';
 import { heroQuests, questBonusLine } from '../campaign/quests';
 import { respecSpent, supplyColor, supplyRarityName } from '../campaign';
 import { openRespecChooser, type RespecKind } from './supply-respec';
+import { gearChanged } from './gear-change';
 import { boonList, slotLocks, supplyList, supplyText, useSupply } from '../campaign';
 import { supplyIconSvg } from './supply-icons';
 import { bandTipHtml } from './band-tip';
@@ -170,7 +172,10 @@ export interface GearSource {
 
 /** Seferin kaynağı: CampaignState üzerinden (davranış eskisiyle birebir). */
 export function campaignGearSource(get: () => CampaignState, set: (s: CampaignState) => void): GearSource {
-  const apply = (fn: (s: CampaignState) => CampaignState): void => set(fn(get()));
+  const apply = (fn: (s: CampaignState) => CampaignState): void => {
+    set(fn(get()));
+    gearChanged(); // skill / stat puanı, eşya değişimi otomatik kayda girer (campaign-session > gearAutosave)
+  };
   return {
     heroes: () => {
       const s = get();
@@ -817,8 +822,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     // Esc / geri: Gear'ın kendi katmanlı Esc'i (önce onay, çanta menüsü, ipucu, seçim; sonra kapanış)
     esc: () => onKey({ key: 'Escape', stopPropagation() {}, preventDefault() {} } as KeyboardEvent),
   });
-  // hata / uyarı yazısı: ortak üst-orta bildirim (el-toast.ts; Ömer 2026-11-09)
-  const showToast = (text: string, ok = false): void => showElToast(text, { bad: !ok, ms: 2600 });
+  // hata / uyarı yazısı: ortak ALTTAN uyarı barı (bottom-warn.ts; Ömer 2026-11-21), panelin altında
+  const showToast = (text: string, ok = false): void => showBottomWarn(panel, text, { ok, ms: 2600 });
 
   const focusInst = (): ItemInstance | null => {
     const uid = dragUid || hoverUid || sel;
@@ -847,7 +852,19 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     else if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', ''));
     const boons = ext ? [] : (src.blessings?.() ?? []);
     boonsEl.hidden = !boons.length;
-    boonsEl.textContent = boons.length ? `${boons.length} ${boons.length === 1 ? 'Blessing' : 'Blessings'}` : '';
+    boonsEl.replaceChildren();
+    if (boons.length) {
+      // ortak ikon seti (assets/misc-icons/blessing/blessing.png), BAG etiketiyle aynı boy
+      if (hasMiscImage('blessing', 'blessing')) {
+        const bi = document.createElement('img');
+        bi.className = 'gr-ui-ico';
+        bi.alt = '';
+        bi.draggable = false;
+        bi.src = iconUrl(miscIconName('blessing', 'blessing'));
+        boonsEl.append(bi);
+      }
+      boonsEl.append(`${boons.length} ${boons.length === 1 ? 'Blessing' : 'Blessings'}`);
+    }
   }
   /** Kahraman değişimi (a08): yeni portre karesi bir kez altın kenarla parlar; kök baştan kurulmaz. */
   function switchHero(id: string): void {

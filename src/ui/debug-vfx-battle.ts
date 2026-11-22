@@ -114,8 +114,8 @@ const CLASS_TESTS: ReadonlyArray<{ key: string; skill: string; caster: string; l
   { key: 'ice_crater', skill: 'ice_crater', caster: 'mage' },
   { key: 'ice_crater_crash', skill: 'ice_crater', caster: 'mage', dummySlot: 10, label: 'Ice Crater crash (dummy on the back row: pushed into the edge)' },
   { key: 'heat_mirage', skill: 'rend', caster: 'grey_wolf', dummy: 'mage', label: 'Heat Mirage (Grey Wolf bites the Mage)' },
-  { key: 'ley_thread', skill: 'mana_burn', caster: 'antimage', label: 'Ley Thread (Mana Steal)' },
-  { key: 'ley_thread_brand', skill: 'drain_field', caster: 'antimage', pre: ['mana_burn'], label: 'Ley Thread used up (Mana Steal, then Ley Brand)' },
+  { key: 'ley_thread', skill: 'mana_burn', caster: 'antimage', label: 'Ley Thread (Mana Steal, retired)' },
+  { key: 'ley_thread_brand', skill: 'drain_field', caster: 'antimage', pre: ['mana_burn'], label: 'Ley Thread used up (Mana Steal, then Ley Brand; retired)' },
   { key: 'storm', skill: 'blizzard', caster: 'mage', label: 'Chill Ground (Blizzard)' },
   // Undead sheet seti (2026-10-29, docs/anim-review/new-art/undead/brief.md): anahtar sheet adında geçer (assets/vfx/undead/NN-<anahtar>-..), yakalama aracı onu izler
   { key: 'bone_throw', skill: 'bone_throw', caster: 'undead' },

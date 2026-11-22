@@ -28,6 +28,7 @@
     "icon": "blizzard",
     "color": "#5fc8ff",
     "skipTurn": true,
+    "breaksTaunt": true,
     "cc": true,
     "blocks": ["chilled"],
     "clearedBy": ["fire"],
@@ -385,14 +386,14 @@
     "text": "Grounded by lightning: 50% less Magic Armor, and lightning hits its shields twice as hard"
   },
   "electrocuted": {
-    "_not": "Ömer onaylı 2026-11-09 (ikinci element formu): T2 şimşek durumu. Suda (Flooded, kan, Healing Rain) duran ya da Soaked birime şimşek Shocked yerine bunu verir (formulas.json > thunder.wetInto; eski Stun yerine). Uygulanınca birim hemen temel saldırısıyla (ilk skill'i) KENDİ tarafından rastgele bir dosta vurur (Battle.flushElectro). Sıra çubuğunu 0'a çekme Ömer 2026-11-15'te kalktı (yerine Islak devre). cc: boss bağışık, elit Stun ile aynı ccImmunity. Süre = thunder.stunTurns (yalnız rozet). İkon YER TUTUCU: bolt.",
+    "_not": "Ömer onaylı 2026-11-09 (ikinci element formu): T2 şimşek durumu. Suda (Flooded, kan, Healing Rain) duran ya da Soaked birime şimşek Shocked yerine bunu verir (formulas.json > thunder.wetInto; eski Stun yerine). Uygulanınca birim hemen İLK skill'iyle KENDİ takımına vurur (Battle.flushElectro; form r39 2026-11-21): tek hedefli skill rastgele bir dosta, alan skill'i kendi şekliyle rastgele bir dostun hücresine, tüm düşmanlara giden skill kendi takımının tümüne (kendisi hariç). Sıra çubuğunu 0'a çekme Ömer 2026-11-15'te kalktı (yerine Islak devre). cc: boss bağışık, elit Stun ile aynı ccImmunity. Süre = thunder.stunTurns (yalnız rozet). İkon YER TUTUCU: bolt.",
     "name": "Electrocuted",
     "type": "debuff",
     "icon": "bolt",
     "color": "#5fb0ff",
     "cc": true,
     "dispellable": false,
-    "text": "Lightning through water: it lashes out at a random ally with its basic attack"
+    "text": "Lightning through water: it turns its first skill on its own team, aimed at a random ally (an area skill hits around that ally, a skill that hits all enemies hits all its allies)"
   },
   "tempered_red_hot": {
     "_not": "Harita 3 C6 Tempering (maps-2-3.md): duruş rozeti; pasif çevirir (süre işlemez). İkon YER TUTUCU. Ek su çarpanı pasifte (waterTaken).",
@@ -426,6 +427,7 @@
     "icon": "flame",
     "color": "#b8735a",
     "skipTurn": true,
+    "breaksTaunt": true,
     "armorMult": 0,
     "dispellable": false,
     "text": "Skips its next turn and has 100% less Armor until then"

@@ -216,6 +216,17 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       // Blood Tithe (Redtithe, Ömer 2026-11-18): bar dolu kayma = bloodAdvance + bloodAdvancePerDex x DEX (formül görünür); advance = ağacın düz eki
       if (e.bloodAdvance && e.bloodAdvancePerDex) {
         const peak = e.bloodAdvance + e.bloodAdvancePerDex * stats.dex;
+        // Ömer 2026-11-21 form r40 (onaylı taslak, üç cümle): kan barı, dolu bar (sıra kayması), boş bar (büyü zırhı + can emme). Sayılar
+        // formulas.json > bloodBar ve kahramanın statından (motorla aynı: Battle.instinctAdvance, bloodMagicArmor, bloodLifesteal)
+        const bb = formulas.bloodBar;
+        if (bb) {
+          const n = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
+          return [
+            `Blood bar: 0-${bb.max}, starts at ${bb.start}. Tithe Cut fills it; skills spend it. Missing blood is paid in HP (not by skills that spend the whole bar).`,
+            `Fuller bar: when an enemy spends MP on a skill against your team, your turn bar jumps ahead, up to ${pct(peak + e.advance)} of a turn at a full bar. Once between your turns.`,
+            `Emptier bar: more Magic armor (up to ${n(bb.magicArmorBase + bb.magicArmorPerInt * stats.int)} at 0 blood) and up to ${pct(bb.lifestealMax)} life steal on skill hits.`,
+          ].join(' ');
+        }
         return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ahead by (${pct(e.bloodAdvance)} + DEX x${Math.round(e.bloodAdvancePerDex * 10000) / 100}%) x your blood fill: ${pct(peak)} of a turn with a full bar (${pct(peak / 2)} at half)${e.advance > 0 ? ` plus ${pct(e.advance)}` : ''}, so your next turn comes sooner. At most once between your turns.`;
       }
       if (e.bloodAdvance) return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ahead by up to ${pct(e.bloodAdvance)} of a turn with a full blood bar (${pct(e.bloodAdvance / 2)} at half)${e.advance > 0 ? ` plus ${pct(e.advance)}` : ''}, so your next turn comes sooner. At most once between your turns.`;
@@ -679,8 +690,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       // Blood Brand (Redtithe): işaret metni; sayılar veriden
       const def = defs.statuses?.['blood_brand'];
       const bleed = defs.statuses?.['bleeding']?.name ?? 'Bleeding';
-      add(`Marks the target for ${e.turns} turn${e.turns > 1 ? 's' : ''}${def ? ` (${def.name})` : ''}: each skill it uses makes its ${bleed} tick ${e.ticks === 1 ? 'once' : `${e.ticks} times`} more at once, without shortening it`);
-      add(`The marked enemy pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
+      const many = skill.target !== 'single_enemy'; // Ömer 2026-11-21 form r40: Blood Brand 2x2 alan
+      add(`Marks ${many ? 'every enemy in the area' : 'the target'} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${def ? ` (${def.name})` : ''}: each skill a marked enemy uses makes its ${bleed} tick ${e.ticks === 1 ? 'once' : `${e.ticks} times`} more at once, without shortening it`);
+      add(`A marked enemy pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
       add('Casting it again refreshes the mark');
     } else if (e.type === 'taunt') {
       add(`Taunt ${e.turns} turns: enemies must target you${e.breakRatio ? ` (ends after losing ${pct(e.breakRatio)} HP)` : ''}`);
@@ -726,7 +738,10 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'dispel') {
       const names = Object.values(defs.statuses ?? {}).filter((d) => d.type === e.status && d.dispellable !== false).map((d) => d.name);
       const what = e.status === 'debuff' ? 'debuff' : 'buff';
-      add(`${e.count ? `Removes the ${e.count} longest-lasting ${what}${e.count > 1 ? 's' : ''}` : `Removes every ${what}`} from the target${names.length ? ` (${names.join(', ')})` : ''}`);
+      // Purging Ward (r36): debuff'ı olan dostlar arasında canı en düşük; skill yalnız kendine ise (3.fb) yalnız kullanan (Battle.purgeTargetOf)
+      const from = e.lowestHp ? (skill.target === 'self' ? 'yourself' : `your lowest-HP ally that has a ${what} (you included)`) : 'the target';
+      const how = e.count ? (e.random ? `Removes ${e.count} random ${what}${e.count > 1 ? 's' : ''}` : `Removes the ${e.count} longest-lasting ${what}${e.count > 1 ? 's' : ''}`) : `Removes every ${what}`;
+      add(`${how} from ${from}${names.length ? ` (${names.join(', ')})` : ''}`);
     } else if (e.type === 'omen') {
       const kind = e.status ?? 'omen';
       const def = defs.statuses?.[kind];
@@ -971,6 +986,11 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'manaOverflow':
       return fixed(`Team MP per ${e.threshold} blocked`, `+${e.mana}`);
     case 'spellbreakerInstinct':
+      if (e.bloodAdvance && formulas.bloodBar) {
+        // Blood Tithe (form r40 metni): dolu bar kayması + boş bar büyü zırhı ve can emme (describePassive ile aynı hesap)
+        const bb = formulas.bloodBar;
+        return [...fixed('Turn bar ahead (full blood)', pct(e.advance + e.bloodAdvance + (e.bloodAdvancePerDex ?? 0) * stats.dex)), ...fixed('Magic armor (0 blood)', String(Math.round((bb.magicArmorBase + bb.magicArmorPerInt * stats.int) * 10) / 10)), ...fixed('Life steal (0 blood)', pct(bb.lifestealMax))];
+      }
       return e.bloodAdvance ? fixed('Turn bar ahead (full blood)', pct(e.advance + e.bloodAdvance + (e.bloodAdvancePerDex ?? 0) * stats.dex)) : fixed('Turn bar ahead', pct(e.advance));
     case 'omenTransfer':
       return fixed('Omens passed', `up to ${e.maxOnArrival}`);

@@ -132,12 +132,14 @@
       "choices": [
         {
           "id": "mend",
+          "crownChoice": "mend",
           "label": "Mend the crown",
           "hint": "One of you takes up the crown and becomes Valdoria's new Crownbearer.",
           "result": "The halves close with a sound like a bell. Your leader lifts the crown and sets it on their brow, and the fire inside it settles, for now. Valdoria has a Crownbearer again."
         },
         {
           "id": "quench",
+          "crownChoice": "quench",
           "label": "Quench the fire",
           "hint": "Throw both halves into the hearth and put it out.",
           "result": "The halves fall into the hearth and you pour the Tidewater after them. Steam fills the hall, and when it clears the First Hearth is dark for the first time since the founding. Valdoria is without a crown."

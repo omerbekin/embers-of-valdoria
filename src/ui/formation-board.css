@@ -35,27 +35,6 @@
   z-index: 3;
 }
 
-.fbw-win::before,
-.fbw-win::after {
-  content: '';
-  position: absolute;
-  width: max(6px, calc(12 * var(--u, 1px)));
-  height: max(6px, calc(12 * var(--u, 1px)));
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid #f3d999;
-}
-
-.fbw-win::before {
-  left: -8px;
-  top: -8px;
-}
-
-.fbw-win::after {
-  right: -8px;
-  bottom: -8px;
-}
-
 .fbw-ttl {
   position: absolute;
   left: 0;
@@ -403,28 +382,6 @@
   box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.6), inset 0 0 22px rgba(217, 178, 106, 0.06);
 }
 
-.fb-panel::before,
-.fb-panel::after {
-  content: '';
-  position: absolute;
-  width: max(5px, calc(10 * var(--u, 1px)));
-  height: max(5px, calc(10 * var(--u, 1px)));
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid #f3d999;
-  z-index: 2;
-}
-
-.fb-panel::before {
-  left: -6px;
-  top: -6px;
-}
-
-.fb-panel::after {
-  right: -6px;
-  bottom: -6px;
-}
-
 .fb-ico {
   position: relative;
   flex: none;
@@ -433,28 +390,6 @@
   background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--ac, #d9b26a) 30%, #1a110a) 0%, #0d0806 78%);
   border: 1px solid color-mix(in srgb, var(--ac, #d9b26a) 62%, #000);
   box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 16px color-mix(in srgb, var(--ac, #d9b26a) 32%, transparent), inset 0 0 14px color-mix(in srgb, var(--ac, #d9b26a) 22%, transparent);
-}
-
-.fb-ico::before,
-.fb-ico::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid #f3d999;
-  z-index: 2;
-}
-
-.fb-ico::before {
-  left: -5px;
-  top: -5px;
-}
-
-.fb-ico::after {
-  right: -5px;
-  bottom: -5px;
 }
 
 .fb-ico img {
@@ -854,14 +789,15 @@ html.short .fbw-ttl::after {
 }
 
 html.short .fbw-sub {
-  display: none;
+  top: 64px;
+  font-size: 19px;
 }
 
 html.short .fbw-btns {
   top: 0;
   bottom: auto;
   height: 90px;
-  padding: 0 26px;
+  padding: 0 84px 0 26px; /* sağda X için boşluk: X, Done köşesine binmez */
   gap: 14px;
   justify-content: flex-start;
 }
@@ -1014,6 +950,19 @@ html.short .fb-srow .fb-chip {
 html.short .fb-ptag,
 html.short .fb-utag {
   font-size: 14px;
+}
+
+/* ULTIMATE etiketi telefonda satırın içinde (isim ile bedel arasında); üst kenarda durunca üstteki skill satırına biniyordu */
+html.short .fb-utag {
+  position: static;
+  transform: none;
+  order: 5;
+  flex: none;
+  padding: 1px 8px;
+}
+
+html.short .fb-srow.ult .fb-chip {
+  order: 6;
 }
 
 html.short .fb-vlbl {

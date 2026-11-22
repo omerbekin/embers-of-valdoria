@@ -42,19 +42,20 @@ describe('Archer ağacı fx (Faz 2b)', () => {
     expect(checkTreeFx(D)).toEqual([]);
   });
 
-  it('Leg Shot Only: Quick Shot artık Haste vermez, hedefi 2 tur Slow eder', () => {
+  it('Leg Shot Only: Quick Shot Haste 1 tur (2 yerine), hedefi 2 tur Slow eder', () => {
     const run = (withTree: boolean) => {
       const b = make({ 0: 'archer' }, { 0: 'warrior' }, withTree ? { 0: { tree: tree(['1.f1*3', '1.f2*5', '1.f3*2', '1.n0', '1.r*3', '1.ea', '1.fa']) } } : {});
       const e = E0(b);
       e.stats = { ...e.stats, evasion: -5 };
       cast(b, P0(b).uid, 'quick_shot', e.uid);
-      return { haste: P0(b).statuses.some((s) => s.kind === 'haste'), slow: e.statuses.find((s) => s.kind === 'slow')?.turns ?? 0, b };
+      return { haste: P0(b).statuses.find((s) => s.kind === 'haste')?.turns ?? 0, slow: e.statuses.find((s) => s.kind === 'slow')?.turns ?? 0, b };
     };
     const plain = run(false);
     const tr = run(true);
-    expect(plain.haste).toBe(true);
+    expect(plain.haste).toBeGreaterThan(0);
     expect(plain.slow).toBe(0);
-    expect(tr.haste).toBe(false);
+    expect(tr.haste).toBeGreaterThan(0); // tur 4 (Ömer 2026-11-22): Haste kalkmaz, 1 tur kısalır
+    expect(tr.haste).toBeLessThan(plain.haste);
     expect(tr.slow).toBeGreaterThanOrEqual(2);
     expect(procs(tr.b, 'archer:1.fa')).toBe(1);
   });

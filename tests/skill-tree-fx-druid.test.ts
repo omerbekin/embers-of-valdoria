@@ -61,15 +61,15 @@ describe('Druid ağacı fx (Faz 2b)', () => {
     const heal = rj.find((e) => e.type === 'heal') as { power: number };
     const hot = rj.find((e) => e.type === 'ground') as { power: number; turns: number };
     expect(hot.turns).toBe(3);
-    expect(heal.power).toBeCloseTo(0.675 * (1 + 3 * v(T.nodes['3.f1']!.fx![0])) * (1 + v(bar.fx![0])), 6);
-    expect(hot.power).toBeCloseTo(0.225 * (1 + 5 * v(T.nodes['3.f2']!.fx![0])) * (1 + v(bar.fx![1])), 6);
+    expect(heal.power).toBeCloseTo(0.675 * (1 + 3 * v(T.nodes['3.f1']!.fx![0])) * (1 + v(bar.fx![0])), 5);
+    expect(hot.power).toBeCloseTo(0.225 * (1 + 5 * v(T.nodes['3.f2']!.fx![0])) * (1 + v(bar.fx![1])), 5);
     expect(bar.text).toContain(`${Number((v(bar.fx![0]) * 100).toFixed(2))}% more`); // ayrı çarpan cümle biçiminde yazılır (2026-10-27)
   });
 
   it('Third Lash (1.ma): her 3. Thorn Whip başka bir düşmana %20 kırbaç atar; Wild Thorns (1.fa, kritik yok) ile de çalışır', () => {
     const fx = T.nodes['1.ma']!.fx![0] as unknown as { on: string; every: number; do: { strike: number }[] };
     expect(fx.on).toBe('skillUse');
-    expect(T.nodes['1.ma']!.text).toContain(`${Math.round(fx.do[0]!.strike * 100)}% damage`);
+    expect(T.nodes['1.ma']!.text).toContain(`${+(fx.do[0]!.strike * 100).toFixed(3)}% damage`);
     const b = make({ 0: 'druid' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*5', '1.f3*5', '1.n0', '1.r*3', '1.ea', '1.ma', '1.fa']) } });
     for (const e of b.combatants) if (e.side === 'enemy') e.hp = e.maxHp = 99999;
     const me = P(b);

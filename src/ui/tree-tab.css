@@ -140,7 +140,10 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-nd.st-dir .dm { border-style: dashed; } .gt-nd.st-dir { cursor: not-allowed; }
 .gt-nd .lkic { position: absolute; right: calc(50% - var(--s) / 2 - 3px); top: calc(50% - var(--s) / 2 - 4px); width: 15px; height: 15px; display: none; align-items: center; justify-content: center; border-radius: 50%; background: #120c08; border: 1px solid rgba(217, 178, 106, .75); z-index: 3; pointer-events: none; }
 .gt-nd .lkic svg { width: 9px; height: 10px; fill: none; stroke: #e8cf8f; stroke-width: 1.7; }
-.gt-nd.st-dir .lkic { display: flex; }
+.gt-nd.st-dir .lkic, .gt-nd.st-off .lkic { display: flex; }
+/* yeniden tasarlanan (inactive) düğüm / bar bonusu: yerinde, soluk, kesik halka + kilit */
+.gt-nd.st-off { opacity: .4; } .gt-nd.st-off .dm { border-style: dashed; }
+.gt-mk.off { opacity: .5; }
 .gt-nd .pp { position: absolute; left: 50%; top: calc(50% + var(--s) / 2 + 2px); transform: translateX(-50%); font: 600 calc(8px * var(--tx, 1))/1 var(--g-disp); letter-spacing: .02em; color: var(--g-dim); white-space: nowrap; pointer-events: none; }
 .gt-nd .pp .c { color: var(--g-gold); } .gt-nd .pp .p { color: #ffb35a; }
 .gt-nd .lb { position: absolute; left: 50%; transform: translateX(-50%); width: 100px; text-align: center; font: normal 600 calc(10px * var(--tx, 1))/1.1 var(--g-disp); letter-spacing: .04em; text-transform: uppercase; color: var(--g-dim); pointer-events: none; }
@@ -430,7 +433,7 @@ html.short .gt-tools .gt-acts .sh-acts { display: flex; align-items: center; fle
 /* Basili tutarak puan (Omer 2026-11-14): stat kutusunun B Ray geri bildirimi (gear.css > .sh-tile) dugumde. --h (0-1) JS'ten (stat-hold.ts > attachHoldSpend); sureler data/ui-motion.json > statHold (--m-hold-*). */
 .gt-nd { touch-action: none; user-select: none; -webkit-user-select: none; }
 .gt-nd .hb { position: absolute; left: 50%; top: calc(50% + var(--s) / 2 + 4px); width: calc(var(--s) * 1.15 * var(--h, 0)); height: 3px; transform: translateX(-50%); border-radius: 2px; background: linear-gradient(90deg, var(--g-ember, #e0702a), #ffd76a); box-shadow: 0 0 8px rgba(255, 179, 90, .7); pointer-events: none; z-index: 4; transition: opacity .3s; }
-.gt-nd.done .hb { opacity: 0; }
+.gt-nd.done .hb, .gt-nd.hold-out .hb { opacity: 0; transition: opacity var(--m-hold-fade, 250ms) ease-out; }
 .gt-nd.holding .dm, .gt-nd.holding .drop { filter: brightness(1.25); }
 .gt-nd.holding { scale: .96; }
 .gt-nd.nope .dm, .gt-nd.nope .drop { box-shadow: 0 0 0 2px rgba(232, 128, 106, .7); }
@@ -459,3 +462,50 @@ html.short .gr-pair .gt.cols > .gt-tools > .gt-acts.gt-inbar { order: 2; flex: n
 html.short .gt-acts .el-btn { font-size: calc(11px * var(--tx, 1)); letter-spacing: .05em; padding: 0 10px; gap: .3em; line-height: 1; max-height: 30px; }
 html.short .gt-acts .el-btn img { width: 1.2em; height: 1.2em; }
 html.short .gt-acts .el-btn .cost { font-size: inherit; }
+
+/* ================= TELEFON TEK SÜTUN (Ömer 2026-11-21, form r38 seçimi A; taslak public/mockups/agac-mockup/A.html) =================
+   html.short + Gear tek başına: üstte 4 skill sekmesi, solda seçili skill'in sütunu, sağda Mastery bar + açıklama paneli + ult kutusu + "Hold to add".
+   4 sütunun düğümleri DOM'da durur (refresh / ders vurgusu aynı), seçili olmayanlar `data-c` ile gizlenir. Düğüm görseli mockup A'nın ONE_K (0,86) katı;
+   ölçü tree-tab-layout.ts > buildOne. Yanında pencere olan dar Gear (.gr-pair) eski 4 sütunda kalır. */
+.gt.one { gap: 4px; }
+.gt.one[data-sel="0"] [data-c]:not([data-c="0"]), .gt.one[data-sel="1"] [data-c]:not([data-c="1"]), .gt.one[data-sel="2"] [data-c]:not([data-c="2"]), .gt.one[data-sel="3"] [data-c]:not([data-c="3"]) { display: none; }
+.gt-tabs { display: flex; gap: 4px; flex: none; height: 38px; min-width: 0; }
+.gt-tabs .gr-pl.hz { position: relative; left: auto; top: auto; flex: 1 1 0; width: auto; min-width: 0; height: 100%; display: flex; flex-direction: row; align-items: center; gap: 6px; padding: 2px 6px 2px 3px; box-sizing: border-box; overflow: hidden; cursor: pointer; opacity: .62; --is: calc(100% - 4px); container-type: normal; background: linear-gradient(90deg, color-mix(in srgb, var(--ac) 12%, transparent), rgba(13, 9, 6, .9)); border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent); touch-action: manipulation; }
+.gt-tabs .gr-pl.hz.sel { opacity: 1; box-shadow: 0 0 0 1px #f3d999 inset, 0 0 10px rgba(243, 217, 153, .3); }
+.gt-tabs .gr-pl.hz .pl-ico { height: 100%; max-height: none; width: auto; aspect-ratio: 1; flex: none; box-shadow: 0 0 0 1px rgba(8, 6, 4, .9); }
+.gt-tabs .gr-pl.hz .pl-bd { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.gt-tabs .gr-pl.hz .pl-hd { display: flex; align-items: center; min-width: 0; }
+.gt-tabs .gr-pl.hz .pl-nm { flex: 1 1 0; min-width: 0; display: block; text-align: left; font-size: calc(12px * var(--tx, 1)); letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gt-tabs .gr-pl.hz .pl-tag, .gt-tabs .gr-pl.hz .pl-chips, .gt-tabs .gr-pl.hz .pl-ds { display: none; }
+.gt-tabs .gt-pts { font-size: calc(14px * var(--tx, 1)); align-self: center; padding: 0; }
+.gt-tabs .gt-pts small { display: none; }
+.gt-onebox { flex: 1 1 0; min-height: 0; display: flex; gap: 8px; min-width: 0; }
+.gt.one .gt-onebox > .gt-body { flex: none; width: clamp(210px, 34%, 262px); margin-top: 0; }
+.gt-side { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.gt-sidebody { flex: 1 1 0; min-height: 0; display: flex; gap: 8px; }
+.gt-dr { flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden auto; scrollbar-width: thin; }
+.gt-dr .bt { width: 100% !important; max-width: none !important; position: static !important; box-shadow: none; }
+.gt-dr .bt::after { display: none; }
+.gt-dr .bt-foot.lock { color: #ffd99a; }
+.gt-dr .bt-foot.bad { color: #ffb070; border-top-color: rgba(224, 112, 42, .7); background: rgba(224, 112, 42, .12); }
+.gt-dr .bt-foot.pend { color: #ffc98a; }
+.gt-aside { flex: none; width: 200px; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.gt-aside .gt-ubox { flex: 1 1 0; min-height: 0; margin: 0; overflow: visible; }
+.gt-aside .gt-ubox .gc-arm { transform: translateX(-50%); }
+.gt-aside .gt-ubox .gt-ulv { color: #c9b98f; font-size: calc(11px * var(--tx, 1)); }
+.gt-hold { display: flex; align-items: center; justify-content: center; gap: 8px; flex: none; height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid rgba(224, 112, 42, .75); background: linear-gradient(180deg, rgba(224, 112, 42, .22), rgba(224, 112, 42, .1)); color: #ffd99a; font: 700 calc(13px * var(--tx, 1)) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; white-space: nowrap; }
+.gt-hold::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--h, 0) * 100%); background: linear-gradient(90deg, #8a3a10, #ffb35a); opacity: .55; pointer-events: none; }
+.gt-hold span, .gt-hold svg { position: relative; }
+.gt-hold svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.gt-hold::before { transition: opacity var(--m-hold-fade, 250ms) ease-out; }
+.gt-hold.hold-out::before { opacity: 0; }
+.gt-hold.off { opacity: .45; border-color: rgba(217, 178, 106, .3); color: #a89a7c; background: rgba(255, 255, 255, .03); }
+.gt-hold.off::before { display: none; }
+.gt-hold.nope { box-shadow: 0 0 0 2px rgba(232, 128, 106, .7) inset; }
+html.short .gt-tabs .gr-pl.hz .pl-nm { min-height: 0; line-height: 1.2; font-size: calc(12px * var(--tx, 1)); }
+/* Tek sütun paneli: düğüm adı sözcük ortasından bölünmez (en çok 2 satır, sözcük sınırı); dar başlıkta sağdaki "POINT / RANK" bloğu daralır */
+.gt-dr .bt-title { overflow-wrap: normal; word-break: normal; hyphens: none; font-size: calc(12px * var(--tx, 1)); letter-spacing: 0; }
+.gt-dr .bt-head { gap: 8px; padding: 8px 10px; }
+.gt-dr .bt-big { font-size: calc(20px * var(--tx, 1)); }
+.gt-dr .bt-big small { letter-spacing: .06em; font-size: calc(9px * var(--tx, 1)); margin-top: .25em; }
+.gt-dr .bt-aside { gap: 6px; }

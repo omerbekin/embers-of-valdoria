@@ -487,7 +487,7 @@ describe('Vesper ağacı: başlangıç ve Mastery bar çanları', () => {
   });
   it('Iron Rope (bar 20): çan başı güç artar', () => {
     const v = vesper(treed({ '1.f1': barAt('Iron Rope') }, { 1: 'warrior' }));
-    expect((v.passive!.effect as { perBell: number }).perBell).toBeCloseTo(pe.perBell + 0.01, 6);
+    expect((v.passive!.effect as { perBell: number }).perBell).toBeCloseTo(pe.perBell + (TREE.mastery.bar[3]!.fx![0] as unknown as { v: number }).v, 6); // veriden
   });
   it("Vespers' Hour (bar 25): 10+ çanda Great Bell bir kez 3 çan, altında yok", () => {
     const b = treed({ '1.f1': barAt("Vespers' Hour") }, { 1: 'warrior' });
@@ -524,7 +524,7 @@ describe('Vesper ağacı: Pealing Bells satırı (çan ritmi)', () => {
     v.bells = 4;
     expect(previewSkill(b, v.uid, 'toll')[0]!.damage!.critChance).toBe(0);
     v.bells = 5;
-    expect(previewSkill(b, v.uid, 'toll')[0]!.damage!.critChance).toBeCloseTo(0.02 * 5, 6);
+    expect(previewSkill(b, v.uid, 'toll')[0]!.damage!.critChance).toBeCloseTo(fxOf('0.f3')[0]!.mod!.critBonus as number * 5, 6); // veriden
   });
   it('Prime: 3 çan ve altında daha çok hasar, 4 çanda yok', () => {
     const low = ratio({ '0.r': 3 }, { 1: 'warrior' }, 'toll', (b) => (vesper(b).bells = 3), 1);
@@ -604,8 +604,8 @@ describe('Vesper ağacı: Toll satırı (seri ve en zayıf)', () => {
   });
   it('Ringing Ears: rank başı Shaken şansı (byRank), Toll\'a eklenir', () => {
     const eff = (r: number) => setupFor({ '1.f2': r })!.skills!.toll!.effects.find((e) => e.type === 'status' && e.status === 'blinded') as { chance?: number; turns: number };
-    expect(eff(1).chance).toBeCloseTo(0.03, 6);
-    expect(eff(5).chance).toBeCloseTo(0.15, 6);
+    expect(eff(1).chance).toBeCloseTo((TREE.nodes['1.f2']!.fx![0] as unknown as { byRank: { chance: number }[] }).byRank[0]!.chance, 6); // veriden
+    expect(eff(5).chance).toBeCloseTo((TREE.nodes['1.f2']!.fx![0] as unknown as { byRank: { chance: number }[] }).byRank[4]!.chance, 6);
     expect(eff(5).turns).toBe(1);
   });
   it('Dread Peal: Shaken düşmana daha çok, öbürüne aynı', () => {
@@ -631,7 +631,7 @@ describe('Vesper ağacı: Toll satırı (seri ve en zayıf)', () => {
     const acc = b.effectiveStats(f).accuracy;
     vcast(b, 'toll');
     expect(has(f, 'blinded')).toBe(true);
-    expect(b.effectiveStats(f).accuracy).toBeCloseTo(acc + scaleDelta(content.statuses.blinded!.accuracyDelta!, 0.333) - 0.02 * 3, 6);
+    expect(b.effectiveStats(f).accuracy).toBeCloseTo(acc + scaleDelta(content.statuses.blinded!.accuracyDelta!, 0.333) + (fxOf('1.r')[0]!.mod!.statusPotency as { accuracyDelta: number }).accuracyDelta * 3, 6);
   });
   it('Unbroken Rope: üçüncü art arda Toll\'dan itibaren herkese Shaken', () => {
     const b = treed({ '1.ea': 1 }, { 1: 'warrior' });
@@ -731,7 +731,7 @@ describe('Vesper ağacı: Thunderpeal satırı (Blind ve sıra)', () => {
     vcast(b, 'thunderpeal', undefined, 1, 'enemy');
     const base = S.thunderpeal!.effects.find((e) => e.type === 'status' && e.status === 'blinded') as { turns: number };
     expect(statusOf(f, 'blinded')!.turns).toBe(base.turns + 1);
-    expect(b.effectiveStats(f).accuracy).toBeCloseTo(acc + content.statuses.blinded!.accuracyDelta! - 0.02 * 5, 6);
+    expect(b.effectiveStats(f).accuracy).toBeCloseTo(acc + content.statuses.blinded!.accuracyDelta! + (fxOf('2.f3')[0]!.mod!.statusPotency as { accuracyDelta: number }).accuracyDelta * 5, 6);
   });
   it('Dazzled: Cracked Bell Blind\'lı düşmana daha çok', () => {
     expect(ratio({ '2.r': 3 }, { 1: 'warrior' }, 'cracked_bell', (b) => b.debugAddStatus(foeAt(b, 1).uid, 'blinded', 2), 1, 1)).toBeCloseTo(1 + powerMulOf('2.r') * 3, 2);
@@ -791,7 +791,7 @@ describe('Vesper ağacı: Cracked Bell satırı (Stun ve tek hedef)', () => {
     expect(ratio({ '3.f1': 3 }, { 1: 'warrior' }, 'cracked_bell', (b) => (vesper(b).bells = 10), 1, 1)).toBeCloseTo(1 + powerMulOf('3.f1') * 3 * 10, 2);
   });
   it('Jarring Note: Stun şansı rank kadar artar', () => {
-    expect(stunChance(setupFor({ '3.f2': 5 })!.skills!.cracked_bell!)).toBeCloseTo(stunChance(S.cracked_bell!)! + 0.03 * 5, 6);
+    expect(stunChance(setupFor({ '3.f2': 5 })!.skills!.cracked_bell!)).toBeCloseTo(stunChance(S.cracked_bell!)! + fxOf('3.f2')[0]!.v! * 5, 6);
   });
   it('Bell-Breaker: yarı canın üstündekine daha çok, altındakine aynı', () => {
     expect(ratio({ '3.f3': 5 }, { 1: 'warrior' }, 'cracked_bell', () => {}, 1, 1)).toBeCloseTo(1 + powerMulOf('3.f3') * 5, 2);
@@ -870,8 +870,8 @@ describe('Vesper ağacı: Cracked Bell satırı (Stun ve tek hedef)', () => {
     noArmor(b);
     const ev = vcast(b, 'cracked_bell', foeAt(b, 1).uid);
     const main = dealt(ev, foeAt(b, 1).uid);
-    expect(dealt(ev, foeAt(b, 0).uid) / main).toBeCloseTo(0.5, 1);
-    expect(dealt(ev, foeAt(b, 2).uid) / main).toBeCloseTo(0.5, 1);
+    expect(dealt(ev, foeAt(b, 0).uid) / main).toBeCloseTo((fxOf('3.v')[1] as unknown as { splash: { mult: number } }).splash.mult, 1); // pay veriden
+    expect(dealt(ev, foeAt(b, 2).uid) / main).toBeCloseTo((fxOf('3.v')[1] as unknown as { splash: { mult: number } }).splash.mult, 1);
     expect(dealt(ev, foeAt(b, 4).uid)).toBe(0);
     expect((setupFor({ '3.v': 1 })!.skills!.cracked_bell!.effects[0] as DamageEffect).power).toBeCloseTo((S.cracked_bell!.effects[0] as DamageEffect).power * (1 + pctOf('3.v')), 6);
   });
@@ -884,7 +884,7 @@ describe('Vesper ağacı: Great Bell kolları', () => {
     vcast(b, GB);
     expect(vesper(b).bells).toBe(1);
     const per = (s: typeof S[string]) => (s.effects.find((e) => e.type === 'damage') as DamageEffect & { powerPerBell?: number }).powerPerBell!;
-    expect(per(setupFor({ '4.u2': 1 })!.skills![GB]!)).toBeCloseTo(per(S[GB]!) + 0.01, 6);
+    expect(per(setupFor({ '4.u2': 1 })!.skills![GB]!)).toBeCloseTo(per(S[GB]!) + fxOf('4.u2')[0]!.v!, 6);
   });
   it('u3 Peal of Ages: 10+ çanda Great Bell cooldown\'ı 1 kısa (turns)', () => {
     const cd = (bells: number) => {

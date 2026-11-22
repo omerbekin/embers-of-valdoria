@@ -20,6 +20,13 @@
 ## Savaşta v2 poz gövdeleri
 - **Savaşta oynanabilir sınıflar v2 POZ gövdeleriyle çizilir (Ömer 2026-10-13; artık yalnızca Pose Tester'lar değil):** `data/poses.json > classes.<id>_v2` + takılı silah el noktasında (`src/game/poses.ts`, `pose-rig.ts`, `combatant-view.ts`; skill -> poz = Pose Tester kopyası `pt_<id>.pose`, `poseSkill`; silahsız / Quick Battle / düşman = Pose Tester silahı `pose-weapons.ts > unitWeaponPick`); sınıfa özel ek poz `assets/source/poses/<id>-v2/extra-<poz>.png` (ör. Cutthroat `cross_cut` = Saltire Cut; `tools/make-poses-v2.mjs`). Sıra çubuğu avatarları ve portreler `idle.png`/avatar'da kalır; moblar ve çağrılar eski tek görsel. Karşılaştırma: debug > Characters > Poses > Real classes "v1 render" (`src/game/pose-mode.ts`, localStorage).
 
+### Poz çizim kuralları: el ve kol yönü (Ömer 2026-11-22, KALICI)
+Her yeni poz çiziminde ve poz denetiminde geçerli (Codex isteminde de yazılır):
+- **Yumruk silahın yönünü belirler.** Saplama / ileri hamle pozunda yumruk karşıya (boğumlar hedefe) bakmaz; öyle olursa oyunun ele taktığı silah dik durur. Yumruk, silahın namlusu/ucu hedefe uzanacak şekilde döner (sap avuçta yatay, uç hedefte). Kural: poz çizilmeden önce "bu elde silah hangi yöne bakacak" sorulur, yumruk ona göre çizilir.
+- **Yandan görünüşte iki kol aynı yüzünü göstermez.** Karakter sağa bakarken iki kol öne uzanıyorsa: kameraya yakın kolun DIŞI, uzak kolun (karakterin sol kolu) İÇİ görünür. İki kolun da dışını göstermek yanlıştır.
+- **Tutuş kanalı silahla aynı yönde (Ömer 2026-11-22, form r41 `rt4_ulti`):** "Dagger'ı karşıdaki adama saplaması için yumruğunu yere paralel tutması lazım". El, YATAY duran bir sapı kavramış gibi çizilir: sapın geçtiği kanal yere paralel ve hedefe dönük, boğum sırası yatay. Dik bir sopayı tutan yumruk (kanal dikey) da yumruk atan el de yanlıştır. (Kanalın tam biçimi Lead yorumu; Ömer'in sözü tırnak içindeki.)
+- Örnek kusurlar (Redtithe 22 poz seti): `thrust2` kollar doğru, yumruk karşıya bakıyor; `slash2` iki kolun da dışı görünüyor.
+
 - Harici asset kullanılırsa kaynağı ve lisansı `assets/CREDITS.md` dosyasına yaz.
 
 ## Sanat sürümleri (v1 / v2)

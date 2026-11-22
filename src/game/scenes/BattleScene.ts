@@ -38,10 +38,13 @@ import { clampSize } from '../team-select-model';
 import { EL, elGo, elScreenIn, elText } from '../elegant-ui';
 import { MOTION, motion } from '../../ui/motion';
 import { enemiesEnter, showWaveBanner } from '../wave-banner';
+import { FIRST_FIRE_MUSIC_ENTER_MS, FIRST_FIRE_SFX, battleMusicFor, firstFireBadge, firstFireStartText, firstFireWarnText } from '../first-fire-ui';
+import { ensureFirstFireArt, firstFireStrikeFx } from '../first-fire-fx';
 import { playFinalBlow } from '../final-blow';
 import { debugActive } from '../../ui/debug-entry';
 import { storage } from '../kv-storage';
 import { formatHit } from '../hit-format';
+import { streakFull } from '../dice-feel';
 import { splitPreviewStatuses } from '../preview-format';
 import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
@@ -542,6 +545,7 @@ export class BattleScene extends Phaser.Scene {
     this.shownRound = this.battle.round;
     this.goalState = undefined;
     this.syncGoalLabel();
+    this.syncFirstFireBadge();
     this.drawBlockedCells();
     // Sefer tutorial'ı (docs/design/tutorial.md): ders kutuları DOM'da; sahne kapanınca kapanır
     this.tut?.destroy();
@@ -2826,6 +2830,18 @@ export class BattleScene extends Phaser.Scene {
     return this.makeInfo(info.name, colors.text, icon, rows, info.targetBadge, [{ text: info.cost, hex: colors.muted }]);
   }
 
+  /**
+   * MP yakma halkasının rengi: yakımı bu kullanımın skill'i yaptıysa (Pose Tester kopyası artOf ile) data/battle-layout.json > animation.manaBurnRing,
+   * yoksa ortak mor (colors.burn). Tithe Cut kan kırmızısı (Lead 2026-11-21); öteki skill'ler aynı.
+   */
+  private manaBurnRing(e: BattleEvent): string {
+    const usage = this.currentUsage;
+    const id = usage && usage.events.includes(e) ? usage.used.skill : undefined;
+    const own = id ? (content.skills[id]?.artOf ?? id) : undefined;
+    const map = layout.animation.manaBurnRing as Record<string, string>;
+    return (own && own !== '_not' && map[own]) || colors.burn;
+  }
+
   /** Çok vuruşlu skill'in sıradaki vuruş animasyonu (VfxCtx.gate): ilgili hasar olayından hemen önce oynar. */
   private hitGate: { skip: number; run: () => Promise<void>; abort: () => void } | null = null;
 
@@ -3433,9 +3449,9 @@ export class BattleScene extends Phaser.Scene {
     return this.shownStatuses?.get(c.uid) ?? c.statuses;
   }
 
-  /** Extra damage tags for the floating number (engine fields, all optional): element, origin (skill/ground/status/self), ground type. */
+  /** Extra damage tags for the floating number (engine fields, all optional): element, origin (skill/ground/status/self), ground type, pure damage. */
   private damageTags(e: BattleEvent & { type: 'damage' }): DamageTags {
-    return { ...(e.element ? { element: e.element } : {}), ...(e.origin ? { origin: e.origin } : {}), ...(e.ground ? { ground: e.ground } : {}), ...(e.status ? { statusId: e.status } : {}) };
+    return { ...(e.element ? { element: e.element } : {}), ...(e.origin ? { origin: e.origin } : {}), ...(e.ground ? { ground: e.ground } : {}), ...(e.status ? { statusId: e.status } : {}), ...(e.damageType === 'pure' ? { damageType: 'pure' } : {}) };
   }
 
   /** Bu kullanımda ekran sarsıntısı oldu mu (skillUsed olayı; sarsıntı kullanım başına en çok bir kez). */
@@ -3664,7 +3680,7 @@ export class BattleScene extends Phaser.Scene {
       case 'manaBurn': {
         const target = this.views.get(e.target);
         target?.floatText(`-${e.amount} MP`, colors.burn, 44, false, { kind: 'resource' });
-        target?.ring(colors.burn, 0.8);
+        target?.ring(this.manaBurnRing(e), 0.8);
         target?.setMp(e.mpAfter);
         await this.wait(slow(60));
         return;
@@ -3849,6 +3865,12 @@ export class BattleScene extends Phaser.Scene {
         const t = this.views.get(e.target);
         const other = e.with ? this.views.get(e.with) : undefined;
         if (t) await this.runEventFx(ownerOfSkill(e.cause), EVENT_FX.crash(e.cause), { actor: this.views.get(e.source) ?? t, targets: other ? [t, other] : [t], event: e, skillId: e.cause });
+        return;
+      }
+      case 'streak': {
+        // Lucky Streak: fişler dolar / boşalır (yalnız görünüm; sayı motorda). Skill çerçevesi sıradaki birim için refreshCommands'ta eşitlenir.
+        this.views.get(e.actor)?.setStreak(e.after, e.max, true);
+        if (this.activeActor?.uid === e.actor) this.hud?.setStreakFull(e.after >= e.max);
         return;
       }
       case 'passive': {
@@ -4079,7 +4101,7 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'phase': {
         const next = phaseTrack(this.battle.get(e.actor)?.defId ?? '', e.phase);
-        if (next && !this.campaign?.intermission) sceneMusic(next); // boss fazına özel müzik (data/audio-music-boss-map.json)
+        if (next && !this.ffMusic && !this.campaign?.intermission) sceneMusic(next); // boss fazına özel müzik (data/audio-music-boss-map.json)
         this.announce(e.banner);
         await this.runWardenFx(e.phase >= 3 ? 'wardenphase3' : 'wardenphase2', { actor: this.views.get(e.actor), targets: [], event: e, skillId: 'anchor_smash' });
         return;
@@ -4100,7 +4122,7 @@ export class BattleScene extends Phaser.Scene {
         if (this.endlessPaused) return; // endless ara verme: savaş alanı yalnızca görüntü (debug ile düşman ölse de sonuç ekranı yok)
         this.tut?.end(); // savaş bitti: açık ders kutusu sonuç/loot ekranının üstünde kalmasın
         this.endBattleAudio(e.winner === this.localSide);
-        logBattleEnd(e.winner === this.localSide ? 'victory' : 'defeat', this.battle); // hata raporu izi
+        logBattleEnd(e.winner === 'draw' ? 'draw' : e.winner === this.localSide ? 'victory' : 'defeat', this.battle); // hata raporu izi
         if (e.winner === this.localSide && this.campaign?.onVictory?.(this.battle)) return; // endless: toparlanma + ara verme (sonuç ekranı yok)
         {
           // son vuruş nefesi (a03): kısa ağır çekim + kenar koyulaşması + bekleme, sonra sonuç ekranı
@@ -4149,9 +4171,44 @@ export class BattleScene extends Phaser.Scene {
         this.drawUrn(e.left);
         this.syncGoalLabel();
         return;
+      // The First Fire's Verdict (form r40 + r41): uyarılar ortak savaş bildirimi (announce), başlangıç dalga bandı, vuruş = Ocak mührü (first-fire-fx.ts: altın mühür daralır, beyaz alev fışkırır); hasar sayısı ardından gelen damage olayında
+      case 'firstFireWarn':
+        this.announce(firstFireWarnText(e.warning));
+        ensureFirstFireArt(this); // vuruş sprite'ları (mühür, sütun) kural başlamadan iner
+        playSceneSfxDef(this, FIRST_FIRE_SFX[e.warning === 'first' ? 'first_warn' : 'final_warn']);
+        await this.wait(slow(e.warning === 'final' ? 900 : 700));
+        return;
+      case 'firstFireStart': {
+        const t = firstFireStartText();
+        ensureFirstFireArt(this);
+        this.syncFirstFireBadge();
+        playSceneSfxDef(this, FIRST_FIRE_SFX.start);
+        // müzik: eski parça söner (Music fadeOutMs), fısıltı bitince gerilim parçası girer; savaş bitene dek sürer (dalga / boss fazı değiştirmez)
+        this.ffMusic = true;
+        sceneMusic(null);
+        this.time.delayedCall(FIRST_FIRE_MUSIC_ENTER_MS, () => {
+          if (this.ffMusic) sceneMusic('first_fire');
+        });
+        await showWaveBanner(this, t.title.toUpperCase(), t.sub, MOTION.wave.battleHoldMs, { boss: true, titleSize: 64 });
+        return;
+      }
+      case 'firstFireStrike': {
+        const v = this.views.get(e.target);
+        if (v) await firstFireStrikeFx(this, v);
+        // sıradaki vuruş hasarı iki takıma da vurulunca artar; rozet çiftin ikinci vuruşundan sonra tazelenir
+        this.syncFirstFireBadge();
+        return;
+      }
       case 'battleStart':
         return;
     }
+  }
+
+  /** HUD rozeti: kural başlayınca "First Fire · <sıradaki vuruş hasarı>". */
+  private syncFirstFireBadge(): void {
+    const ff = this.battle.firstFire;
+    if (!this.hud) return;
+    this.hud.setFirstFire(ff ? firstFireBadge(ff.damage, content.firstFireRule()) : null);
   }
 
   // --- Dalgalı savaş (docs/design/waves.md): görünüm tek yerde; kesin görünüm Ömer'in wave-battle mockup seçiminden sonra değişir ---
@@ -4473,6 +4530,7 @@ export class BattleScene extends Phaser.Scene {
   private setRageShown(uid: string, value: number): void {
     this.rageShown.set(uid, value);
     if (this.activeActor?.uid === uid) this.hud?.setRage(value);
+    this.views.get(uid)?.setBlood(value, false); // karakter üstü kan çubuğu (yalnız manasız kan biriminde işler)
   }
 
   /** Animates the Rage bar of a unit to a new value (events are played in order, so the bar follows the log, not the engine). */
@@ -5116,7 +5174,7 @@ export class BattleScene extends Phaser.Scene {
           enemy: true,
           flip: false,
           state,
-          tip: { title: 'Rolling Thunder', titleColor: SHOCK_HEX, badge: 'Bolt', rows: [{ text: `Strikes the glowing row in ${n} turn${n === 1 ? '' : 's'}` }, { text: 'Haste and Slow do not change it. Defeating the caster does not stop it.', color: colors.muted }, ...(info ? [{ text: `Row of ${info.cells.length} cells on ${info.board === 'party' ? 'your' : 'the enemy'} side`, color: colors.muted }] : [])] },
+          tip: { title: 'Rolling Thunder', titleColor: SHOCK_HEX, badge: 'Bolt', rows: [{ text: `Strikes the glowing row in ${n} turn${n === 1 ? '' : 's'}` }, { text: 'Haste and Chilled do not change it. Defeating the caster does not stop it.', color: colors.muted }, ...(info ? [{ text: `Row of ${info.cells.length} cells on ${info.board === 'party' ? 'your' : 'the enemy'} side`, color: colors.muted }] : [])] },
         });
         return;
       }
@@ -5314,6 +5372,12 @@ export class BattleScene extends Phaser.Scene {
     this.refreshCommands();
   }
 
+  /** Gambler: sırası gelen birimin Lucky Streak'i doluysa skill 2-4 altın çerçeve (HUD). */
+  private syncStreakFull(actor: Combatant | null | undefined): void {
+    const p = actor?.passive?.effect;
+    this.hud?.setStreakFull(!!actor && p?.type === 'luckyStreak' && streakFull(actor.streak, p.max));
+  }
+
   private refreshCommands(): void {
     this.hideInfoTip();
     if (this.battle.rules) this.syncGoalLabel(); // Hold / Totem sayacı hamle ve ölümle değişir (olayı yok)
@@ -5321,6 +5385,7 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     for (const v of this.views.values()) v.setActive(v.combatant.uid === actor?.uid && !this.battle.winner);
     this.hud?.setModel(this.buildHudModel(actor));
+    this.syncStreakFull(actor);
     this.refreshCrown(actor);
     this.refreshValor();
     this.refreshReviveChips();
@@ -5730,16 +5795,21 @@ export class BattleScene extends Phaser.Scene {
    * Savaş sesi (2026-10-13): savaş / boss müziği (yumuşak geçişle) + savaş borusu ve davul. Endless ara vermesinde (kamp) değil: kamp müziğini
    * EndlessScene seçer. Data: data/audio-music-tracks.json, data/audio-world.json.
    */
+  /** The First Fire's Verdict başladı: savaş müziği gerilim parçası (first_fire). */
+  private ffMusic = false;
+
   private startBattleAudio(): void {
     if (this.campaign?.intermission) return;
     const boss = this.isBossBattle();
-    sceneMusic(battleTrack(this.battle.combatants.filter((c) => c.side !== this.localSide), this.campaign?.music));
+    this.ffMusic = !!this.battle.firstFire; // yarım kalan savaştan devam: kural zaten başlamışsa gerilim parçası
+    sceneMusic(battleMusicFor(battleTrack(this.battle.combatants.filter((c) => c.side !== this.localSide), this.campaign?.music), this.ffMusic));
     worldSound(boss ? 'boss_horn' : 'battle_horn');
   }
 
   /** Savaş bitti: zafer / yenilgi stingeri; müzik söner (Endless zaferinde kamp müziğine geçilir: enterEndlessPause). */
   private endBattleAudio(victory: boolean): void {
     worldSound(victory ? 'victory' : 'defeat');
+    this.ffMusic = false;
     if (!(victory && this.campaign?.onVictory)) sceneMusic(null);
   }
 
@@ -5883,7 +5953,7 @@ export class BattleScene extends Phaser.Scene {
     const info = mpInfo ?? (mp ? mp.result() : null);
     this.resultScreen = showResultScreen(this, {
       victory,
-      ...(mp ? { localSide: this.localSide, headings: mp.names(), actions: mp.resultActions(), status: () => mp.resultStatus(), ...(info?.title ? { title: info.title } : {}), ...(info?.subtitle ? { subtitle: info.subtitle } : {}) } : {}),
+      ...(mp ? { localSide: this.localSide, headings: mp.names(), actions: mp.resultActions(), status: () => mp.resultStatus(), ...(info?.title ? { title: info.title } : {}), ...(info?.draw ? { draw: true } : {}), ...(info?.subtitle ? { subtitle: info.subtitle } : {}) } : {}),
       battle: this.battle,
       stats: this.stats,
       avatar: (unit, cx, cy, size) => this.avatarImage(unit, cx, cy, size),

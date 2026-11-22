@@ -187,9 +187,10 @@ describe('Altıncı tur: Weakened (verilen hasar azalır)', () => {
     const foe = E(b);
     cast(b, P(b), 'void_strike', foe);
     expect(foe.statuses.find((s) => s.kind === 'weakened')?.turns).toBe(2);
-    expect(b.weakenedMult(foe, 'magic')).toBeCloseTo(0.8, 9);
+    const mag = 1 + (treeOf('antimage')!.nodes['4.u2']!.fx![1] as unknown as { mod: { statusPotency: { magicDealtMult: number } } }).mod.statusPotency.magicDealtMult; // veriden
+    expect(b.weakenedMult(foe, 'magic')).toBeCloseTo(mag, 9);
     expect(b.weakenedMult(foe, 'physical')).toBe(1);
-    expect(b.dealtDamageMult(foe, P(b), b.skill('fire_bolt'))).toBeCloseTo(0.8, 9);
+    expect(b.dealtDamageMult(foe, P(b), b.skill('fire_bolt'))).toBeCloseTo(mag, 9);
   });
 
   it('derleyici: Weakened alanları statusPotency sözlüğünde; bilinmeyen alan reddedilir', () => {

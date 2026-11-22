@@ -63,7 +63,7 @@ describe('Mage ağacı fx (Faz 2b)', () => {
     const b = make({ 0: 'mage' }, { 0: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*5']) } });
     const me = P(b);
     const dmg = previewSkill(b, me.uid, 'fire_bolt', E0(b).uid).find((x) => x.uid === E0(b).uid)!.damage!;
-    expect(dmg.critMult).toBeCloseTo(me.stats.critMult + 5 * 0.06, 9);
+    expect(dmg.critMult).toBeCloseTo(me.stats.critMult + 5 * (T.nodes['1.f2']!.fx![0] as { mod: { critMultAdd: number } }).mod.critMultAdd, 9);
   });
 
   it('Execution Bolt + Finisher: düşük canlı hedefe Fire Bolt daha sert (önizleme)', () => {

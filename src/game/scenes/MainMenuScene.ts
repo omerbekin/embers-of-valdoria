@@ -585,7 +585,11 @@ export class MainMenuScene extends Phaser.Scene {
     }
     else if (key === 'settings') this.setView('settings');
     else if (key === 'mp') this.setView('mp');
-    else openWiki(); // Codex = wiki (sağ üstteki kitap simgesiyle aynı pencere)
+    else if (key === 'credits') {
+      // Jenerik (src/ui/credits.ts; data/credits.json): menünün üstünde tam ekran, X / Esc ile kapanır
+      const root = document.getElementById('ui-root');
+      if (root) void import('../../ui/credits').then((m) => m.openCredits(root));
+    } else openWiki(); // Codex = wiki (sağ üstteki kitap simgesiyle aynı pencere)
   }
 
   // ------------------------------------------------------------ görünüm geçişleri

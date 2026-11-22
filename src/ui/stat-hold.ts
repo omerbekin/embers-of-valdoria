@@ -18,6 +18,8 @@ export interface HoldClock {
 
 export const HOLD_TIMES: HoldTimes = cfg.statHold;
 /** Geri bildirim süreleri (bitiş parıltısı, rakam büyümesi, '+1' süzülmesi, reddetme kenarı): stat kutusu ve skill ağacı düğümü AYNI değerleri kullanır. */
+/** Basili-tut cubugunun islem sonu fade-out suresi (ms; reduced-motion'da 0). */
+export const HOLD_FADE_MS = 250;
 export const HOLD_FEEDBACK: { doneMs: number; bumpMs: number; riseMs: number; nopeMs: number } = cfg.statHold;
 
 const browserClock = (): HoldClock => ({
@@ -102,6 +104,7 @@ export function createHold(o: HoldOpts): Hold {
       }
       active = true;
       t0 = -1;
+      if (prog >= 1) prog = 0; // dolu tutustan sonra yeni basis sifirdan baslar (aninda dolmasin)
       stop();
       o.onHolding?.(true);
       raf = clock.raf(tick);
@@ -127,16 +130,40 @@ export function createHold(o: HoldOpts): Hold {
  */
 export function attachHoldSpend(row: HTMLElement, o: { canStart: () => boolean; onRefuse: () => void; onSpend: (viaKey: boolean) => void; onPreview: (on: boolean) => void; swallowClick: () => boolean }): void {
   let viaKey = false;
+  // Islem bitince (puan harcandi) dolu cubuk kisa fade-out ile kalkar, sonra --h sifirlanir (kalinti kalmaz). Yeni basis fade'i hemen keser.
+  let fadeTimer = 0;
+  const clearFade = (): void => {
+    if (fadeTimer) window.clearTimeout(fadeTimer);
+    fadeTimer = 0;
+    row.classList.remove('hold-out');
+  };
+  const fadeOut = (): void => {
+    const reduced = document.documentElement.classList.contains('reduced-motion');
+    const ms = reduced ? 0 : HOLD_FADE_MS;
+    row.style.setProperty('--m-hold-fade', `${ms}ms`);
+    row.classList.add('hold-out');
+    fadeTimer = window.setTimeout(() => {
+      fadeTimer = 0;
+      row.style.setProperty('--h', '0');
+      row.classList.remove('hold-out');
+    }, ms + 30);
+  };
   const hold = createHold({
     canStart: o.canStart,
     onProgress: (p) => row.style.setProperty('--h', p.toFixed(4)),
-    onHolding: (on) => row.classList.toggle('holding', on),
+    onHolding: (on) => {
+      if (on) clearFade();
+      row.classList.toggle('holding', on);
+    },
     onRefuse: () => {
       row.classList.add('nope');
       window.setTimeout(() => row.classList.remove('nope'), HOLD_FEEDBACK.nopeMs);
       o.onRefuse();
     },
-    onDone: () => o.onSpend(viaKey),
+    onDone: () => {
+      fadeOut();
+      o.onSpend(viaKey);
+    },
   });
   row.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;

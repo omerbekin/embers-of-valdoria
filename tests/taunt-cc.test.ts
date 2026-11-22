@@ -4,7 +4,7 @@ import type { BattleEvent, BattleMode } from '../src/engine';
 
 /**
  * Taunt kuralı (Ömer): "Taunt stun ya da CC yiyince silinsin." Taunt'ı olan birim, data/statuses.json'da `breaksTaunt: true` olan bir durum
- * (şu an yalnızca Stun) yediği AN taunt'ı silinir. Slow / Wound gibi diğer durumlar taunt'ı bozmaz. Guard / allyDamageMult / breakRatio mantığı aynen kalır.
+ * (form r39, 2026-11-21: turu atlatan her durum = skipTurn: Stun, Frozen, Cooling) yediği AN taunt'ı silinir. Slow / Wound gibi diğer durumlar taunt'ı bozmaz. Guard / allyDamageMult / breakRatio mantığı aynen kalır.
  */
 type Ev<T extends BattleEvent['type']> = Extract<BattleEvent, { type: T }>;
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T): Ev<T>[] => events.filter((e): e is Ev<T> => e.type === type);
@@ -30,9 +30,10 @@ function until(b: Battle, uid: string): void {
 }
 
 describe('Taunt: kontrol (CC) durumu taunt\'ı siler', () => {
-  it('veri: breaksTaunt yalnızca Stun\'da (slow, haste, wound, bufflar yok)', () => {
+  it('veri: breaksTaunt yalnızca turu atlatan (skipTurn) durumlarda (slow, haste, wound, bufflar yok; form r39)', () => {
     const flagged = Object.entries(content.statuses).filter(([, d]) => d.breaksTaunt).map(([id]) => id);
-    expect(flagged).toEqual(['stun']);
+    expect(flagged).toEqual(Object.entries(content.statuses).filter(([, d]) => d.skipTurn).map(([id]) => id));
+    expect(flagged).toContain('stun');
     expect(content.statuses.slow!.breaksTaunt).toBeUndefined();
     expect(content.statuses.wound!.breaksTaunt).toBeUndefined();
   });
@@ -160,6 +161,6 @@ describe('Taunt metinleri (skill-info / wiki) CC kuralını söyler', () => {
   it('Taunt skill açıklaması "ends at once if you get Stun" satırını veriden üretir', async () => {
     const { describeSkill } = await import('../src/engine');
     const info = describeSkill(content.skills.taunt!, content.classes.defender!.stats, content.formulas, {}, { statuses: content.statuses, grounds: content.grounds });
-    expect(info.lines.join(' | ')).toMatch(/Ends at once if you get Stun/);
+    expect(info.lines.join(' | ')).toMatch(/Ends at once if you get [^|]*Stun/);
   });
 });

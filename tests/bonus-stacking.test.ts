@@ -121,7 +121,7 @@ describe('skill ağacı', () => {
   const W = treeOf('warrior')!;
   const only = (key: string, rank: number): TreeAlloc => ({ v: W.version, r: { [key]: rank } });
   it('cond powerMul rank\'ları doğrusal (3 rank = 3 x değer)', () => {
-    const node = Object.entries(W.nodes).find(([, n]) => JSON.stringify(n.fx ?? []).includes('"powerMul":0.06'))!;
+    const node = Object.entries(W.nodes).find(([, n]) => { const f = n.fx?.[0] as unknown as { h?: string; rank?: unknown; mod?: { powerMul?: number } } | undefined; return f?.h === 'cond' && f.rank === true && (f.mod?.powerMul ?? 0) > 0; })!; // değer veriden (ağaç ayarı 2026-11-21)
     const per = (node[1].fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul;
     const hook = compileTree(W, only(node[0], 3))!.hooks!.find((h) => h.node === `warrior:${node[0]}`) as { mod: { powerMul: number } };
     expect(hook.mod.powerMul).toBeCloseTo(3 * per, 12);
@@ -164,9 +164,10 @@ describe('skill ağacı', () => {
     const plain = run({});
     const fa = run({ '1.fa': 1 });
     const both = run({ '1.fa': 1, '1.v': 1 });
-    expect(fa.add - plain.add).toBeCloseTo(0.35, 9);
+    const bonus = (C.nodes['1.fa']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul; // veriden
+    expect(fa.add - plain.add).toBeCloseTo(bonus, 9);
     expect(fa.mult).toBeCloseTo(plain.mult, 9);
-    expect(both.add - plain.add).toBeCloseTo(0.35, 9);
+    expect(both.add - plain.add).toBeCloseTo(bonus, 9);
     expect(both.mult / plain.mult).toBeCloseTo(2, 9);
   });
 });

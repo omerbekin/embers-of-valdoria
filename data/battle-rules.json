@@ -116,5 +116,14 @@
       "text": "Masts and rails close some cells on both sides: no one can stand there.",
       "blocked": [7, 9]
     }
+  },
+  "firstFire": {
+    "_not": "The First Fire's Verdict (Ömer 2026-11-21 form r40 + r41): HER savaş türünde (content.battleSetup verir). Savaş afterMoves hamleyi GEÇİNCE (battle.turnsTaken > afterMoves; hamle = tek birim eylemi) başlar. Uyarılar tetikten warnFirst (ilk) ve warnFinal (son) hamle önce (firstFireWarn olayı, warning first / final). Tur = hayattaki en yavaş birimin TEMEL hızıyla (durum / hız zarı / Skip desteği hariç) bir tam sıra döngüsü süresi (test modunda yaşayan birim sayısı kadar eylem). Her tur sonu vuruş çifti: önce bir takımdan (savaşta bir kez seed'li zarla seçilir), sonra öbür takımdan rastgele yaşayan birim; saf hasar (zırh, kalkan, azaltma, kaçınma yok) damage ile başlar, iki takıma da vurulunca +damageStep. Motor battle.ts > firstFire*.",
+    "name": "The First Fire's Verdict",
+    "afterMoves": 100,
+    "warnFirst": 10,
+    "warnFinal": 3,
+    "damage": 30,
+    "damageStep": 10
   }
 }

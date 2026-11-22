@@ -116,26 +116,6 @@
   box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 18px 40px rgba(0, 0, 0, 0.6);
 }
 
-.bh-corners::before,
-.bh-corners::after {
-  content: '';
-  position: absolute;
-  top: -5px;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #140e09;
-  box-shadow: 0 0 0 1px rgba(var(--gold), 0.7);
-}
-
-.bh-corners::before {
-  left: -5px;
-}
-
-.bh-corners::after {
-  right: -5px;
-}
-
 .bh-n {
   font: 600 22px var(--cin);
   letter-spacing: 0.06em;
@@ -385,27 +365,6 @@
   pointer-events: none;
 }
 
-.bh-wave::before,
-.bh-wave::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid rgba(243, 217, 153, 0.8);
-}
-
-.bh-wave::before {
-  left: -5px;
-  top: -5px;
-}
-
-.bh-wave::after {
-  right: -5px;
-  bottom: -5px;
-}
-
 .bh-wave .ico {
   width: 54px;
   height: 54px;
@@ -542,6 +501,57 @@
   color: #ff7a6a;
 }
 
+/* The First Fire's Verdict rozeti: kural satırının (goal) altında, onunla aynı görünüm; ateş vurgusu */
+.bh-ff {
+  position: absolute;
+  left: 28px;
+  top: 22px;
+  pointer-events: auto;
+}
+
+.bh-ff.below {
+  top: 68px;
+}
+
+.bh-ff.low {
+  top: 114px;
+}
+
+.bh-ff.low.below {
+  top: 160px;
+}
+
+.bh-ff[hidden] {
+  display: none;
+}
+
+.bh-ff .t {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  background: linear-gradient(180deg, rgba(40, 18, 10, 0.92), rgba(14, 6, 4, 0.92));
+  border: 1px solid rgba(232, 120, 60, 0.55);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.6);
+  font: 600 17px var(--gar);
+  font-style: normal;
+  color: #e9dcc0;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.bh-ff .p {
+  font: 600 15px var(--cin);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff9a5a;
+}
+
+.bh-ff .c {
+  font: 700 18px var(--num);
+  color: #ffd27a;
+}
+
 .bh-turn-lbl {
   position: absolute;
   top: 120px;
@@ -572,48 +582,55 @@
   cursor: pointer;
 }
 
-/* köşe elmaslı portre (sol üst + sağ alt) */
+/* Büyük portre çerçevesi (Ömer 2026-11-21, mockup avatar-frame E · Double line + glow; karo yok): iki ince altın çizgi, arada koyu boşluk,
+   içte yan renkli (dost --party, düşman --enemy) ince ışıma. Yan rengi yalnız ışıma ve iç çizgi taşır. Çizgiler var(--rp) (1 gerçek piksel): telefonda iki çizgi
+   arasında 2 gerçek piksel boşluk kalır. Aynı görünüm birim kartı (.bh-card) ve karakter sayfası (.bh-sheet) portre madalyonunda da. Işıma değerleri mockup * 0,85. */
+.bh-pframe,
+.bh-card .bt-medal.por,
+.bh-sheet .bt-medal.por {
+  --pf-side: var(--party);
+  --pf-ring: 0 0 0 var(--frame-gap) rgba(8, 6, 4, 0.95), 0 0 0 calc(var(--frame-gap) + var(--frame-line)) rgba(var(--gold), 0.85), 0 0 0 calc(var(--frame-gap) + var(--frame-line) + 2 * var(--rp)) rgba(8, 6, 4, 0.9),
+    0 0 calc(var(--rp) * 15.3) calc(var(--rp) * 1.7) color-mix(in srgb, var(--pf-side) 18.7%, transparent);
+  --pf-glow: inset 0 0 calc(var(--rp) * 13.6) color-mix(in srgb, var(--pf-side) 35.7%, transparent), inset 0 0 0 var(--rp) color-mix(in srgb, var(--pf-side) 38.3%, transparent);
+}
+
+.bh-pframe.en,
+.bh-card.enemy .bt-medal.por,
+.bh-actor.en .bh-sheet .bt-medal.por {
+  --pf-side: var(--enemy);
+}
+
 .bh-pframe {
   position: relative;
   width: 108px;
   height: 128px;
   flex: none;
   background: linear-gradient(180deg, #22180f, #0a0705);
-  border: 1px solid rgba(var(--gold), 0.62);
-  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 16px rgba(var(--gold), 0.3), inset 0 0 16px rgba(var(--gold), 0.2);
+  border: var(--rp) solid rgba(var(--gold), 0.55);
+  box-shadow: var(--pf-ring);
   transition: box-shadow 0.2s;
 }
 
 .bh-pframe::before,
-.bh-pframe::after {
+.bh-card .bt-medal.por::before,
+.bh-sheet .bt-medal.por::before {
   content: '';
   position: absolute;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid #f0dca8;
+  inset: 0;
   z-index: 2;
+  pointer-events: none;
+  box-shadow: var(--pf-glow);
 }
 
-.bh-pframe::before {
-  left: -5px;
-  top: -5px;
+.bh-card .bt-medal.por,
+.bh-sheet .bt-medal.por {
+  border-color: rgba(var(--gold), 0.55);
+  border-width: var(--rp);
+  box-shadow: var(--pf-ring);
 }
 
-.bh-pframe::after {
-  right: -5px;
-  bottom: -5px;
-}
-
-.bh-pframe.en {
-  border-color: rgba(255, 130, 120, 0.65);
-  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 16px rgba(255, 90, 90, 0.3), inset 0 0 16px rgba(255, 90, 90, 0.18);
-}
-
-.bh-pframe.en::before,
-.bh-pframe.en::after {
-  border-color: #f0a090;
+.bh-sheet .bt-medal.por {
+  position: relative;
 }
 
 .bh-pframe .bh-portrait {
@@ -622,7 +639,7 @@
 
 .bh-opener:hover .bh-pframe,
 .bh-actor.open .bh-pframe {
-  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 26px rgba(240, 140, 40, 0.5), inset 0 0 16px rgba(var(--gold), 0.28);
+  box-shadow: var(--pf-ring), 0 0 calc(var(--rp) * 22) rgba(240, 140, 40, 0.4);
 }
 
 .bh-actor-info {
@@ -980,28 +997,6 @@
   background: radial-gradient(circle at 50% 40%, rgba(46, 33, 20, 0.95), rgba(10, 7, 5, 0.97) 75%);
   box-shadow: inset 0 0 0 1px rgba(var(--gold), 0.45), 0 0 0 3px rgba(8, 6, 4, 0.75);
   transition: box-shadow 0.2s, transform 0.25s var(--ease);
-}
-
-.bh-sk .fr::before,
-.bh-sk .fr::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  margin-top: -4px;
-  transform: rotate(45deg);
-  background: #1a130c;
-  box-shadow: 0 0 0 1px rgba(var(--gold), 0.45);
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.bh-sk .fr::before {
-  left: -5px;
-}
-
-.bh-sk .fr::after {
-  right: -5px;
 }
 
 .bh-sk .fr .bh-ico {
@@ -1651,7 +1646,7 @@ html.short .bh-ctip.at-top:not(.at-many) .bt-title {
 .bh-card .bh-av:hover .bt-medal.por,
 .bh-card .bh-av:focus-visible .bt-medal.por {
   border-color: #f3d999;
-  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 18px rgba(243, 217, 153, 0.55);
+  box-shadow: var(--pf-ring), 0 0 calc(var(--rp) * 18) rgba(243, 217, 153, 0.45);
 }
 
 .bh-card.stats .bh-av .bt-medal.por {
@@ -2768,28 +2763,6 @@ html.short .bh-right.stacked .bh-pl-ico {
   object-fit: contain;
 }
 
-.bp-ico::before,
-.bp-ico::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid var(--acl);
-  z-index: 2;
-}
-
-.bp-ico::before {
-  left: -5px;
-  top: -5px;
-}
-
-.bp-ico::after {
-  right: -5px;
-  bottom: -5px;
-}
-
 .bp-nm {
   width: 100%;
   min-height: 2.2em;
@@ -2919,6 +2892,19 @@ html.short .bh-right.stacked .bh-pl-ico {
   box-shadow: 0 0 8px rgba(240, 140, 40, 0.9);
 }
 
+/* Lucky Streak dolu: skill 2-4 (1. skill seriyi harcamaz) altın çerçeve + nefes alan ışıma */
+.bh-skills.streak-full .bp[data-skill]:nth-child(n + 2):not(.off) {
+  border-color: #ffd23f;
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8), 0 0 18px rgba(255, 210, 63, 0.55), inset 0 0 16px rgba(255, 210, 63, 0.18);
+  animation: streak-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes streak-glow {
+  50% {
+    box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8), 0 0 30px rgba(255, 210, 63, 0.85), inset 0 0 22px rgba(255, 210, 63, 0.3);
+  }
+}
+
 .bp.cdn,
 .bp.off {
   --ac: #8c7a58;
@@ -3039,27 +3025,6 @@ html:not(.short) .bh-gcol {
   box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75);
 }
 
-html:not(.short) .bh-gcol::before,
-html:not(.short) .bh-gcol::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid #f0dca8;
-}
-
-html:not(.short) .bh-gcol::before {
-  left: -5px;
-  top: -5px;
-}
-
-html:not(.short) .bh-gcol::after {
-  right: -5px;
-  bottom: -5px;
-}
-
 html:not(.short) .bh-gl {
   flex: 1 1 0;
   height: auto;
@@ -3098,27 +3063,6 @@ html:not(.short) .bh-valor .vl-meter {
   border: 1px solid rgba(var(--gold), 0.42);
   box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), inset 0 0 20px rgba(var(--gold), 0.08);
   transition: box-shadow 0.2s;
-}
-
-html:not(.short) .bh-valor .vl-meter::before,
-html:not(.short) .bh-valor .vl-meter::after {
-  content: '';
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid #f0dca8;
-}
-
-html:not(.short) .bh-valor .vl-meter::before {
-  left: -5px;
-  top: -5px;
-}
-
-html:not(.short) .bh-valor .vl-meter::after {
-  right: -5px;
-  bottom: -5px;
 }
 
 html:not(.short) .bh-valor .vl-meter:hover {
@@ -3665,4 +3609,19 @@ html.short .bh-root .bp .bh-sktip .bt-body {
 html.short .bh-root .bp .bh-sktip .bt-meta {
   padding-top: 5px;
   padding-bottom: 5px;
+}
+
+/* The First Fire rozeti telefonda (html.short): yazı en az 10 gerçek piksel, sol üstte taşmaz */
+html.short .bh-ff .t {
+  gap: calc(6 * var(--rp));
+  padding: calc(4 * var(--rp)) calc(8 * var(--rp));
+}
+
+html.short .bh-ff .p {
+  font-size: calc(9 * var(--rp));
+  letter-spacing: 0.06em;
+}
+
+html.short .bh-ff .c {
+  font-size: calc(11 * var(--rp));
 }

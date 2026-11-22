@@ -45,3 +45,33 @@ export function playTimeText(ms: number | undefined): string {
   const h = Math.floor(m / 60);
   return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
 }
+
+type MapStart = NonNullable<CampaignState['mapStart']>;
+const MAP_START_KEYS = ['victories', 'defeats', 'goldEarned', 'playMs', 'fallen', 'day'] as const;
+
+/** Şimdiki sefer toplamlarının anlık görüntüsü (harita geçişinde yeni haritanın başlangıcı olarak yazılır). */
+export function snapshotMapStart(s: Pick<CampaignState, 'stats' | 'day'>): MapStart {
+  return {
+    victories: s.stats.victories,
+    defeats: s.stats.defeats,
+    goldEarned: s.stats.goldEarned ?? 0,
+    playMs: s.stats.playMs ?? 0,
+    fallen: s.stats.fallen ?? 0,
+    day: typeof s.day === 'number' && Number.isInteger(s.day) && s.day >= 1 ? s.day : 1,
+  };
+}
+
+/** Kayıt okuması (YERİNDE): bozuk `mapStart` atılır (= sıfırdan sayılır). */
+export function normalizeMapStart(s: { mapStart?: unknown }): void {
+  const m = s.mapStart as Record<string, unknown> | undefined;
+  if (m === undefined) return;
+  if (!m || typeof m !== 'object' || !MAP_START_KEYS.every((k) => typeof m[k] === 'number' && Number.isFinite(m[k] as number) && (m[k] as number) >= 0)) delete s.mapStart;
+}
+
+/** Yalnız ŞU HARİTANIN sayıları (sefer toplamı - harita başlangıcı); `mapStart` yoksa toplamın kendisi (Harita 1). Negatif çıkmaz. */
+export function mapOnlyStats(s: Pick<CampaignState, 'stats' | 'day' | 'mapStart'>): { victories: number; defeats: number; days: number; goldEarned: number; playMs: number; fallen: number } {
+  const now = snapshotMapStart(s);
+  const b = s.mapStart ?? { victories: 0, defeats: 0, goldEarned: 0, playMs: 0, fallen: 0, day: 1 };
+  const d = (k: keyof MapStart): number => Math.max(0, now[k] - b[k]);
+  return { victories: d('victories'), defeats: d('defeats'), days: Math.max(1, now.day - b.day + 1), goldEarned: d('goldEarned'), playMs: d('playMs'), fallen: d('fallen') };
+}

@@ -45,6 +45,14 @@ describe('Settings sayfaları', () => {
     setSettingsPage('sound');
   });
 
+  it('UI sekmesi telefon / dokunmatik düzende gizli, masaüstünde görünür; adımlama onu atlar', () => {
+    expect(pageVisible('ui', true)).toBe(true);
+    expect(pageVisible('ui', true, true)).toBe(false);
+    expect(visiblePages(true, true).some((p) => p.key === 'ui')).toBe(false);
+    expect(stepPage('display', 1, true, true)).toBe('privacy');
+    expect(stepPage('display', 1)).toBe('ui');
+  });
+
   it('Account sayfası yalnızca giriş kullanılabilirken görünür', () => {
     expect(pageVisible('account', false)).toBe(false);
     expect(pageVisible('account', true)).toBe(true);
@@ -58,7 +66,7 @@ describe('Settings sayfaları', () => {
     expect(menu).toMatch(/fullAccount: true/); // tek Settings ekranı (Ömer 2026-11-11): ana menü aynı DOM ekranını tam hesap sayfasıyla açar
     const dom = read('src/ui/settings.ts');
     expect(dom).toMatch(/accountLine\(/);
-    expect(dom).toMatch(/cat\.hidden = !pageVisible\(k, login\)/);
+    expect(dom).toMatch(/cat\.hidden = !pageVisible\(k, login, touch\)/);
     expect(dom).toMatch(/const login = accountShown\(\)/);
   });
 

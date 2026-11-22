@@ -115,6 +115,11 @@ Ayar: J (`ai.json > difficulty.easy|medium|hard`: ufuk, seçim payı, aç/kapa a
 
 - Yalnız düşman YZ'si, yeni oyun kuralı yok: skill ödendikten sonra MP oranı `manaSurplusFrom` (0,3) üstündeyse mana doldukça skorda MP bedeli silinir, brüt değerin en çok `manaSurplusShare` (0,6) payı eklenir (`data/ai.json`, `ai.ts > scoreOption`).
 
+### 6.11 MP kazancı değeri sürekli (Ömer 2026-11-22, form tr3_mp "Motor")
+
+- Yalnız YZ değerlemesi, oyun kuralı aynı. Eski `manaGain` mana yakmanın (`manaDenial`) tersiydi: ufuk planı tam sayılı skill kullanımı sayıyordu, bir kullanım açmayan 1-2 MP ve ufukta yenilenmeyle zaten karşılanan MP 0 değer alıyordu (ağaç kazançları 1 MP'ye inince YZ onları görmüyordu).
+- Şimdi değer iki parçanın büyüğü: (1) ufuk planı eğrisinin şimdiki noktadan başlayan içbükey zarfı (kesirli kullanım: bir kullanım açmayan kazanç sonraki kullanıma doğru doğrusal pay alır, 2 MP'de açılan kullanımın 1 MP'si yarı değer; değer eski basamaklı değerden hiç az değil, kullanımı tam açan kazançta eşit), (2) açık tabanı = doldurulan MP x en iyi MP başı değer x (MP açığı / maks MP) x `value.manaGainDeficitShare` (0,05, Ömer onayı 2026-11-22). MP doluyken 0; miktar kesirli kalır (Mana Steal ve ağaç tetiği artık yuvarlanmaz). `manaDenial` (yakma) değişmedi. Kod `ai-value.ts > manaGain`, test `tests/ai-coverage.test.ts` > manaGain sürekli. Sim ölçümü ayrı koşacak.
+
 ## 7. Uygulama durumu
 
 Faz 1-5 UYGULANDI (tek değer terazisi, kontrol / taunt / çağrı / diriltme terimleri, Rest-Skip-Move terazide, zorluk seviyeleri, K14). Faz 6 (balans ölçümü ve ayarı) YAPILMADI (balance-tester). Plan tablosu ve Faz notları: `docs/archive/design/ai-priorities-plan-and-questions.md`. Geçerli kurallar:

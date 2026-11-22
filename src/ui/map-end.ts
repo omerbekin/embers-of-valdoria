@@ -16,11 +16,15 @@ export interface MapEndOpts {
   story: string;
   /** Sefer özeti kutuları: yalnız oyunun gerçekten tuttuğu sayılar. */
   stats: Array<{ label: string; value: string }>;
+  /** Sefer toplamı, kutuların altında küçük yazı ("Campaign total"). */
+  total?: string;
   heroes: Array<{ name: string; level: number; face?: string }>;
   loot: Array<{ name: string; tag: string; icon: string; color?: string }>;
   /** Sıradaki harita (yoksa teaser şeridi çizilmez). */
   next?: { name: string; art?: string; teaser: string };
   buttons: Array<{ label: string; primary?: boolean; run: () => void }>;
+  /** Arka plan: bitirilen haritanın görseli (assets/campaign/<id>.webp; Harita 2-3 kartı, 2026-11-21). Yoksa / bulunmazsa valdoria-bg. */
+  bg?: string;
 }
 
 export interface MapEndHandle {
@@ -37,7 +41,7 @@ export const mapEndArt = (id: string): string | undefined => artUrl(id);
 export function openMapEnd(root: HTMLElement, o: MapEndOpts): MapEndHandle {
   const wrap = document.createElement('div');
   wrap.className = 'mend';
-  const bg = artUrl('valdoria-bg');
+  const bg = (o.bg ? artUrl(o.bg) : undefined) ?? artUrl('valdoria-bg');
   const stats = o.stats.map((s) => `<div class="me-stat"><b>${esc(s.value)}</b><span>${esc(s.label)}</span></div>`).join('');
   const heroes = o.heroes
     .map((h) => `<div class="me-hero"><div class="face">${h.face ? `<img src="${h.face}" alt="" draggable="false">` : ''}<span class="lv">Lv ${h.level}</span></div><div class="nm">${esc(h.name)}</div></div>`)
@@ -46,11 +50,11 @@ export function openMapEnd(root: HTMLElement, o: MapEndOpts): MapEndHandle {
     .map((l) => `<div class="me-it"><div class="tile"><img src="${l.icon}" alt="" draggable="false"></div><div><div class="nm"${l.color ? ` style="color:${esc(l.color)}"` : ''}>${esc(l.name)}</div><div class="tg">${esc(l.tag)}</div></div></div>`)
     .join('');
   const tease = o.next
-    ? `<div class="me-tease">${o.next.art ? `<div class="art" style="background-image:url(${o.next.art})"></div>` : ''}<div class="tx"><div class="nm">${esc(o.next.name)}</div><p>${esc(o.next.teaser)}</p></div></div>`
+    ? `<div class="me-tease"><div class="tx"><div class="nm">${esc(o.next.name)}</div><p>${esc(o.next.teaser)}</p></div></div>`
     : '<div class="me-tease"></div>';
   wrap.innerHTML = `${bg ? `<div class="me-bg" style="background-image:url(${bg})"></div>` : ''}<div class="me-panel" role="dialog" aria-label="${esc(o.title)}">
     <div class="me-sub">${esc(o.subtitle)}</div><h1 class="me-t">${esc(o.title)}</h1>${o.story ? `<p class="me-story">${esc(o.story)}</p>` : ''}<hr class="me-rule">
-    ${stats ? `<div class="me-stats" style="--n:${o.stats.length}">${stats}</div>` : ''}
+    ${stats ? `<div class="me-stats" style="--n:${o.stats.length}">${stats}</div>` : ''}${o.total ? `<div class="me-total"><b>Campaign total</b> ${esc(o.total)}</div>` : ''}
     <div class="me-row2"><div><div class="me-h">Your company</div><div class="me-heroes">${heroes}</div></div>${loot ? `<div><div class="me-h">Best finds</div><div class="me-loot">${loot}</div></div>` : ''}</div>
     <div class="me-foot">${tease}<div class="me-acts"></div></div></div>`;
   const acts = wrap.querySelector<HTMLElement>('.me-acts')!;

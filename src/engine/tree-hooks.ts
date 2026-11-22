@@ -349,6 +349,8 @@ export interface CondCtx {
   skillId?: string;
   /** Bu kullanımda harcanan Rage (gerçek vuruşta ödenen; önizlemede ödenecek). */
   rageSpent?: number;
+  /** Kullanım bilgisi (cast) yokken bu skill'in ödeyeceği can (önizleme / YZ; gerçek kullanımda cast.hpPaid geçerlidir). */
+  hpPaid?: number;
   /** Sahibe gelen vuruş (savunma koşulları; Faz 4/5 uygulama noktası). */
   incoming?: { actor: Combatant; skill?: SkillDef | null; type?: 'physical' | 'magic' };
   /** Vuruşun kritik olup olmadığı (yalnızca vuruş sonrası değerlendirmede; önce: undefined = hitIsCrit tutmaz). */
@@ -661,7 +663,11 @@ export const SCALE: Record<string, (x: CondCtx, arg: unknown) => number> = {
   /** Double Hit zincirindeki sıra (0 = asıl vuruş). */
   repeatIndex: (x) => x.hit?.repeat ?? 0,
   /** Bu kullanımda ödenen can / argüman (argüman: kaç can başına 1; ör. 10). */
-  hpPaidAmount: (x, a) => (x.cast && num(a) ? Math.max(0, Math.floor(x.cast.hpPaid / num(a)!)) : 0),
+  hpPaidAmount: (x, a) => {
+    // Gerçek kullanımda ödenen can (cast.hpPaid); kullanım yokken (önizleme / YZ) ödenecek can (hpPaid)
+    const paid = x.cast ? x.cast.hpPaid : (x.hpPaid ?? 0);
+    return num(a) ? Math.max(0, Math.floor(paid / num(a)!)) : 0;
+  },
   /** DoT tiki: bu durumun bu hedefteki önceki tik sayısı (ilk tik 0). */
   dotTickIndex: (x) => x.tick?.index ?? 0,
   /** Altıncı tur (Gnawing Rot): DoT tikinin sıra numarası (ilk tik 1, ikinci 2...). */
@@ -1080,6 +1086,8 @@ export interface TriggerAction {
   element?: string;
   /** Rage / MP kazancı (düz). */
   rage?: number;
+  /** Redtithe r36 (Open Veins): kan barına düz kan (bar sınırına kırpılır; kan barsız alıcıda bir şey yapmaz). */
+  blood?: number;
   mp?: number;
   /** Alıcı can kaybeder: taban x oran (kalkan emmez, öldürmez: en az 1 can kalır). */
   hpLoss?: number;

@@ -77,6 +77,7 @@ import { totalXpFor, trackKills, type KillRecord } from '../progression/levels';
 import { maps23On } from '../ui/maps23-flag';
 import { mapSceneTrack } from '../ui/music';
 import { showElToast } from '../ui/el-toast';
+import { onGearChange } from '../ui/gear-change';
 import { logBattleEnd } from './battle-diag';
 
 // Harita 2 test bayrağı (maps-2-3.md 9.1): debug anahtarı ya da ?maps=1 açıksa bu oturumda Drowned Reach geçişi görünür
@@ -199,6 +200,31 @@ export function checkpoint(): boolean {
   const s = session.state;
   if (!s || s.suspended) return false;
   return writeCheckpointSave(storage(), s);
+}
+
+/**
+ * Gear'da skill / stat puanı harcanınca ya da eşya giyilince / çıkarılınca / değişince otomatik kayıt (Ömer 2026-11-21): AYNI mekanizma (checkpoint).
+ * Art arda değişiklikler (5 puan üst üste) kısa gecikmeyle tek yazıma birleşir; sekme kapanırken bekleyen yazım hemen yapılır.
+ * Duraklatılmış savaşta checkpoint yazmaz (kendi kuralı); Ironman tek kayıt kuralı writeSave'dedir.
+ */
+export const GEAR_SAVE_DELAY_MS = 500;
+let gearSaveTimer: ReturnType<typeof setTimeout> | null = null;
+export function flushGearSave(): boolean {
+  if (gearSaveTimer === null) return false;
+  clearTimeout(gearSaveTimer);
+  gearSaveTimer = null;
+  return checkpoint();
+}
+onGearChange(() => {
+  if (gearSaveTimer !== null) clearTimeout(gearSaveTimer);
+  gearSaveTimer = setTimeout(() => {
+    gearSaveTimer = null;
+    checkpoint();
+  }, GEAR_SAVE_DELAY_MS);
+});
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function' && typeof document !== 'undefined') {
+  window.addEventListener('pagehide', () => void flushGearSave());
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && void flushGearSave());
 }
 
 /** "Load Last Save"in döneceği yer ve zaman (Defeat ekranı, H4): "Valdren Keep · 12 min ago"; kayıt yoksa sefer başı. */

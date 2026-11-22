@@ -1,0 +1,91 @@
+/* Köşe süsü = yuvarlak üç nokta (Ömer 2026-11-21, mockup uc-nokta-3). TEK ortak yapı: kural `corner-dots-rule.ts`, işaretleme `corner-dots.ts` (host listesi CD_HOSTS).
+   JS kutuyu ölçer ve hosta data-cd="k" (köşe) / "c" (ortalı) + --cd-sk (kademe çarpanı) yazar. Eski karo kuralları kaldırıldı; her hostta
+   ::before = sol üst grup (ortalıda üst kenar), ::after = sağ alt grup (data-cd-pos="tr": sağ üst; ortalıda alt kenar) - hostun kendi "bu köşede
+   karo yok" kuralları (display:none) aynen geçerli kalır. Ölçek: --cd-u = hostun ölçek birimi (--bu HUD / --u pencereler, yoksa 1px); nokta
+   kutuyla birlikte ölçeklendiği için telefonda nokta / kutu oranı masaüstünü aşmaz. */
+@property --cd-u {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 1px;
+}
+
+[data-cd] {
+  --cd-u: var(--bu, var(--u, 1px));
+  --cd-sk: 1.25;
+  --cd-in: 0px;
+  --cd-c: #f6e8bc;
+  --cd-d: calc(4 * var(--cd-sk) * var(--cd-u));
+  --cd-pt: max(calc(8 * var(--cd-sk) * var(--cd-u)), calc(var(--cd-d) * 1.9));
+}
+
+[data-cd]::before,
+[data-cd]::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  width: calc(3 * var(--cd-pt));
+  height: var(--cd-d);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  transform: none;
+  background-color: transparent;
+  background-image: radial-gradient(circle at 50% 50%, var(--cd-c) calc(var(--cd-d) / 2 - 0.6px), transparent calc(var(--cd-d) / 2));
+  background-size: var(--cd-pt) var(--cd-d);
+  background-repeat: repeat-x;
+  box-shadow: none;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* köşe: grubun ilk noktası kenardan bir adım içeride, dikeyde kenar çizgisinin ortasında */
+[data-cd='k']::before,
+[data-cd='k']::after {
+  top: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
+}
+
+[data-cd='k']::before {
+  left: calc(var(--cd-pt) - 1px - (var(--cd-pt) - var(--cd-d)) / 2);
+  top: calc(-0.5px - var(--cd-d) / 2 + var(--cd-in));
+}
+
+[data-cd='k']::after {
+  right: calc(var(--cd-pt) - 1px - (var(--cd-pt) - var(--cd-d)) / 2);
+  bottom: calc(-0.5px - var(--cd-d) / 2 + var(--cd-in));
+}
+
+[data-cd='k'][data-cd-pos='tr']::after {
+  bottom: auto;
+  top: calc(-0.5px - var(--cd-d) / 2 + var(--cd-in));
+}
+
+/* ortalı (yalnız kısa kenar 70 altı ve kareye yakın): üst + alt kenarda üçer nokta */
+[data-cd='c']::before,
+[data-cd='c']::after {
+  left: calc(50% - 1.5 * var(--cd-pt));
+  right: auto;
+}
+
+[data-cd='c']::before {
+  top: calc(-0.5px - var(--cd-d) / 2 + var(--cd-in));
+  bottom: auto;
+}
+
+[data-cd='c']::after {
+  bottom: calc(-0.5px - var(--cd-d) / 2 + var(--cd-in));
+  top: auto;
+}
+
+/* telefonda karosu olmayan yerlerde nokta da yok (bugünkü durum korunur) */
+html.short [data-cd-np]::before,
+html.short [data-cd-np]::after {
+  display: none;
+}
+
+/* telefonda harita / olay penceresi kenarı taşmayı kırpar: noktalar kenarın 3 px içine alınır (yazıya değmesin) */
+html.short .mw:not(.hp) .mw-panel[data-cd] {
+  --cd-in: 3px;
+}

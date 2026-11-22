@@ -1,0 +1,53 @@
+// Alttan uyarı barı: Blacksmith (gerçek tetik: Reforge'a Epic olmayan) + Gear tek pencere + tüccar çift pencere (Ömer 2026-11-21).
+import { dbg, dismiss, tutorialsOff } from './_lib.mjs';
+const hide = (page) => page.addStyleTag({ content: '.debug-toggle{display:none!important}' });
+const warn = (page, text) => page.evaluate(async (t) => {
+  const m = await import('/src/ui/bottom-warn.ts');
+  const ps = [...document.querySelectorAll('.gr-gear.gr-ledger')];
+  const p = ps[ps.length - 1];
+  m.showBottomWarn(p, t, { ms: 60000 });
+  const w = p.querySelector(':scope > .ui-warn').getBoundingClientRect(); const r = p.getBoundingClientRect();
+  return { bar: [w.left, w.right, w.top, w.bottom].map(Math.round), panel: [r.left, r.right, r.top, r.bottom].map(Math.round) };
+}, text);
+export default async ({ page, shot, wait, view }) => {
+  await hide(page);
+  await dbg(page, 'campaign.solo-valdren');
+  await wait(3000);
+  await page.evaluate(() => { document.querySelectorAll('[aria-label="Skip"]').forEach((b) => b.click()); });
+  await wait(1500);
+  await dbg(page, 'campaign.level-5');
+  await wait(3000);
+  await hide(page);
+  await tutorialsOff(page);
+  await dbg(page, 'maps23.boons.all');
+  await wait(1000);
+  for (let i = 0; i < 3; i++) await dbg(page, 'campaign.give-gold');
+  await page.evaluate(() => document.querySelectorAll('.gr-overlay').forEach((o) => o.remove()));
+  await dbg(page, 'campaign.shop');
+  await wait(3000);
+  await dismiss(page, wait); await wait(2500);
+  await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /browse wares/i.test(x.textContent)); if (b) b.click(); });
+  await wait(1500);
+  console.log(view, 'panels', await page.evaluate(() => [...document.querySelectorAll('.gr-panel')].map((e) => e.className.slice(0, 60))));
+  console.log(view, 'CIFT', JSON.stringify(await warn(page, 'Warrior cannot use this item.')));
+  await wait(600);
+  await shot('g2-gear-tuccar-cift');
+  await page.keyboard.press('Escape'); await wait(800);
+  // Blacksmith: bir item seçip Reforge sekmesinde ... gerçek uyarıyı bar sınıfıyla zorla (aynı CSS), çünkü tetik item gerektirir
+  await dbg(page, 'campaign.blacksmith');
+  await wait(2500);
+  await page.evaluate(() => { const w = document.querySelector('.bs-warn'); if (w) { w.textContent = 'Reforge works on Epic items only'; w.classList.add('on'); } });
+  await wait(600);
+  await shot('b1-blacksmith-bar');
+  const bs = await page.evaluate(() => { const w = document.querySelector('.bs-warn').getBoundingClientRect(); const p = document.querySelector('.bs-smith').getBoundingClientRect(); return { bar: [w.left, w.right, w.top, w.bottom].map(Math.round), panel: [p.left, p.right, p.top, p.bottom].map(Math.round) }; });
+  console.log(view, 'BLACKSMITH', JSON.stringify(bs));
+  await page.keyboard.press('Escape'); await wait(800);
+  await page.keyboard.press('Escape'); await wait(800);
+  await dbg(page, 'campaign.gear');
+  await wait(2000);
+  await page.locator('.gr-tab').nth(1).click({ timeout: 8000 }).catch(() => {});
+  await wait(1200);
+  console.log(view, 'GEAR', JSON.stringify(await warn(page, 'Warrior cannot use this item.')));
+  await wait(600);
+  await shot('g1-gear-tek');
+};

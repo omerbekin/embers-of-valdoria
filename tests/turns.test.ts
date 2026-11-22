@@ -81,7 +81,8 @@ describe('savaşta sıra (turns modu)', () => {
   });
 
   it('uzun vadede herkesin oynama sayısı SPD ile orantılı', () => {
-    const b = turnsBattle();
+    // salt sıra ölçümü: 100 hamleden sonra The First Fire's Verdict birim öldürür (sayım bozulur), burada kapalı
+    const b = new Battle({ ...oldLayoutSetup('first-battle', 1, 'turns'), firstFire: undefined });
     const order = playOrder(b, 360);
     const count = (uid: string) => order.filter((u) => u === uid).length;
     const total = b.combatants.reduce((sum, c) => sum + c.stats.spd, 0);

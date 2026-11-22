@@ -19,9 +19,12 @@ export interface MatchSetup {
 /** Kurucu sol tarafı (party), katılan sağ tarafı (enemy) oynar. */
 export const sideOfRole = (role: 'host' | 'guest'): NetSide => (role === 'host' ? 'party' : 'enemy');
 
-/** İki istemcide birebir aynı savaşı kurar (tek oyunculu Quick Battle'la aynı yol; debug ayarları uygulanmaz). */
+/**
+ * İki istemcide birebir aynı savaşı kurar (tek oyunculu Quick Battle'la aynı yol; debug ayarları uygulanmaz). Tek fark: iki takım aynı anda
+ * biterse beraberlik (drawOnMutualEnd; Ömer 2026-11-21, form r39); tek oyunculu savaşta oyuncu kaybeder.
+ */
 export function createMatchBattle(setup: MatchSetup): Battle {
-  return new Battle(content.battleSetup(content.DEFAULT_BATTLE, setup.seed, 'turns', { party: [...setup.host], enemies: [...setup.guest] }, false));
+  return new Battle({ ...content.battleSetup(content.DEFAULT_BATTLE, setup.seed, 'turns', { party: [...setup.host], enemies: [...setup.guest] }, false), drawOnMutualEnd: true });
 }
 
 export interface Desync {

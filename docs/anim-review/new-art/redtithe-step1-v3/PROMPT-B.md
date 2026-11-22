@@ -1,0 +1,8 @@
+IMAGE EDIT of image 1 (a 450x412 game sprite of a woman fighter mid-stride, facing right, transparent background). Image 2 is another character in the same walking-step pose, given ONLY as a reference for how much the body leans forward (do not copy its face, armour or style).
+
+PROBLEM to fix: in image 1 the upper body is too stiff and upright, like she swallowed a stick; a walking step should carry the weight forward.
+FIX: hinge the whole upper body (chest, shoulders, neck and head together, as one rigid block) forward from the hips by about 6 degrees, so the head ends up roughly 15 pixels further right (forward). The neck stays straight and visible in line with the spine, the head does NOT drop between the shoulders and the top of the head stays at about the same height as in image 1. Chin level, eyes looking right ahead, same 3/4 face with both eyes readable, eyebrow scar, shaved side, long dark braid down the back.
+
+KEEP as in image 1: both forearms and both bandaged wrists with empty clenched fists (they may follow the shoulders by a few pixels only; rear fist near (113,213), front fist near (329,205)), belt, sash, vials, pouch, brass bowl, trousers, legs, boots, stride, scale, canvas size and position, painterly pixel-art rendering, outline, palette, lighting. Each arm is one continuous limb from shoulder to fist, sleeves connected to the vest shoulders with no gap.
+
+BANS: no weapon, no extra or missing limb, no floating parts, no blood, magic, glow, text, ground shadow, halo, checkerboard or white/coloured background. Output a 450x412 image with real transparent background.

@@ -744,9 +744,9 @@ export class TeamSelectScene extends Phaser.Scene {
       }
       const ic = this.add.image(x + 11, 0, ensureIcon(this, statIconName(k), STAT_COLOR[k], false)).setDisplaySize(22, 22);
       x += 22 + 7;
-      const lb = this.cz(x, 1, STAT_LABEL[k], fs(15, 11), pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
+      const lb = this.cz(x, 1, STAT_LABEL[k], fs(15, 7), pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
       x += lb.width + 7;
-      const v = this.cz(x, 0, String(def.stats[k]), fs(25, 13), pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
+      const v = this.cz(x, 0, String(def.stats[k]), fs(25, 10), pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
       x += v.width;
       const zw = x - sx;
       const lw = Math.max(6, Math.min(Math.min(LINE_MAX, zw), (def.stats[k] / 30) * LINE_MAX));
@@ -804,12 +804,14 @@ export class TeamSelectScene extends Phaser.Scene {
         const num = /^\d+(?:\.\d+)?/.exec(b.cost)?.[0];
         const rage = /rage/i.test(b.cost);
         const txt = free ? 'FREE' : num ?? '*';
-        const t = this.cz(0, 0, txt, fs(free ? 10 : 13, 10), free ? '#cfe8a8' : rage ? '#ffb98a' : '#d9b26a', free ? 0.04 : 0).setOrigin(0.5);
+        const t = this.cz(0, 0, txt, fs(free ? 10 : 13, free ? 7 : 8), free ? '#cfe8a8' : rage ? '#ffb98a' : '#d9b26a', free ? 0.04 : 0).setOrigin(0.5);
+        // Telefonda yazı büyüyebilir (fs alt sınırı): hap yazıya oranlı büyür, masaüstünde 22 px aynı kalır
+        const ph = Math.max(22, Math.round(t.height * 1.15));
         const bw = Math.max(22, t.width + 10);
         const pg = this.add.graphics();
-        pg.fillStyle(0x130d07, 1).fillRoundedRect(30 - bw, 8, bw, 22, 11);
-        pg.lineStyle(1, rage ? EMBER : GOLDC, 0.6).strokeRoundedRect(30 - bw, 8, bw, 22, 11);
-        t.setPosition(30 - bw / 2, 19);
+        pg.fillStyle(0x130d07, 1).fillRoundedRect(30 - bw, 30 - ph, bw, ph, ph / 2);
+        pg.lineStyle(1, rage ? EMBER : GOLDC, 0.6).strokeRoundedRect(30 - bw, 30 - ph, bw, ph, ph / 2);
+        t.setPosition(30 - bw / 2, 30 - ph / 2);
         parts.push(pg, t);
       }
       const z = this.add.zone(0, 0, short ? 70 : Math.max(58, hit + 8), Math.max(64, hit)).setInteractive();

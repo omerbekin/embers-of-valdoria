@@ -18,8 +18,8 @@
 @keyframes mw-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes mw-fade { from { opacity: 0; } to { opacity: 1; } }
 html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { animation: none; }
-.mw-corner { position: absolute; width: max(4px, calc(7 * var(--u))); height: max(4px, calc(7 * var(--u))); background: #130d07; border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 2; }
-.mw-corner.tl { left: -4px; top: -4px; } .mw-corner.tr { right: -4px; top: -4px; } .mw-corner.bl { left: -4px; bottom: -4px; } .mw-corner.br { right: -4px; bottom: -4px; }
+/* köşe süsü: .mw-panel üç noktası (corner-dots.ts); eski karo elemanları gizli */
+.mw-corner { display: none; }
 .mw-scroll { overflow-y: auto; min-height: 0; scrollbar-width: thin; }
 
 /* ---------- yazilar ---------- */
@@ -163,7 +163,7 @@ html.reduced-motion .mw-in .mw-card { animation: none; }
 
 /* ---------- kisa ekran (telefon yatay) ---------- */
 html.short .mw:not(.hp) .mw-center { padding: 6px; }
-html.short .mw:not(.hp) .mw-panel { overflow: hidden; } html.short .mw:not(.hp) .mw-corner { display: none; }
+html.short .mw:not(.hp) .mw-panel { overflow: hidden; }
 html.short .mw:not(.hp) .mw-A .mw-art, html.short .mw:not(.hp) .mw-C .mw-art { height: 0; display: none; }
 html.short .mw:not(.hp) .mw-C .mw-hd2 { margin-top: 0; padding-top: 8px; }
 html.short .mw:not(.hp) .mw-body { padding: 8px 14px 8px; gap: 6px; }
@@ -230,3 +230,10 @@ html.short .mw-cname-in.el-field { padding: 0 10px; font-size: max(14px, calc(18
 html.short .mw-cname-in.el-field:not(:placeholder-shown) { padding-right: 46px; }
 html.short .mw-cname-in:placeholder-shown + .mw-cname-n { display: none; }
 html.short .mw-cname-sug.el-btn { padding-left: 8px; padding-right: 8px; }
+
+/* Kalıcı seçim uyarısı ("Side with ... (final)"): çerçevesiz düz bilgi satırı, düğme gibi görünmez (Ömer 2026-11-21, form r39) */
+.mw-note { flex: 1 1 100%; font: max(calc(11px * var(--tx, 1)), calc(18 * var(--u) * var(--tx, 1))) var(--g-body); color: #cdb88d; line-height: 1.2; }
+
+/* telefon yatay: OLAY penceresinde resim şeridi görünür (alçak); metin kendi içinde kayar, seçenek kartları taşmaz (Ömer 2026-11-21, Tur 40) */
+html.short .mw.mw-ev:not(.hp) .mw-A .mw-art, html.short .mw.mw-ev:not(.hp) .mw-C .mw-art { display: block; height: 46px; flex: none; }
+html.short .mw.mw-ev:not(.hp) .mw-A .mw-art::after { background: linear-gradient(180deg, rgba(12,9,6,0) 30%, rgba(14,10,7,.96) 100%); }

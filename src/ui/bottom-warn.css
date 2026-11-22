@@ -1,0 +1,67 @@
+/* Ortak ALTTAN uyarı barı (Ömer 2026-11-12 "alttan"; 2026-11-21 Gear de aynı, tek parça): pencerenin (panelin) alt kenarına yapışık, panel genişliğinde,
+   OPAK zeminli bant; alttan kayarak girer. Üstte kor çizgi + solda kor elması = "bu bir uyarı"; başarı iletisi (.ok) altın çizgi, elmassız.
+   Host: konumlu + overflow:hidden panel (Gear paneli; Blacksmith kendi .bs-warn düğümünü panel sonundaki yapışkan çapa ile kullanır).
+   Kullananlar: Blacksmith (.bs-warn), Gear (.ui-warn, bottom-warn.ts). */
+.bs-warn,
+.ui-warn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7em;
+  min-height: max(36px, calc(46 * var(--u)));
+  padding: max(6px, calc(8 * var(--u))) max(28px, calc(56 * var(--u)));
+  font: 400 max(calc(14px * var(--tx, 1)), calc(21 * var(--u) * var(--tx, 1))) / 1.2 var(--g-body);
+  color: #f0c7bb;
+  text-align: center;
+  background: linear-gradient(180deg, #2a160c, #120b07);
+  border-top: 2px solid rgba(224, 112, 42, 0.9);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 30;
+  transform: translateY(100%);
+  transition: transform 0.22s ease-out, opacity 0.15s, visibility 0s 0.22s;
+}
+
+.bs-warn::before,
+.ui-warn::before {
+  content: '';
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  transform: rotate(45deg);
+  background: var(--g-ember, #e0702a);
+  box-shadow: 0 0 8px rgba(240, 140, 40, 0.8);
+}
+
+.ui-warn.ok {
+  color: var(--g-gold, #f3d999);
+  border-top-color: rgba(217, 178, 106, 0.8);
+  background: linear-gradient(180deg, #2a2010, #120d07);
+}
+
+.ui-warn.ok::before {
+  background: var(--g-gold, #f3d999);
+  box-shadow: none;
+}
+
+.bs-warn.on,
+.ui-warn.on {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: transform 0.22s ease-out, opacity 0.15s, visibility 0s;
+}
+
+html.short .bs-warn,
+html.short .ui-warn {
+  min-height: 28px;
+  padding: 4px 18px;
+  font-size: calc(12px * var(--tx, 1));
+}

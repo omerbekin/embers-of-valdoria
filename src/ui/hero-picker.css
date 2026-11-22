@@ -49,9 +49,6 @@
 .mw.hp .hp-sk .tg { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 .8em; font: 700 max(calc(8px * var(--tx, 1)), calc(11*var(--u) * var(--tx, 1))) / 1.6 var(--g-disp); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; color: #fff4d6; background: color-mix(in srgb, var(--a) 55%, #0c0905); border: 1px solid var(--al); }
 .mw.hp .hp-sk .ic { position: relative; width: calc(64*var(--u)); height: calc(64*var(--u)); background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--a) 30%, #1a110a) 0%, #0d0806 78%); border: 1px solid color-mix(in srgb, var(--a) 62%, #000); box-shadow: 0 0 0 2px rgba(8,6,4,.9), inset 0 0 12px color-mix(in srgb, var(--a) 22%, transparent); }
 .mw.hp .hp-sk .ic img { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: pixelated; }
-.mw.hp .hp-sk .ic::before, .mw.hp .hp-sk .ic::after { content: ''; position: absolute; width: calc(9*var(--u)); height: calc(9*var(--u)); transform: rotate(45deg); background: #130d07; border: 1px solid var(--al); }
-.mw.hp .hp-sk .ic::before { left: calc(-5*var(--u)); top: calc(-5*var(--u)); }
-.mw.hp .hp-sk .ic::after { right: calc(-5*var(--u)); bottom: calc(-5*var(--u)); }
 .mw.hp .hp-sk .sn { width: 100%; min-height: 2.3em; display: flex; align-items: center; justify-content: center; font: 600 max(calc(9px * var(--tx, 1)), calc(13*var(--u) * var(--tx, 1))) / 1.15 var(--g-disp); letter-spacing: .04em; text-transform: uppercase; text-align: center; color: var(--al); }
 
 /* sabit satır sayısı (Recruit + Choose a companion): kaydırılabilir sütun, "Recommended" etiketi */

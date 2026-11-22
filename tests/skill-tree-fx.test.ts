@@ -99,7 +99,7 @@ describe('derleyici: (b) addEffect / replaceEffect / unitFx', () => {
   });
 
   it('kancalar: cond (Red Arc, rank x 3 = %9), bedel koşulu (Pain Into Iron), Rage (War Gallop / Roaring Charge / Into the Fire)', () => {
-    expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: 3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul } });
+    expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: expect.closeTo(3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9) } });
     expect(tree(D, ['4.l1', '4.l2']).skills!.fist_crush!.cost.cond).toEqual([{ node: 'defender:4.l2', add: -1, scale: { missingHp: 0.1 } }]);
     const c = tree(W, CHARGE_PATH);
     expect(c.hooks).toContainEqual({ h: 'rage', node: 'warrior:3.f3', skill: 'charge', on: 'hit', gain: 2 * (W.nodes['3.f3']!.fx![0] as unknown as { gain: number }).gain });
@@ -174,7 +174,8 @@ describe('motor: C1 koşul kancası (önizleme = gerçek vuruş)', () => {
     const tr = run(true);
     const armor = tr.b.effectiveStats(E0(tr.b)).armor;
     expect(armor).toBeGreaterThan(0);
-    expect(tr.m / run(false).m).toBeCloseTo(1 + 0.01 * armor, 9);
+    const per = (D.nodes['4.d2']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul; // sayı veriden
+    expect(tr.m / run(false).m).toBeCloseTo(1 + per * armor, 9);
   });
 
   it('kesin kritik (guaranteedCrit) ve durum süresi (turns) kancaları gerçek kullanımda', () => {

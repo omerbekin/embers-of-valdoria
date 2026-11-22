@@ -59,11 +59,11 @@ const POSE = {
   wail_of_the_dead: 'channel',
   dark_bond: 'channel',
   raise_dead: 'raise',
-  // Anti-Mage (hançer; mana_burn = hançer fırlatır, void_strike = sol elle point)
-  mana_burn: 'throw',
+  // Redtithe (hançer; mana_burn = Tithe Cut: yerinde yarım adım hamle + atış, ön el hançeri kan ipliğiyle hedefe uçar ve ele döner (Lead 2026-11-21 v3); void_strike = Exsanguinate ulti v3: efekt overhead > step > twin_stab pozlarını kendisi gösterir, tepe ve son poz Redtithe'e özel ek poz twin_stab (extra-twin_stab.png: iki kol öne, iki hançer hedefe yatay; başka gövdede yok -> attack (slash), 2026-11-22))
+  mana_burn: ['step', 'throw'],
   drain_field: 'raise',
   spell_ward: 'channel',
-  void_strike: 'point',
+  void_strike: 'twin_stab',
   // Gambler (iskambil: tılsım fırlatışta elden çıkar, point'te açık elin parmaklarında)
   loaded_dice: 'throw',
   high_stakes: 'point',
@@ -91,6 +91,7 @@ const LABEL = {
   sky: 'Sky Shot',
   cross_cut: 'Cross Cut (Cutthroat only)',
   doll_stab: 'Doll Stab (Hexer only)',
+  twin_stab: 'Twin Stab (Redtithe only)',
 };
 
 // skills.json elle biçimli (CRLF, satır içi diziler): yalnızca pt_* bloğu metin olarak değiştirilir, dosyanın geri kalanına dokunulmaz

@@ -238,7 +238,7 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
   };
   const foesWith = (kind: string) => (b: Battle) => b.combatants.filter((c) => c.side === 'enemy').forEach((c) => b.debugAddStatus(c.uid, kind, 2));
   const lowFoes = (b: Battle) => b.combatants.filter((c) => c.side === 'enemy').forEach((c) => (c.hp = 1));
-  const lowMp = (b: Battle) => (K(b).mp = 10); // MP kazancı ancak MP azken değerli
+  const lowMp = (b: Battle) => (K(b).mp = 10); // MP kazancı MP azken daha değerli olabilir (açık tabanı)
   const cd = (skill: string, n = 3) => (b: Battle) => (K(b).cooldowns[skill] = n);
   const both = (...fs: Array<(b: Battle) => void>) => (b: Battle) => fs.forEach((f) => f(b));
   // Ömer 2026-11-16: Hobbled (eski Slow) kaçınma keser; isabet %100'de (fight: accuracy 10) değeri 0 olurdu
@@ -268,7 +268,6 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
     expect(treeOn({ '0.v': 1 }, 'hammer_spark', lowFoes)).toBe(0); // durumsuz ölü: koşul tutmaz
     expect(treeOn({ '0.v': 1 }, 'hammer_spark', both(lowFoes, foesWith('slow')))).toBeGreaterThan(0);
     const rows: Array<[Record<string, number>, string, Opt]> = [
-      [{ '2.f3': 3 }, 'thunder_strike', {}],
       [{ '4.u3': 1 }, 'stormcall', {}],
       [{ '4.l3': 1 }, 'stormcall', { mode: 'turns', allies: { 1: 'warrior' } }],
     ];
@@ -276,6 +275,12 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
       expect(treeOn(r, skill, undefined, o), skill).toBe(0);
       expect(treeOn(r, skill, lowFoes, o), skill).toBeGreaterThan(0);
     }
+    // Grounding (2.f3): ağaç ayarı 2026-11-21 sonrası 1 MP / rank. manaGain 2026-11-22'den beri sürekli: maks-8 MP'de de (yeni skill açmasa da) artı;
+    // MP azken en az o kadar değerli
+    expect(treeOn({ '2.f3': 3 }, 'thunder_strike', lowMp), 'thunder_strike').toBe(0);
+    const grounded = treeOn({ '2.f3': 3 }, 'thunder_strike', lowFoes);
+    expect(grounded, 'thunder_strike maks-8').toBeGreaterThan(0);
+    expect(treeOn({ '2.f3': 3 }, 'thunder_strike', both(lowFoes, lowMp)), 'thunder_strike').toBeGreaterThanOrEqual(grounded);
   });
   it('Stun tetikleri (Struck Senseless, Grounded Storm, Thunder Memory): koşullu Stun şansıyla artı, Slow yokken daha az', () => {
     const memory = T.mastery.bar.find((x) => x.name === 'Thunder Memory')!.at;
@@ -285,6 +290,7 @@ describe('7c. Skald ağacı: her tetik / etki terazide', () => {
       [{ '2.ma': 1, '1.f1': 3, '1.f2': 5, '1.f3': memory - 8 }, 'thunder_strike'],
     ];
     for (const [r, skill] of rows) {
+      // ağaç ayarı 2026-11-21: Thunder Memory 1 MP; manaGain 2026-11-22'den beri sürekli (1 MP skill açmasa da artı), eski "MP = 17" ayarı gerekmez
       const prep = both(cd('stormcall'), cd('thunder_strike', 0), ...(skill === 'stormcall' ? [] : [lowMp])); // Stormcall 18 MP ister
       expect(treeOn(r, skill, both(prep, foesWith('slow'))), JSON.stringify(r)).toBeGreaterThan(treeOn(r, skill, prep));
     }
@@ -427,6 +433,82 @@ describe('8. küçük kalemler', () => {
     expect(ctx.manaGain(mage, 20)).toBeGreaterThan(0);
     mage.mp = mage.maxMp;
     expect(ctx.manaGain(mage, 20)).toBe(0);
+  });
+
+  describe('manaGain sürekli (Ömer 2026-11-22, tr3_mp): küçük MP kazancı 0 değil, eski basamaklı değerden az değil', () => {
+    // Eski değer: manaDenial'ın tersi (tam sayılı kullanım planı; skill kullanımı açmayan kazanç = 0)
+    const stepped = (ctx: ValueContext, u: Combatant, amount: number) => {
+      const a = Math.min(u.maxMp - u.mp, amount);
+      if (a <= 0) return 0;
+      const mp = u.mp;
+      u.mp = mp + a;
+      const v = ctx.manaDenial(u, a);
+      u.mp = mp;
+      return v;
+    };
+    const mageIn = (mode: 'test' | 'turns') => {
+      const m = arena([['mage', 0]], [['warrior', 0]], mode);
+      return { m, mage: P(m), ctx: ctxOf(m, P(m)) };
+    };
+    const share = () => content.aiConfig.value!.manaGainDeficitShare!;
+    it('veriden: manaGainDeficitShare ai.json\'da ve artı', () => {
+      expect(share()).toBeGreaterThan(0);
+      expect(vcOf().manaGainDeficitShare).toBe(share());
+    });
+    for (const mode of ['test', 'turns'] as const) {
+      it(`${mode}: 1 MP > 0 (eskiden 0), 2 MP 1 MP'den çok ama en çok iki katı, MP doluyken 0`, () => {
+        const { mage, ctx } = mageIn(mode);
+        for (const mp of [0, Math.round(mage.maxMp / 2), mage.maxMp - 6]) {
+          mage.mp = mp;
+          const one = ctx.manaGain(mage, 1);
+          expect(one, `mp ${mp}`).toBeGreaterThan(0);
+          expect(ctx.manaGain(mage, 2), `mp ${mp}`).toBeGreaterThan(one);
+          expect(ctx.manaGain(mage, 2), `mp ${mp}`).toBeLessThanOrEqual(2 * one + 1e-9);
+          expect(ctx.manaGain(mage, 0.5), `kesirli mp ${mp}`).toBeGreaterThan(0);
+          expect(ctx.manaGain(mage, 0.5)).toBeLessThan(one);
+        }
+        mage.mp = mage.maxMp - 6;
+        expect(stepped(ctx, mage, 1)).toBe(0); // kök sebep: basamaklı plan 1 MP'yi 0 sayıyordu
+        mage.mp = mage.maxMp;
+        expect(ctx.manaGain(mage, 1)).toBe(0);
+        expect(ctx.manaGain(mage, 20)).toBe(0);
+        mage.mp = mage.maxMp - 1;
+        expect(ctx.manaGain(mage, 20)).toBeCloseTo(ctx.manaGain(mage, 1)); // açıktan fazlası sayılmaz
+      });
+      it(`${mode}: değer eski basamaklı değerden hiç az değil (MP x miktar ızgarası); MP azken MP başı değer dolmaya yakınkinden az değil`, () => {
+        const { mage, ctx } = mageIn(mode);
+        const step = Math.max(1, Math.round(mage.maxMp / 6));
+        for (let mp = 0; mp <= mage.maxMp; mp += step) {
+          mage.mp = mp;
+          for (const a of [1, 2, 3, 5, 10, 20]) expect(ctx.manaGain(mage, a), `mp ${mp} +${a}`).toBeGreaterThanOrEqual(stepped(ctx, mage, a) - 1e-9);
+        }
+        mage.mp = 0;
+        const low = ctx.manaGain(mage, 1);
+        mage.mp = mage.maxMp - 2;
+        expect(low).toBeGreaterThanOrEqual(ctx.manaGain(mage, 1));
+      });
+    }
+    it('büyük kazanç eski basamaklı değere yakın (MP 0, 20 MP: eskinin 1-2 katı)', () => {
+      for (const mode of ['test', 'turns'] as const) {
+        const { mage, ctx } = mageIn(mode);
+        mage.mp = 0;
+        const old = stepped(ctx, mage, 20);
+        expect(old, mode).toBeGreaterThan(0);
+        const v = ctx.manaGain(mage, 20);
+        expect(v, mode).toBeGreaterThanOrEqual(old - 1e-9);
+        expect(v, mode).toBeLessThanOrEqual(old * 2);
+      }
+    });
+    it('ufuk MP\'yi karşılıyorken açık tabanı: pay 0 ise 0, veri payıyla artı; MP\'siz birimde 0', () => {
+      const s = arena([['skald', 0]], [['warrior', 0]], 'turns');
+      const sk = P(s);
+      sk.mp = sk.maxMp - 6; // yenilenme ufuk planını zaten karşılar (zarf düz)
+      const zero = new ValueContext(s, sk, { ...vcOf(), manaGainDeficitShare: 0 }, () => 'lowest_ratio');
+      expect(zero.manaGain(sk, 1)).toBe(0);
+      expect(ctxOf(s, sk).manaGain(sk, 1)).toBeGreaterThan(0);
+      const w = arena([['warrior', 0]], [['mage', 0]]);
+      expect(ctxOf(w, P(w)).manaGain(P(w), 5)).toBe(0);
+    });
   });
 
   it('Spell Echo: Gambler hasar skill\'inin cooldown bedeli şansla azalır', () => {
@@ -594,7 +676,8 @@ describe('7b. Vesper ağacı: her tetik / etki terazide', () => {
   it('Stun tetikleri (Ringing Skull, Aftershock, Resounding Crack, Death Bell): Cracked Bell Stun şansıyla tree artı', () => {
     expect(treeOn({}, 'cracked_bell')).toBe(0);
     for (const k of ['3.n0', '3.r', '3.ea', '3.ma']) {
-      expect(treeOn({ [k]: 1 }, 'cracked_bell', (b) => { lowMp(b); V(b).cooldowns = {}; for (const c of b.combatants) if (c.side === 'enemy') c.stats.accuracy = 0.8; }), k).toBeGreaterThan(0);
+      // ağaç ayarı 2026-11-21: Resounding Crack (3.r) 1 MP / rank; 1 MP YZ'de çoğu durumda 0 (basamaklı), 3 rankla ölçülür
+      expect(treeOn({ [k]: k === '3.r' ? 3 : 1 }, 'cracked_bell', (b) => { lowMp(b); V(b).cooldowns = {}; for (const c of b.combatants) if (c.side === 'enemy') c.stats.accuracy = 0.8; }), k).toBeGreaterThan(0);
     }
   });
   it('Thunder After (bar 15, Ömer 2026-11-08: Blinded düşman ıskalayınca çan): veri düğümüyle Thunderpeal kurulum değeri artı', () => {

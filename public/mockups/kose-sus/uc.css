@@ -1,0 +1,40 @@
+/* Uc-nokta taslagi (NOT game code). Fontlar kose.css ile ayni. */
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122; }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122; }
+html, body { margin: 0; background: linear-gradient(rgba(8,6,4,.82), rgba(8,6,4,.82)), #0b0907 url(img/bg.webp) center top / cover; color: #d9c8a2; font-family: var(--font-body); }
+body { padding: 12px 14px; }
+.ucw {
+  --u: var(--gu, 1px);
+  --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3);
+  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: var(--font-display); --g-body: var(--font-body);
+  --gold: 217, 178, 106; --on: #f3d999; --txt: #d9c8a2; --muted: #a8977a; --dim: #7d705a; --ember: #e0702a; --ember2: #ffb35a; --ease: cubic-bezier(.33,1,.68,1); --cin: var(--font-display); --num: var(--font-num); --gar: var(--font-body);
+}
+.ucw .mw { position: static; inset: auto; z-index: auto; }
+.ucw .mw-win { position: static; }
+.lbl { font: 600 12px var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: #f3d999; margin: 0 0 4px; }
+.lbl small { display: block; font: 12px var(--font-body); letter-spacing: 0; text-transform: none; color: #a8977a; }
+body.clean .lbl { display: none; }
+.row { display: flex; align-items: flex-start; gap: 46px; margin: 0 0 30px; }
+.lbl { margin-top: 6px; }
+.col { flex: none; }
+.col > .cap { font: 600 11px var(--font-display); letter-spacing: .12em; color: #cdb88d; margin: 0 0 14px; text-transform: uppercase; }
+.col .it { position: relative; display: inline-block; padding: 10px; }
+.ph .row { gap: 14px; margin: 0 0 8px; }
+.ph .col > .cap { font-size: 8px; margin-bottom: 6px; }
+
+/* ---- bilesenlere ozel yerlesim (gercek CSS'e dokunmadan) ---- */
+.ucw .bh-skills { position: static; display: flex; gap: 8px; }
+.ucw .gr-item { width: 62px; height: 62px; position: relative; }
+.ucw .gr-item .gr-svg { width: 84%; height: 84%; object-fit: contain; image-rendering: pixelated; }
+.ucw .gr-slot.gr-plate { width: 440px; }
+.ucw .gr-slot-name { font: 600 calc(20 * var(--u)) var(--font-display); color: #f3d999; }
+.ucw .mw-panel { width: 1240px; max-height: 470px; overflow: visible; }
+.ucw .bt { width: 453px; }
+.ph .ucw .gr-item { width: 44px; height: 44px; }
+.ph .ucw .gr-slot.gr-plate { width: 160px; }
+.ph .ucw .mw-panel { width: 600px; max-height: none; }
+.ph .ucw .bt { width: 163px; }
+/* kapsam disi karolar (bt ayirici / madde) gizli */
+.ucw .bt-div::after, .ucw .bt-ln .dia::after { display: none; }
+.row.stack { flex-direction: column; gap: 14px; }
+.ph .ucw .mw-panel { overflow: visible !important; }

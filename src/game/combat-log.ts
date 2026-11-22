@@ -155,6 +155,12 @@ export class CombatLog {
         this.hit(e.target).miss = 'block';
         return true;
       }
+      case 'dice': {
+        // Gambler Loaded Dice: hasarın sebebi (Ömer 2026-11-22). Her atış kendi satırı (tekrar atışta ikinci satır); çiftte "Double"
+        const sum = e.values.reduce((t, v) => t + v, 0);
+        this.line([this.who(e.actor), { t: ' rolled ' }, { t: `${e.values.join(' + ')} = ${sum}`, k: 'n' }, ...(e.double ? [{ t: ' · ' }, { t: 'Double', k: 'sk' as const }] : [])]);
+        return true;
+      }
       case 'daze':
         // Daze (çekiç örtüğü, Ömer 2026-10-27): hedefin sırası geri itildi
         this.line([this.who(e.target), { t: ' is Dazed (turn delayed)' }]);
@@ -217,7 +223,7 @@ export class CombatLog {
         return true;
       case 'battleEnd':
         this.close();
-        this.line([{ t: e.winner === this.localSide ? 'Victory' : 'Defeat', k: 'n' }]);
+        this.line([{ t: e.winner === 'draw' ? 'Draw' : e.winner === this.localSide ? 'Victory' : 'Defeat', k: 'n' }]);
         return true;
       default:
         return false;

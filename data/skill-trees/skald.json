@@ -1,7 +1,7 @@
 {
   "_not": "Thunder Skald ağacı v1 (2026-11-08, Lead isteği; Ömer kuralı: generic bonus yok). Mantık docs/design/classes/skill-tree-logic.md; düğüm listesi ve yeni mekanik önerileri docs/design/classes/skald.md bölüm 3. Yalnız mevcut fx kancaları. Sayılar tahmin, sim Ömer onayıyla. Yapı _rules.json rowShape.",
   "class": "skald",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "D",
@@ -66,7 +66,7 @@
       {
         "at": 10,
         "name": "Thunder Memory",
-        "text": "The first time you Stun an enemy each battle, restore 5 MP.",
+        "text": "The first time you Stun an enemy each battle, restore 1 MP.",
         "src": "D:skald v1 2026-11-08",
         "fx": [
           {
@@ -77,7 +77,7 @@
             "once": true,
             "do": [
               {
-                "mp": 5
+                "mp": 1
               }
             ]
           }
@@ -105,21 +105,21 @@
       {
         "at": 20,
         "name": "Charged Air",
-        "text": "Conductor bonus +5%.",
+        "text": "Conductor bonus +1.25%.",
         "src": "D:skald v1 2026-11-08",
         "fx": [
           {
             "k": "passive",
             "f": "bonus",
             "op": "add",
-            "v": 0.05
+            "v": 0.0125
           }
         ]
       },
       {
         "at": 25,
         "name": "Last Saga",
-        "text": "When an ally falls, your next turn comes 30% sooner.",
+        "text": "When an ally falls, your next turn comes 8% sooner.",
         "src": "D:skald v1 2026-11-08",
         "fx": [
           {
@@ -128,7 +128,7 @@
             "on": "allyFell",
             "do": [
               {
-                "sooner": 0.3
+                "sooner": 0.08
               }
             ]
           }
@@ -139,14 +139,14 @@
   "nodes": {
     "0.f1": {
       "name": "Copper Coil",
-      "text": "Conductor bonus +3% per rank.",
+      "text": "Conductor bonus +0.75% per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
           "k": "passive",
           "f": "bonus",
           "op": "add",
-          "v": 0.03,
+          "v": 0.0075,
           "rank": true
         }
       ]
@@ -175,7 +175,7 @@
     },
     "0.f3": {
       "name": "Static Charge",
-      "text": "Your skills have +2% critical chance per rank against Hobbled, Stunned or Shocked enemies.",
+      "text": "Your skills have +0.5% critical chance per rank against Hobbled, Stunned or Shocked enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -189,7 +189,7 @@
             ]
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.005
           },
           "rank": true
         }
@@ -217,7 +217,7 @@
     },
     "0.r": {
       "name": "Pressure Front",
-      "text": "Your skills deal 3% more damage per rank to Hobbled enemies.",
+      "text": "Your skills deal 0.75% more damage per rank to Hobbled enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -227,7 +227,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.0075
           },
           "rank": true
         }
@@ -235,7 +235,7 @@
     },
     "0.ea": {
       "name": "Rolling Thunder",
-      "text": "Once per turn, when you hit a Shocked enemy, your next turn comes 10% sooner.",
+      "text": "Once per turn, when you hit a Shocked enemy, your next turn comes 2.75% sooner.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -248,7 +248,7 @@
           "once": "perTurn",
           "do": [
             {
-              "sooner": 0.1
+              "sooner": 0.0275
             }
           ]
         }
@@ -278,7 +278,7 @@
     },
     "0.fa": {
       "name": "Overdrive",
-      "text": "Rolling Thunder brings your next turn 20% sooner (instead of 10%). Conductor bonus -10%.",
+      "text": "Rolling Thunder brings your next turn 5.5% sooner (instead of 2.75%). Conductor bonus -10%.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -291,7 +291,7 @@
           "once": "perTurn",
           "do": [
             {
-              "sooner": 0.2
+              "sooner": 0.055
             }
           ],
           "drop": "0.ea"
@@ -306,7 +306,7 @@
     },
     "0.eb": {
       "name": "Thunderclap",
-      "text": "Your hits on Hobbled enemies have a 10% chance to Stun them for 1 turn.",
+      "text": "Your hits on Hobbled enemies have a 2.75% chance to Stun them for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -319,7 +319,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.0275
             }
           }
         }
@@ -327,7 +327,7 @@
     },
     "0.fb": {
       "name": "Hammerfall",
-      "text": "Thunderclap Stuns with a 25% chance (instead of 10%). Thunder Strike costs 4 more MP.",
+      "text": "Thunderclap Stuns with a 6.75% chance (instead of 2.75%). Thunder Strike costs 4 more MP.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -340,7 +340,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.25
+              "chance": 0.0675
             }
           },
           "drop": "0.eb"
@@ -357,7 +357,7 @@
     },
     "0.mb": {
       "name": "Struck Senseless",
-      "text": "When you Stun an enemy, restore 4 MP and lower Stormcall's cooldown by 1 turn.",
+      "text": "When you Stun an enemy, restore 1 MP and lower Stormcall's cooldown by 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -367,7 +367,7 @@
           "status": "stun",
           "do": [
             {
-              "mp": 4
+              "mp": 1
             },
             {
               "cooldown": -1,
@@ -379,14 +379,14 @@
     },
     "0.v": {
       "name": "Living Storm",
-      "text": "Conductor bonus +10%. Once per cast, when you kill a Hobbled, Stunned or Shocked enemy, cast a free Thunder Strike at 50% power on a random enemy.",
+      "text": "Conductor bonus +2.75%. Once per cast, when you kill a Hobbled, Stunned or Shocked enemy, cast a free Thunder Strike at 13.5% power on a random enemy.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
           "k": "passive",
           "f": "bonus",
           "op": "add",
-          "v": 0.1
+          "v": 0.0275
         },
         {
           "k": "hook",
@@ -403,7 +403,7 @@
           "do": [
             {
               "cast": "thunder_strike",
-              "power": 0.5,
+              "power": 0.135,
               "to": "randomEnemy",
               "noChain": true
             }
@@ -413,7 +413,7 @@
     },
     "1.f1": {
       "name": "Drumbeat Swing",
-      "text": "While Hasted, Hammer Spark deals 4% more damage per rank.",
+      "text": "While Hasted, Hammer Spark deals 1% more damage per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -423,7 +423,7 @@
             "selfStatus": "haste"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.01
           },
           "rank": true
         }
@@ -431,7 +431,7 @@
     },
     "1.f2": {
       "name": "Spark Gap",
-      "text": "Hammer Spark has +2% critical chance per rank against Shocked enemies.",
+      "text": "Hammer Spark has +0.5% critical chance per rank against Shocked enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -441,7 +441,7 @@
             "targetStatus": "shocked"
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.005
           },
           "rank": true
         }
@@ -449,13 +449,13 @@
     },
     "1.f3": {
       "name": "Iron Drag",
-      "text": "Hammer Spark has a 3% chance per rank to Hobble the target for 1 turn.",
+      "text": "Hammer Spark has a 0.75% chance per rank to Hobble the target for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
-          "procChance": 0.03,
+          "procChance": 0.0075,
           "rank": "chance",
           "mod": {
             "addStatus": {
@@ -487,7 +487,7 @@
     },
     "1.r": {
       "name": "Same Nail",
-      "text": "Hammer Spark deals 3% more damage per rank to the enemy you hit last.",
+      "text": "Hammer Spark deals 0.75% more damage per rank to the enemy you hit last.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -497,7 +497,7 @@
             "targetIsMyLastTarget": true
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.0075
           },
           "rank": true
         }
@@ -505,7 +505,7 @@
     },
     "1.ea": {
       "name": "Through the Line",
-      "text": "Hammer Spark also strikes the enemy behind the target for 40% damage.",
+      "text": "Hammer Spark also strikes the enemy behind the target for 11% damage.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -513,14 +513,14 @@
           "h": "target",
           "splash": {
             "pattern": "behind",
-            "mult": 0.4
+            "mult": 0.11
           }
         }
       ]
     },
     "1.ma": {
       "name": "Rolling Hammer",
-      "text": "If Hammer Spark hits 2 enemies, your next turn comes 10% sooner.",
+      "text": "If Hammer Spark hits 2 enemies, your next turn comes 2.75% sooner.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -532,7 +532,7 @@
           },
           "do": [
             {
-              "sooner": 0.1
+              "sooner": 0.0275
             }
           ]
         }
@@ -540,7 +540,7 @@
     },
     "1.fa": {
       "name": "Heavy Throw",
-      "text": "Through the Line strikes for 80% damage (instead of 40%). Hammer Spark costs 4 MP.",
+      "text": "Through the Line strikes for 21.5% damage (instead of 11%). Hammer Spark costs 1 MP.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -548,7 +548,7 @@
           "h": "target",
           "splash": {
             "pattern": "behind",
-            "mult": 0.8
+            "mult": 0.215
           }
         },
         {
@@ -556,13 +556,13 @@
           "sel": "self",
           "f": "cost.amount",
           "op": "add",
-          "v": 4
+          "v": 1
         }
       ]
     },
     "1.eb": {
       "name": "Split the Storm",
-      "text": "Against Shocked enemies, Hammer Spark ignores 20% of armor and magic armor.",
+      "text": "Against Shocked enemies, Hammer Spark ignores 5.5% of armor and magic armor.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -572,14 +572,14 @@
             "targetStatus": "shocked"
           },
           "mod": {
-            "ignoreDefense": 0.2
+            "ignoreDefense": 0.055
           }
         }
       ]
     },
     "1.fb": {
       "name": "Cold Iron",
-      "text": "Split the Storm ignores 40% (instead of 20%). Hammer Spark deals 20% less damage to enemies that are not Shocked.",
+      "text": "Split the Storm ignores 11% (instead of 5.5%). Hammer Spark deals 20% less damage to enemies that are not Shocked.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -589,7 +589,7 @@
             "targetStatus": "shocked"
           },
           "mod": {
-            "ignoreDefense": 0.4
+            "ignoreDefense": 0.11
           },
           "drop": "1.eb"
         },
@@ -609,7 +609,7 @@
     },
     "1.mb": {
       "name": "Thunder Anvil",
-      "text": "Hammer Spark has a 25% chance to Stun Shocked enemies for 1 turn.",
+      "text": "Hammer Spark has a 6.75% chance to Stun Shocked enemies for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -622,7 +622,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.25
+              "chance": 0.0675
             }
           }
         }
@@ -630,7 +630,7 @@
     },
     "1.v": {
       "name": "Returning Hammer",
-      "text": "Hammer Spark +15% power. The hammer flies back through a random enemy for 50% damage.",
+      "text": "Hammer Spark +4% power. The hammer flies back through a random enemy for 13.5% damage.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -638,7 +638,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.15
+          "v": 0.04
         },
         {
           "k": "hook",
@@ -646,7 +646,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.5,
+              "strike": 0.135,
               "to": "randomEnemy"
             }
           ]
@@ -655,7 +655,7 @@
     },
     "2.f1": {
       "name": "Opening Bolt",
-      "text": "Thunder Strike deals 5% more damage per rank to enemies at full HP.",
+      "text": "Thunder Strike deals 1.25% more damage per rank to enemies at full HP.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -665,7 +665,7 @@
             "targetFullHp": true
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.0125
           },
           "rank": true
         }
@@ -673,7 +673,7 @@
     },
     "2.f2": {
       "name": "Sky Mark",
-      "text": "Thunder Strike has +3% critical chance per rank against Hobbled or Stunned enemies.",
+      "text": "Thunder Strike has +0.75% critical chance per rank against Hobbled or Stunned enemies.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -686,7 +686,7 @@
             ]
           },
           "mod": {
-            "critBonus": 0.03
+            "critBonus": 0.0075
           },
           "rank": true
         }
@@ -694,7 +694,7 @@
     },
     "2.f3": {
       "name": "Grounding",
-      "text": "When Thunder Strike kills an enemy, restore 2 MP per rank.",
+      "text": "When Thunder Strike kills an enemy, restore 1 MP per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -704,7 +704,7 @@
           "rank": true,
           "do": [
             {
-              "mp": 2
+              "mp": 1
             }
           ]
         }
@@ -712,7 +712,7 @@
     },
     "2.n0": {
       "name": "Forked Bolt",
-      "text": "Thunder Strike also strikes the enemies beside the target for 40% damage.",
+      "text": "Thunder Strike also strikes the enemies beside the target for 11% damage.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -720,14 +720,14 @@
           "h": "target",
           "splash": {
             "pattern": "perpendicular",
-            "mult": 0.4
+            "mult": 0.11
           }
         }
       ]
     },
     "2.r": {
       "name": "Earthed Bolt",
-      "text": "When Thunder Strike hits a Hobbled enemy, restore 2 MP per rank.",
+      "text": "When Thunder Strike hits a Hobbled enemy, restore 1 MP per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -741,7 +741,7 @@
           "rank": true,
           "do": [
             {
-              "mp": 2
+              "mp": 1
             }
           ]
         }
@@ -765,7 +765,7 @@
     },
     "2.ma": {
       "name": "Storm Lock",
-      "text": "Thunder Strike has a 30% chance to Stun already Hobbled enemies for 1 turn.",
+      "text": "Thunder Strike has an 8% chance to Stun already Hobbled enemies for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -778,7 +778,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.3
+              "chance": 0.08
             }
           }
         }
@@ -855,7 +855,7 @@
     },
     "2.mb": {
       "name": "Drumroll Thunder",
-      "text": "While Hasted, Thunder Strike deals 20% more damage.",
+      "text": "While Hasted, Thunder Strike deals 5.5% more damage.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -865,14 +865,14 @@
             "selfStatus": "haste"
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.055
           }
         }
       ]
     },
     "2.v": {
       "name": "Second Thunder",
-      "text": "Thunder Strike +15% power. A second bolt falls on the same spot at the start of your next turn for 60% power.",
+      "text": "Thunder Strike +4% power. A second bolt falls on the same spot at the start of your next turn for 16% power.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -880,7 +880,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.15
+          "v": 0.04
         },
         {
           "k": "hook",
@@ -890,7 +890,7 @@
             {
               "cast": "thunder_strike",
               "delay": 1,
-              "power": 0.6,
+              "power": 0.16,
               "noChain": true
             }
           ]
@@ -899,7 +899,7 @@
     },
     "3.f1": {
       "name": "Taut Skin",
-      "text": "War Drum's Haste gives 3% more Speed per rank.",
+      "text": "War Drum's Haste gives 0.75% more Speed per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -908,7 +908,7 @@
           "sel": "status:haste",
           "mod": {
             "statusPotency": {
-              "speedMult": 0.03
+              "speedMult": 0.0075
             }
           },
           "rank": true
@@ -938,7 +938,7 @@
     },
     "3.f3": {
       "name": "Battle Rhythm",
-      "text": "Units Hasted by your War Drum take 2% less damage per rank.",
+      "text": "Units Hasted by your War Drum take 0.5% less damage per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -948,14 +948,14 @@
           "who": "team",
           "status": "haste",
           "mine": true,
-          "mul": -0.02,
+          "mul": -0.005,
           "rank": true
         }
       ]
     },
     "3.n0": {
       "name": "Call and Answer",
-      "text": "Everyone War Drum Hastes gets their next turn 10% sooner.",
+      "text": "Everyone War Drum Hastes gets their next turn 2.75% sooner.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -964,7 +964,7 @@
           "on": "skillUse",
           "do": [
             {
-              "sooner": 0.1,
+              "sooner": 0.0275,
               "to": "castTargets"
             }
           ]
@@ -973,7 +973,7 @@
     },
     "3.r": {
       "name": "War Song",
-      "text": "Units Hasted by your War Drum deal 2% more damage per rank.",
+      "text": "Units Hasted by your War Drum deal 0.5% more damage per rank.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -982,7 +982,7 @@
           "sel": "status:haste",
           "mod": {
             "statusPotency": {
-              "damageDealtMult": 0.02
+              "damageDealtMult": 0.005
             }
           },
           "rank": true
@@ -1068,7 +1068,7 @@
     },
     "3.fb": {
       "name": "Thunder Drum",
-      "text": "Each War Drum lowers Stormcall's cooldown by 2 turns (instead of 1). War Drum Hastes only you.",
+      "text": "Each War Drum lowers Stormcall's cooldown by 2 turns (instead of 1). War Drum Hastes only you, 1 turn longer and 50% stronger (+45% Speed).",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1087,12 +1087,29 @@
           "k": "hook",
           "h": "target",
           "target": "self"
+        },
+        {
+          "k": "skill",
+          "sel": "status:haste",
+          "f": "turns",
+          "op": "add",
+          "v": 1
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:haste",
+          "mod": {
+            "statusPotency": {
+              "speedMult": 0.15
+            }
+          }
         }
       ]
     },
     "3.mb": {
       "name": "Storm Song",
-      "text": "While Hasted, Stormcall deals 20% more damage.",
+      "text": "While Hasted, Stormcall deals 5.5% more damage.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1103,14 +1120,14 @@
             "selfStatus": "haste"
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.055
           }
         }
       ]
     },
     "3.v": {
       "name": "Saga of Storms",
-      "text": "War Drum's Haste lasts 1 turn longer. Each War Drum casts a free Thunder Strike at 60% power on a random enemy.",
+      "text": "War Drum's Haste lasts 1 turn longer. Each War Drum casts a free Thunder Strike at 16% power on a random enemy.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1127,7 +1144,7 @@
           "do": [
             {
               "cast": "thunder_strike",
-              "power": 0.6,
+              "power": 0.16,
               "to": "randomEnemy",
               "noChain": true
             }
@@ -1137,7 +1154,7 @@
     },
     "4.u1": {
       "name": "Long Arc",
-      "text": "Stormcall's jumps deal 85% damage (instead of 75%).",
+      "text": "Stormcall's jumps deal 77.75% damage (instead of 75%).",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1145,13 +1162,13 @@
           "sel": "damage",
           "f": "falloff",
           "op": "add",
-          "v": 0.1
+          "v": 0.0275
         }
       ]
     },
     "4.u2": {
       "name": "Iron Magnet",
-      "text": "Stormcall deals 2% more damage for every 10 armor the target has.",
+      "text": "Stormcall deals 0.5% more damage for every 10 armor the target has.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1161,7 +1178,7 @@
             "targetArmor": 10
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.005
           }
         }
       ]
@@ -1202,7 +1219,7 @@
     },
     "4.r2": {
       "name": "Thunder Tempo",
-      "text": "After Stormcall, your next turn comes 25% sooner.",
+      "text": "After Stormcall, your next turn comes 6.75% sooner.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1211,7 +1228,7 @@
           "on": "skillUse",
           "do": [
             {
-              "sooner": 0.25
+              "sooner": 0.0675
             }
           ]
         }
@@ -1253,7 +1270,7 @@
     },
     "4.d2": {
       "name": "Overload",
-      "text": "Stormcall has a 25% chance to Stun already Hobbled enemies for 1 turn.",
+      "text": "Stormcall has a 6.75% chance to Stun already Hobbled enemies for 1 turn.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1266,7 +1283,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.25
+              "chance": 0.0675
             }
           }
         }
@@ -1274,7 +1291,7 @@
     },
     "4.d3": {
       "name": "Grounded Storm",
-      "text": "When Stormcall Stuns an enemy, restore 6 MP and reset Thunder Strike's cooldown.",
+      "text": "When Stormcall Stuns an enemy, restore 2 MP and reset Thunder Strike's cooldown.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1284,7 +1301,7 @@
           "status": "stun",
           "do": [
             {
-              "mp": 6
+              "mp": 2
             },
             {
               "cooldown": "reset",
@@ -1326,7 +1343,7 @@
     },
     "4.l3": {
       "name": "Final Verse",
-      "text": "When Stormcall kills an enemy, all allies get their next turn 10% sooner.",
+      "text": "When Stormcall kills an enemy, all allies get their next turn 2.75% sooner.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1336,7 +1353,7 @@
           "perCast": 1,
           "do": [
             {
-              "sooner": 0.1,
+              "sooner": 0.0275,
               "to": "allAllies"
             }
           ]

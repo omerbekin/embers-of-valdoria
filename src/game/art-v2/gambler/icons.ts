@@ -37,7 +37,27 @@ interface DieLook {
   special?: ['top' | 'left' | 'right', number, string];
 }
 
-/** 3/4 görünüşte zar: üst eşkenar dörtgen + sol + sağ yüz, yüzlerde noktalar. (cx,cy) = üst yüzün alt köşesi; s = kenar. */
+/** Çokgeni merkezine doğru küçültür (yüzler arası koyu dikiş / pah için). */
+function inset(pts: P[], k: number): number[] {
+  const cx = pts.reduce((t, q) => t + q[0], 0) / pts.length;
+  const cy = pts.reduce((t, q) => t + q[1], 0) / pts.length;
+  return pts.flatMap((q) => [cx + (q[0] - cx) * k, cy + (q[1] - cy) * k]);
+}
+/** Köşeleri kırpılmış (yuvarlak görünümlü) çokgen: her köşe kenarlar boyunca `r` oranında kesilir. */
+function rounded(pts: P[], r: number): number[] {
+  const out: number[] = [];
+  pts.forEach((q, i) => {
+    const pr = pts[(i + pts.length - 1) % pts.length]!;
+    const nx = pts[(i + 1) % pts.length]!;
+    out.push(q[0] + (pr[0] - q[0]) * r, q[1] + (pr[1] - q[1]) * r, q[0] + (nx[0] - q[0]) * r, q[1] + (nx[1] - q[1]) * r);
+  });
+  return out;
+}
+
+/**
+ * 3/4 görünüşte yuvarlak köşeli zar (Ömer 2026-11-22): üst + sol + sağ yüz görünür. Işık sol üstten: üst yüz en parlak, sol orta, sağ koyu;
+ * sağ yüzde alta doğru gölge şeridi, üst kenarda ışık çizgisi, yüzler arası koyu dikiş, köşede parlama. (cx,cy) = üst yüzün alt köşesi; s = kenar.
+ */
 function die3d(g: PxGrid, cx: number, cy: number, s: number, faces: { top: number; left: number; right: number }, look: DieLook): void {
   const w = s * 0.87;
   const T0: P = [cx, cy - s];
@@ -47,11 +67,15 @@ function die3d(g: PxGrid, cx: number, cy: number, s: number, faces: { top: numbe
   const L2: P = [cx, cy + s];
   const L3: P = [cx - w, cy + s * 0.5];
   const R2: P = [cx + w, cy + s * 0.5];
-  g.poly([...T3, ...T2, ...L2, ...L3], look.left);
-  g.poly([...T2, ...T1, ...R2, ...L2], look.right);
-  g.poly([...T3, ...T0, ...T1, ...T2], look.top);
-  // yuvarlatılmış kenar parlaması
-  g.line(T3[0] + 0.4, T3[1] + 0.2, T2[0], T2[1] - 0.4, 'w', 0.25).line(T2[0], T2[1] + 0.2, T1[0] - 0.4, T1[1] + 0.2, 'w', 0.25);
+  // gövde: yuvarlatılmış koyu silüet (kenar rengi), üstüne yüzler biraz içeride (koyu dikiş kalır)
+  g.poly(rounded([T0, T1, R2, L2, L3, T3], 0.2), 'o');
+  g.poly(inset([T3, T2, L2, L3], 0.93), look.left);
+  g.poly(inset([T2, T1, R2, L2], 0.93), look.right);
+  g.poly(inset([T3, T0, T1, T2], 0.93), look.top);
+  // gölge şeridi: sağ yüzün alt kenarı
+  g.poly([L2[0] + 0.9, L2[1] - 3.4, R2[0] - 1.3, R2[1] - 3.4, R2[0] - 1.3, R2[1] - 1.4, L2[0] + 0.9, L2[1] - 1.2], 'o');
+  // ışık çizgileri: üst yüzün iki ön kenarı
+  g.line(T3[0] + 1, T3[1] + 0.5, T2[0] - 0.2, T2[1] - 0.8, 'w', 0.55).line(T2[0] + 0.2, T2[1] - 0.8, T1[0] - 1, T1[1] + 0.5, 'w', 0.35);
   const face = (o: P, u: P, v: P, n: number, which: 'top' | 'left' | 'right') => {
     PIPS[n]!.forEach(([a, b], i) => {
       const x = o[0] + (u[0] - o[0]) * a + (v[0] - o[0]) * b;
@@ -64,6 +88,8 @@ function die3d(g: PxGrid, cx: number, cy: number, s: number, faces: { top: numbe
   face(T3, T0, T2, faces.top, 'top');
   face(T3, T2, L3, faces.left, 'left');
   face(T2, T1, L2, faces.right, 'right');
+  // köşe parlaması
+  g.disc(T0[0] - s * 0.05, T0[1] + s * 0.16, Math.max(0.35, s * 0.06), 'w');
 }
 
 /** Yüzü dönük altın para: kenar bandı, iç halka, kabartma (taç). */
@@ -171,6 +197,12 @@ const dieSprite = (top: number, left: number, right: number, gold = false): V2Sp
 });
 
 export const SPRITES: Record<string, V2SpriteEntry> = {
+  // Durmuş zar: üstte motorun verdiği yüz (komşu yüzler gerçek zar düzeninden: karşılıklı yüzler toplamı 7)
+  dv1: dieSprite(1, 2, 3), dv2: dieSprite(2, 1, 3), dv3: dieSprite(3, 1, 2), dv4: dieSprite(4, 1, 2), dv5: dieSprite(5, 1, 3), dv6: dieSprite(6, 2, 3),
+  gdv1: dieSprite(1, 2, 3, true), gdv2: dieSprite(2, 1, 3, true), gdv3: dieSprite(3, 1, 2, true), gdv4: dieSprite(4, 1, 2, true), gdv5: dieSprite(5, 1, 3, true), gdv6: dieSprite(6, 2, 3, true),
+  // Havada dönerken değişen kareler
+  die_d: dieSprite(5, 6, 4), die_e: dieSprite(6, 4, 2), die_f: dieSprite(2, 6, 3),
+  gdie_d: dieSprite(3, 6, 2, true), gdie_e: dieSprite(6, 2, 3, true), gdie_f: dieSprite(4, 1, 2, true),
   // Kemik zar: dönerken sırayla değişen kareler (gerçek zar düzeni: komşu yüzler)
   die_a: dieSprite(1, 2, 3),
   die_b: dieSprite(4, 5, 1),

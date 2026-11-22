@@ -197,7 +197,7 @@ describe('kayıt göçü: hiçbir item kaybolmaz', () => {
   });
 
   it('dosya sürüm 13 okunur, yeniye taşınmış sayılır', () => {
-    expect(SAVE_VERSION).toBe(14);
+    expect(SAVE_VERSION).toBe(15);
     const kv = memoryKV();
     const s = oldEq(map1(), 'pilgrims_token');
     kv.setItem(SAVE_KEY, JSON.stringify({ version: 13, counter: 1, lastSlot: 0, slots: [{ campaignId: s.campaignId, mode: 'normal', difficulty: 'medium', startedAt: 't', lastPlayed: 't', saves: [{ id: 'y', kind: 'auto', savedAt: 't', mode: 'normal', campaignId: s.campaignId, summary: {}, state: s }] }, null, null] }));

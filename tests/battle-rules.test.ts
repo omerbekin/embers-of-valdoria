@@ -168,6 +168,15 @@ describe('B3 Break the Totem', () => {
       expect(ofType(b.log, 'objective').at(-1)).toMatchObject({ objective: 'totem', state: 'done' });
     });
 
+  for (const mode of MODES)
+    it(`${mode}: nesne kırıldığı anda oyuncu tarafı da bittiyse oyuncu kaybeder (aynı anda bitiş, form r39)`, () => {
+      const b = make(11, mode, teams());
+      for (const c of b.fighting('party')) b.debugKill(c.uid, false);
+      for (const c of b.fighting('enemy')) b.debugKill(c.uid, false);
+      b.debugKill(b.objectiveUnits()[0]!.uid);
+      expect(b.winner).toBe('enemy');
+    });
+
   it('nesne dururken her `every` turda takviye gelir (savaşan düşman maxEnemies kadar)', () => {
     const b = make(11, 'turns', teams());
     passTurns(b, 60);

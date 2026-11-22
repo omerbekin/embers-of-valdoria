@@ -190,6 +190,7 @@ describe('Faz 4c: ağaç zeminleri', () => {
     const b = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '1.eb': 1, '1.mb': 1 })), 11, 'turns');
     const me = P(b);
     const m = E(b);
+    me.stats.str *= 10; // küçük STR'de zemin tiki zırhla 0'a inmesin (yüzde veriden, ağaç ayarı 2026-11-21)
     cast(b, me, 'tremor_slam', m);
     const g = grounds(b, 'quaking_ground');
     expect(g).toHaveLength(1);
@@ -226,7 +227,8 @@ describe('Faz 4c: ağaç zeminleri', () => {
     const b = make({ 0: 'archer' }, { 0: 'mage' }, withTree(0, only('archer', { '3.eb': 1, '3.fb': 1 })), 11, 'turns');
     const me = P(b);
     const m = E(b);
-    me.stats = { ...me.stats, dex: me.stats.dex * 4 }; // düşük güçte (denge turu) tik zırhla 0'a yuvarlanmasın
+    me.stats = { ...me.stats, dex: me.stats.dex * 20 }; // düşük güçte (denge turu; ağaç ayarı 2026-11-21 x4 -> x20) tik zırhla 0'a yuvarlanmasın
+    m.hp = m.maxHp = 99999; // güçlü vuruşta ölmesin
     cast(b, me, 'arrow_rain', m, 0);
     const g = grounds(b, 'lingering_rain')[0]!;
     expect(g.turns).toBe(4);
@@ -237,19 +239,21 @@ describe('Faz 4c: ağaç zeminleri', () => {
     expect(m.hp).toBeLessThan(hp0);
   });
 
-  it('Root Field + Hushing Moss + Overgrown Field: kök tarlası 4 tur, tur başında Slow + Silence + doğa hasarı', () => {
+  it('Root Field + Hushing Moss + Overgrown Field: kök tarlası 3 tur, tur başında Slow + Silence (vuruştan) + doğa hasarı', () => {
     const b = make({ 0: 'druid' }, { 0: 'mage' }, withTree(0, only('druid', { '2.n0': 1, '2.ea': 1, '2.ma': 1 })), 11, 'turns');
     const me = P(b);
     const m = E(b);
     m.hp = m.maxHp = 9999;
+    me.stats.int *= 10; // küçük INT'te tik 0'a inmesin (yüzde veriden)
     cast(b, me, 'natures_wrath', m, 0);
+    expect(has(m, 'silence')).toBe(true); // tur 4: Hushing Moss vuruşta 1 tur Silence (alanda sürekli değil)
     const g = grounds(b, 'root_field')[0]!;
-    expect(g.turns).toBe(4);
+    expect(g.turns).toBe(2 + (treeOf('druid')!.nodes['2.ma']!.fx![0] as unknown as { v: number }).v); // tur 4: Overgrown +1 tur
     expect(g.amount).toBeGreaterThan(0);
     const hp0 = m.hp;
     nextTurn(b, m);
     expect(has(m, 'slow')).toBe(true);
-    expect(has(m, 'silence')).toBe(true);
+    expect(has(m, 'silence')).toBe(false); // alan artık Silence vermez
     expect(m.hp).toBeLessThan(hp0);
   });
 
@@ -486,7 +490,7 @@ describe('Faz 4c: durum / Doom aktarımı', () => {
       const r0 = me.rage ?? 0;
       for (let i = 0; i < 5 && has(d, 'stun'); i++) nextTurn(b, d);
       expect(has(d, 'stun')).toBe(false);
-      expect((me.rage ?? 0) - r0).toBeGreaterThanOrEqual(10);
+      expect((me.rage ?? 0) - r0).toBeGreaterThanOrEqual(num('warrior', '3.v', '1.do.0.rage')); // Rage veriden
       return true;
     });
   });
@@ -508,7 +512,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
     expect(ticks.length).toBe(2);
     const burst = evs.filter((e) => e.type === 'damage' && e.target === d.uid && e.source === me.uid && !e.status);
     expect(burst.length).toBe(1);
-    expect(burst[0]!.type === 'damage' && burst[0]!.amount + burst[0]!.absorbed).toBe(Math.round(sum * 0.5));
+    expect(burst[0]!.type === 'damage' && burst[0]!.amount + burst[0]!.absorbed).toBe(Math.round(sum * num('druid', '0.mb', '0.do.0.damage'))); // pay veriden
   });
 
   it('Lifebloom: Healing Rain ilk şifası zaten yağmurdaki dosta %50 güçlü; zeminin kendi tiki güçlenmez', () => {
@@ -521,7 +525,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
     const dry = amountOf(cast(b, me, 'rejuvenate', ally));
     b.debugClearCooldowns();
     const wet = amountOf(cast(b, me, 'rejuvenate', ally));
-    expect(wet).toBeCloseTo(dry * 1.5, -1);
+    expect(wet).toBeCloseTo(dry * (1 + num('druid', '3.mb', '0.mul')), -1); // oran veriden
     expect(wet).toBeGreaterThan(dry);
     const perTurn = b.ground.find((g) => g.ground === 'healing_rain')!.amount;
     const tick = nextTurn(b, ally).filter((e) => e.type === 'heal' && e.target === ally.uid && e.cause === 'healing_rain');
@@ -785,7 +789,7 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
     expect(bad('druid', [{ summon: 'treant', k: 'stat', f: 'hpMult', op: 'mul', v: 0.1 }])).toBe(false);
     const s = only('undead', { '4.d1': 1 })!;
     expect(Object.keys(s.summons!)).toEqual(['skeleton#fed']);
-    expect(s.summons!['skeleton#fed']!.hpMult).toBeCloseTo(1.15);
+    expect(s.summons!['skeleton#fed']!.hpMult).toBeCloseTo(1 + num('undead', '4.d1', '1.v'));
   });
 
   it('Heavy Boughs / Heavy Smash: Treant Root Smash yamalı (+%20) ve yavaş / sersem hedefe +%25 koşullu', () => {
@@ -805,7 +809,7 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
     };
     const plain = hit(false);
     expect(plain).toBeGreaterThan(0);
-    expect(Math.abs(hit(true) - plain * 0.85)).toBeLessThanOrEqual(1);
+    expect(Math.abs(hit(true) - plain * (1 + num('druid', 'bar4', '0.mul')))).toBeLessThanOrEqual(1);
   });
 
   it('Splinter Burst: Treant ölünce Druid en yakın 2 düşmana %60 INT doğa hasarı verir; Brittle Bark %90 ve Treant -%20 can', () => {
@@ -882,7 +886,7 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
     const u = P(b, 3);
     const def = content.summons.skeleton!;
     const plain = make({ 3: 'undead' }, { 0: 'warrior' });
-    expect(b.summonDefFor(u, def, true).stats.hp).toBe(Math.max(1, Math.round(plain.summonDefFor(P(plain, 3), def, true).stats.hp * 1.15)));
+    expect(b.summonDefFor(u, def, true).stats.hp).toBe(Math.max(1, Math.round(plain.summonDefFor(P(plain, 3), def, true).stats.hp * (1 + num('undead', '4.d1', '1.v')))));
     expect(b.summonDefFor(u, def, false).stats.hp).toBe(plain.summonDefFor(P(plain, 3), def, false).stats.hp);
     const pv = b as unknown as Priv3;
     expect(pv.summonTree(u, 'skeleton', true)!.skills!.skeleton_slash!.cooldown).toBe(0);
@@ -895,8 +899,8 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
     const s0 = spawn(plain, P(plain, 3), 'raise_dead');
     const s = spawn(b, P(b, 3), 'raise_dead');
     expect(s.lifespan).toBe((s0.lifespan ?? 0) + 1);
-    expect(s.maxHp).toBe(Math.max(1, Math.round(s0.maxHp * 1.2)));
-    expect(s.stats.armor).toBe(s0.stats.armor + 10);
+    expect(s.maxHp).toBe(Math.max(1, Math.round(s0.maxHp * (1 + num('undead', '4.l1', '0.v')))));
+    expect(s.stats.armor).toBe(s0.stats.armor + num('undead', '4.l2', '0.v'));
     expect(has(s, 'fortify')).toBe(true);
     const c = make({ 3: 'undead' }, { 0: 'warrior' }, withTree(3, only('undead', { '4.l1': 1, '4.l3': 1 })));
     expect(spawn(c, P(c, 3), 'raise_dead').lifespan).toBeUndefined();

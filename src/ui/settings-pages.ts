@@ -49,14 +49,24 @@ export const SETTINGS_LABELS: Record<SettingsItemKey, string> = {
   account: 'Account',
 };
 
-/** Sayfa görünür mü: Account yalnızca giriş kullanılabilirken (src/cloud/cloud.ts > isLoginAvailable). */
-export function pageVisible(key: SettingsPageKey, loginAvailable: boolean): boolean {
+/**
+ * Telefon / dokunmatik düzen mi (Ömer 2026-11-20): UI sekmesi (imleç seçimi yalnızca fare içindir) burada gizlenir. TEK koşul bu;
+ * dokunmatiğe uygun yeni bir ayar eklenirse sekme yeniden açılır (kod durur, yalnız bu işlev ve pageVisible'daki satır değişir).
+ */
+export function touchSettingsLayout(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.classList.contains('short') || !!window.matchMedia?.('(pointer: coarse)').matches;
+}
+
+/** Sayfa görünür mü: Account yalnızca giriş kullanılabilirken (src/cloud/cloud.ts > isLoginAvailable); UI telefon / dokunmatik düzende gizli. */
+export function pageVisible(key: SettingsPageKey, loginAvailable: boolean, touch = false): boolean {
+  if (key === 'ui' && touch) return false;
   return key !== 'account' || loginAvailable;
 }
 
 /** Görünen sayfalar (kategori sütunu). */
-export function visiblePages(loginAvailable: boolean): SettingsPage[] {
-  return SETTINGS_PAGES.filter((p) => pageVisible(p.key, loginAvailable));
+export function visiblePages(loginAvailable: boolean, touch = false): SettingsPage[] {
+  return SETTINGS_PAGES.filter((p) => pageVisible(p.key, loginAvailable, touch));
 }
 
 /** Privacy sayfasının altındaki kısa gizlilik satırı (ayrıntı: Info penceresi, src/diag/diag-notice.ts). */
@@ -81,8 +91,8 @@ export function pageIndex(key: SettingsPageKey): number {
 }
 
 /** Kategori sütununda d adım (yukarı -1 / aşağı +1), uçlarda döner; gizli sayfalar (giriş yokken Account) atlanır. */
-export function stepPage(key: SettingsPageKey, d: number, loginAvailable = true): SettingsPageKey {
-  const list = visiblePages(loginAvailable);
+export function stepPage(key: SettingsPageKey, d: number, loginAvailable = true, touch = false): SettingsPageKey {
+  const list = visiblePages(loginAvailable, touch);
   const n = list.length;
   const i = list.findIndex((p) => p.key === key);
   if (i < 0) return list[0]!.key;

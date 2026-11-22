@@ -30,10 +30,10 @@ function classSkillData(classId: string): SkData[] {
   if (!def) return [];
   const { skills, passive } = classSkills(classId);
   const out: SkData[] = [];
-  if (passive) out.push({ name: passive.name, iconUrl: iconUrl(passive.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), kind: 'pas' });
+  if (passive) out.push({ name: passive.name, iconUrl: iconUrl(passive.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), kind: 'pas', key: 'passive' });
   skills.slice(0, 4).forEach((s, i) => {
     const r = skillRow(s, def.stats);
-    out.push({ name: s.name, iconUrl: iconUrl(skillIconName(s), s.fx, ownerOfSkill(s.id)), kind: i === 3 ? 'ult' : '', cost: r.cost, cd: r.cooldown });
+    out.push({ name: s.name, key: s.id, iconUrl: iconUrl(skillIconName(s), s.fx, ownerOfSkill(s.id)), kind: i === 3 ? 'ult' : '', cost: r.cost, cd: r.cooldown });
   });
   return out;
 }
@@ -45,7 +45,7 @@ function plate(d: SkData): string {
   const cd = d.cd ? `<span class="chip cd">${esc(d.cd)}</span>` : '';
   const free = !d.cost && !d.cd && d.kind !== 'pas' ? '<span class="chip free">Free</span>' : '';
   // ipucu verilmişse (Gear Sheet): tarayıcı title'ı yok, yüzen ipucu `.bh-sktip` kopyasından açılır (character-panel.ts > skillStrip)
-  const title = d.tip ? '' : ` title="${esc(d.name)}"`;
+  const title = d.tip || d.key ? '' : ` title="${esc(d.name)}"`;
   const key = d.key ? ` data-skill="${esc(d.key)}"` : '';
   const tip = d.tip ? `<div class="bh-sktip bh-panel bh-corners">${d.tip}</div>` : '';
   return `<div class="hsk ${d.kind}"${title}${key}>${tag ? `<span class="tg">${tag}</span>` : ''}${ic}<div class="tx"><span class="sn">${esc(d.name)}</span><span class="cs">${cost}${cd}${free}</span></div>${tip}</div>`;

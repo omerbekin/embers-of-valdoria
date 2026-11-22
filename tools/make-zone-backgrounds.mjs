@@ -9,8 +9,8 @@
 // (Ömer eski q82 sıkıştırma izlerini beğenmedi).
 // Zemin kesirleri (kaynakta ölçülen y / 1024) data/battle-layout.json > backgrounds.floor'a yazılır (çıktıda listelenir).
 //
-// Yeniden üretmek için: node tools/make-zone-backgrounds.mjs
-import { statSync } from 'node:fs';
+// Yeniden üretmek için: node tools/make-zone-backgrounds.mjs   (yalnız belirli kimlikler: node tools/make-zone-backgrounds.mjs castle-morvane)
+import { existsSync, statSync } from 'node:fs';
 import sharp from 'sharp';
 
 const SRC_DIR = 'assets/source/backgrounds-v3';
@@ -20,17 +20,25 @@ const NEAR_LOSSLESS = 60; // 100 = kayıpsız; 60 gözle ayırt edilmez, dosya ~
 
 /** Kaynakta (1024 yükseklik) ölçülen zemin çizgisi: çit / mezar taşı / kaya / korkuluk / sütun kaidesi dibi, yürünebilir zeminin başladığı y (v3, 2026-10-13). */
 const FLOOR_SRC_Y = {
-  'ember-road': 610,
-  'border-road': 600,
-  'windy-moor': 605,
-  'iron-pass': 620,
-  'misty-marsh': 640,
+  'ember-road': 612,
+  'border-road': 603,
+  'windy-moor': 608,
+  'iron-pass': 622,
+  'misty-marsh': 650,
   'grave-field': 600,
   'pilgrim-road': 610,
   'ashen-plain': 620,
   'thornwood-hollow': 600,
-  'kings-bridge': 625, // köprü korkuluğunun dibi (birimler güvertede, korkuluğun önünde)
-  'castle-hall': 615, // sütun kaidelerinin dibi (birimler kaidelerin önünde)
+  'kings-bridge': 642, // köprü korkuluğunun dibi (birimler güvertede, korkuluğun önünde)
+  'castle-hall': 634, // sütun kaidelerinin dibi (birimler kaidelerin önünde)
+  'castle-morvane': 650, // r41 (2026-11-21): taht basamaklarının dibi, kaynak 0,635 (ChatGPT temiz pixel art)
+  'pirate-cove': 610, // r41 (2026-11-21): iskele kenarı tahtası, kaynak 0,58
+  'dwarf-mine': 600, // r41: taş kaide sırasının üst çizgisi, kaynak 0,57
+  'sea-cave': 628, // r41: kaya ve su kenarı, kaynak 0,61
+  'wreckers-hall': 614, // r41: salon kenar basamağı, kaynak 0,60
+  'ice-cave': 635, // r41: buz zemin kenarı, kaynak 0,62
+  'deserters-camp': 625, // r41 (2026-11-22): kamp tarasi kenarindaki kar ve kaya dizisinin dibi
+  'flooded-crypt': 625, // r41: korkuluk dibi, kaynak 0,61
   // Quick Battle / multiplayer arenaları (v3): çit direklerinin dibi / taş duvar basamağının dibi (ortada)
   'proving-grounds-sunny-afternoon': 540,
   'proving-grounds-sunset': 540,
@@ -40,28 +48,32 @@ const FLOOR_SRC_Y = {
   'duelling-ring-storm': 562,
   // Harita 2 (The Drowned Reach) bölge arka planları: kaynak assets/source/backgrounds-drowned (2026-10-27, Ömer onayı bekliyor); zemin = kıyı / korkuluk / basamak dibi
   'river-gorge': 595,
-  'saltmarsh': 567, // 2026-10-27 yeniden çizim (temiz pixel art): çamur düzlüğünün başladığı çizgi
-  'saltmere-docks': 580, // rıhtım kenar taşının dibi (yeniden çizim)
-  'saltmere-pit': 555, // Fighting Pit: halka duvarının dibi (2026-11-07, Ömer onayı bekliyor)
-  'wreck-cliffs': 560, // kıyı çizgisi (yeniden çizim)
-  'siren-rocks': 574, // deniz kenarı (yeniden çizim)
+  'saltmarsh': 604, // 2026-10-27 yeniden çizim (temiz pixel art): çamur düzlüğünün başladığı çizgi
+  'saltmere-docks': 610, // rıhtım kenar taşının dibi (yeniden çizim)
+  'saltmere-pit': 560, // Fighting Pit: halka duvarının dibi (2026-11-07, Ömer onayı bekliyor)
+  'wreck-cliffs': 572, // kıyı çizgisi (yeniden çizim)
+  'siren-rocks': 603, // deniz kenarı (yeniden çizim)
   'storm-deck': 625, // güverte korkuluğunun dibi
-  'sunken-court': 600, // taht basamaklarının dibi
+  'sunken-court': 605, // taht basamaklarının dibi
   // Harita 3 (The Hollow Crown) bölge arka planları: kaynak assets/source/backgrounds-hollow (2026-10-29, ChatGPT temiz pixel art); zemin = çit / kerb / korkuluk dibi (ölçülen kenar)
   snowline: 583, // çit dibi
-  glacier: 582, // buz kenarı
+  glacier: 588, // buz kenarı
   kharduin: 582, // korkuluk dibi
   'deep-halls': 585, // göl kenarı kerb dibi
-  warrens: 577, // lav kenarı kaya dudağı
-  'forge-heart': 578, // erimiş kanal kerb dibi
+  warrens: 603, // lav kenarı kaya dudağı
+  'forge-heart': 628, // erimiş kanal kerb dibi
 };
 const HOLLOW = new Set(['snowline', 'glacier', 'kharduin', 'deep-halls', 'warrens', 'forge-heart']);
 const DROWNED = new Set(['river-gorge', 'saltmarsh', 'saltmere-docks', 'saltmere-pit', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court']);
 
+const ONLY = process.argv.slice(2);
 const floors = {};
 for (const [id, fy] of Object.entries(FLOOR_SRC_Y)) {
+  if (ONLY.length && !ONLY.includes(id)) continue;
   const out = `${OUT_DIR}/${id}.webp`;
-  const src = sharp(`${DROWNED.has(id) ? 'assets/source/backgrounds-drowned' : HOLLOW.has(id) ? 'assets/source/backgrounds-hollow' : SRC_DIR}/${id}.png`);
+  // r41 (2026-11-22): 18 yeniden cizim + deserters-camp backgrounds-v3'e tasindi; v3'te dosya varsa o kullanilir, yoksa eski bolge klasoru
+  const v3 = `${SRC_DIR}/${id}.png`;
+  const src = sharp(existsSync(v3) ? v3 : `${DROWNED.has(id) ? 'assets/source/backgrounds-drowned' : HOLLOW.has(id) ? 'assets/source/backgrounds-hollow' : SRC_DIR}/${id}.png`);
   const m = await src.metadata();
   if (m.height !== SRC_H) throw new Error(`${id}: kaynak yüksekliği ${m.height} (beklenen ${SRC_H}); FLOOR_SRC_Y yeniden ölçülmeli`);
   await src.webp({ nearLossless: true, quality: NEAR_LOSSLESS, effort: 6 }).toFile(out);

@@ -1,6 +1,6 @@
 {
   "class": "cutthroat",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "b",
@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Light Step",
-        "text": "Each attack you dodge restores 2 MP.",
+        "text": "Each attack you dodge restores 1 MP.",
         "src": "B:V2:bar1",
         "fx": [
           {
@@ -74,7 +74,7 @@
             "on": "dodge",
             "do": [
               {
-                "mp": 2
+                "mp": 1
               }
             ]
           }
@@ -83,7 +83,7 @@
       {
         "at": 15,
         "name": "Killer Instinct",
-        "text": "Your skills +5% critical chance against targets below 50% HP.",
+        "text": "Your skills +1.5% critical chance against targets below 50% HP.",
         "src": "B:V3:bar2",
         "fx": [
           {
@@ -93,7 +93,7 @@
               "targetHpBelow": 0.5
             },
             "mod": {
-              "critBonus": 0.05
+              "critBonus": 0.015
             }
           }
         ]
@@ -101,7 +101,7 @@
       {
         "at": 20,
         "name": "Notched Blade",
-        "text": "Each kill this battle adds +3% to your critical damage.",
+        "text": "Each kill this battle adds +1% to your critical damage.",
         "src": "B:V3:bar3",
         "fx": [
           {
@@ -111,7 +111,7 @@
             "do": [
               {
                 "buff": {
-                  "critDmgMul": 0.03
+                  "critDmgMul": 0.01
                 },
                 "uses": 0,
                 "stack": true
@@ -145,7 +145,7 @@
   "nodes": {
     "0.f1": {
       "name": "Cold Read",
-      "text": "Opportunist bonus +6% per rank against targets below 50% HP.",
+      "text": "Opportunist bonus +2% per rank against targets below 50% HP.",
       "src": "B:V3:0.f1",
       "fx": [
         {
@@ -155,7 +155,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "passiveBonus": 0.06
+            "passiveBonus": 0.02
           },
           "rank": true
         }
@@ -163,7 +163,7 @@
     },
     "0.f2": {
       "name": "Vein Finder",
-      "text": "Your hits on Opportunist targets +4% critical chance per rank.",
+      "text": "Your hits on Opportunist targets +1.25% critical chance per rank.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -173,7 +173,7 @@
             "targetOpportunist": true
           },
           "mod": {
-            "critBonus": 0.04
+            "critBonus": 0.0125
           },
           "rank": true
         }
@@ -181,7 +181,7 @@
     },
     "0.f3": {
       "name": "Feinting Step",
-      "text": "Each attack you dodge adds +3% per rank Opportunist bonus to your next hit.",
+      "text": "Each attack you dodge adds +1% per rank Opportunist bonus to your next hit.",
       "src": "B:V2:0.f2",
       "fx": [
         {
@@ -192,7 +192,7 @@
           "do": [
             {
               "buff": {
-                "passiveBonus": 0.03
+                "passiveBonus": 0.01
               },
               "stack": true
             }
@@ -219,7 +219,7 @@
     },
     "0.r": {
       "name": "Missed Chance",
-      "text": "Opportunist bonus +3% per rank against an enemy that missed you since your last turn.",
+      "text": "Opportunist bonus +1% per rank against an enemy that missed you since your last turn.",
       "src": "B:V2:0.r",
       "fx": [
         {
@@ -229,7 +229,7 @@
             "targetMissedMeSinceTurn": true
           },
           "mod": {
-            "passiveBonus": 0.03
+            "passiveBonus": 0.01
           },
           "rank": true
         }
@@ -237,7 +237,7 @@
     },
     "0.ea": {
       "name": "Killer's Eye",
-      "text": "Your critical hits on Opportunist targets deal 15% increased damage.",
+      "text": "Your critical hits on Opportunist targets deal 4.75% increased damage.",
       "src": "B:V3:0.ea",
       "fx": [
         {
@@ -248,14 +248,14 @@
             "hitIsCrit": true
           },
           "mod": {
-            "powerMul": 0.15
+            "powerMul": 0.0475
           }
         }
       ]
     },
     "0.eb": {
       "name": "Counter Cut",
-      "text": "When a melee enemy misses you, cut it back for 30% DEX; Opportunist applies.",
+      "text": "When a melee enemy misses you, cut it back for 9.5% DEX; Opportunist applies.",
       "src": "B:V2:0.ea",
       "new": true,
       "approved": true,
@@ -270,7 +270,7 @@
           },
           "do": [
             {
-              "damage": 0.3,
+              "damage": 0.095,
               "stat": "dex",
               "passive": true,
               "to": "source"
@@ -299,7 +299,7 @@
     },
     "0.fa": {
       "name": "Glass Knife",
-      "text": "Your critical hits on Opportunist targets deal 30% increased damage, but non-critical hits on them deal 15% less damage.",
+      "text": "Your critical hits on Opportunist targets deal 9.5% increased damage, but non-critical hits on them deal 15% less damage.",
       "src": "B:V3:0.fa",
       "fx": [
         {
@@ -310,7 +310,7 @@
             "hitIsCrit": true
           },
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.095
           }
         },
         {
@@ -345,7 +345,7 @@
           },
           "do": [
             {
-              "damage": 0.6,
+              "damage": 0.19,
               "stat": "dex",
               "passive": true,
               "to": "source"
@@ -382,7 +382,7 @@
           },
           "do": [
             {
-              "damage": 0.3,
+              "damage": 0.095,
               "stat": "dex",
               "passive": true,
               "crit": true,
@@ -414,7 +414,7 @@
           },
           "do": [
             {
-              "damage": 0.3,
+              "damage": 0.095,
               "stat": "dex",
               "passive": true,
               "to": "source"
@@ -437,7 +437,7 @@
           },
           "do": [
             {
-              "damage": 0.6,
+              "damage": 0.19,
               "stat": "dex",
               "passive": true,
               "crit": true,
@@ -471,7 +471,7 @@
           },
           "do": [
             {
-              "damage": 0.6,
+              "damage": 0.19,
               "stat": "dex",
               "passive": true,
               "to": "source"
@@ -503,7 +503,7 @@
     },
     "1.f1": {
       "name": "Balanced Blade",
-      "text": "Venom Edge has 6% increased power per rank against Wounded targets.",
+      "text": "Venom Edge has 2% increased power per rank against Wounded targets.",
       "src": "B:V4:1.f1",
       "fx": [
         {
@@ -513,7 +513,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -521,7 +521,7 @@
     },
     "1.f2": {
       "name": "Seeking Tip",
-      "text": "Venom Edge +3% critical chance per rank.",
+      "text": "Venom Edge +1% critical chance per rank.",
       "src": "B:V3:1.f2",
       "fx": [
         {
@@ -529,21 +529,21 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.03,
+          "v": 0.01,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Twist the Knife",
-      "text": "Venom Edge's critical hits deal 6% more damage per rank.",
+      "text": "Venom Edge's critical hits deal 2% more damage per rank.",
       "src": "B:V3:1.f3",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.06
+            "critDmgMul": 0.02
           },
           "rank": true
         }
@@ -568,7 +568,7 @@
     },
     "1.r": {
       "name": "Honed Point",
-      "text": "Venom Edge has 3% increased power per rank against targets below 50% HP.",
+      "text": "Venom Edge has 1% increased power per rank against targets below 50% HP.",
       "src": "B:V3:1.f1",
       "fx": [
         {
@@ -578,7 +578,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.01
           },
           "rank": true
         }
@@ -586,7 +586,7 @@
     },
     "1.ea": {
       "name": "Finishing Cut",
-      "text": "Venom Edge deals 40% increased damage against targets below 30% HP.",
+      "text": "Venom Edge deals 13% increased damage against targets below 30% HP.",
       "src": "B:V3:1.ea",
       "fx": [
         {
@@ -596,14 +596,14 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.4
+            "powerMul": 0.13
           }
         }
       ]
     },
     "1.eb": {
       "name": "Backhand Cut",
-      "text": "Venom Edge's backswing also cuts one enemy beside the target for 45% and Wounds it.",
+      "text": "Venom Edge's backswing also cuts one enemy beside the target for 14.5% and Wounds it.",
       "src": "B:V4:1.eb*",
       "fx": [
         {
@@ -612,7 +612,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.45,
+              "strike": 0.145,
               "to": "beside",
               "count": 1
             },
@@ -628,7 +628,7 @@
     },
     "1.ma": {
       "name": "Clean Kill",
-      "text": "If Venom Edge kills, you regain 8 MP and Backstab's cooldown drops by 1.",
+      "text": "If Venom Edge kills, you regain 3 MP and Backstab's cooldown drops by 1.",
       "src": "B:V3:1.ma",
       "syn": "Backstab",
       "fx": [
@@ -638,7 +638,7 @@
           "on": "kill",
           "do": [
             {
-              "mp": 8
+              "mp": 3
             },
             {
               "cooldown": -1,
@@ -650,7 +650,7 @@
     },
     "1.fa": {
       "name": "Butcher's Haste",
-      "text": "Venom Edge deals 35% increased damage against targets below 50% HP, but 25% less against targets above it.",
+      "text": "Venom Edge deals 11% increased damage against targets below 50% HP, but 8% less against targets above it.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -660,7 +660,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.35
+            "powerMul": 0.11
           }
         },
         {
@@ -672,14 +672,14 @@
             }
           },
           "mod": {
-            "powerMul": -0.25
+            "powerMul": -0.08
           }
         }
       ]
     },
     "1.fb": {
       "name": "Thirsty Edge",
-      "text": "Venom Edge heals you for 30% of its damage on a kill, but no longer Wounds.",
+      "text": "Venom Edge heals you for 9.5% of its damage on a kill, but no longer Wounds.",
       "src": "B:V3:1.fb",
       "fx": [
         {
@@ -689,7 +689,7 @@
             "killingBlow": true
           },
           "mod": {
-            "lifesteal": 0.3
+            "lifesteal": 0.095
           }
         },
         {
@@ -710,7 +710,7 @@
           "drop": "1.eb",
           "do": [
             {
-              "strike": 0.45,
+              "strike": 0.145,
               "to": "beside",
               "count": 1,
               "chain": 3,
@@ -756,7 +756,7 @@
     },
     "2.f1": {
       "name": "Crossed Crit",
-      "text": "Saltire Cut +4% critical chance per rank on its center target.",
+      "text": "Saltire Cut +1.25% critical chance per rank on its center target.",
       "src": "B:V3:2.f2",
       "fx": [
         {
@@ -766,7 +766,7 @@
             "targetIsCenter": true
           },
           "mod": {
-            "critBonus": 0.04
+            "critBonus": 0.0125
           },
           "rank": true
         }
@@ -774,7 +774,7 @@
     },
     "2.f2": {
       "name": "Scissor Bite",
-      "text": "Saltire Cut's second center hit has 6% increased power per rank.",
+      "text": "Saltire Cut's second center hit has 2% increased power per rank.",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -784,7 +784,7 @@
             "centerHitIndex": 2
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -792,7 +792,7 @@
     },
     "2.f3": {
       "name": "Keen Pair",
-      "text": "Saltire Cut has 6% increased power per rank against targets below 50% HP.",
+      "text": "Saltire Cut has 2% increased power per rank against targets below 50% HP.",
       "src": "B:V3:2.f1",
       "fx": [
         {
@@ -802,7 +802,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -827,7 +827,7 @@
     },
     "2.r": {
       "name": "Bloody Saltire",
-      "text": "Saltire Cut has an 8% chance per rank to Wound each enemy it crits.",
+      "text": "Saltire Cut has a 2.5% chance per rank to Wound each enemy it crits.",
       "src": "B:V3:2.r",
       "fx": [
         {
@@ -836,7 +836,7 @@
           "when": {
             "hitIsCrit": true
           },
-          "procChance": 0.08,
+          "procChance": 0.025,
           "mod": {
             "addStatus": {
               "status": "wound",
@@ -849,7 +849,7 @@
     },
     "2.ea": {
       "name": "Double Lunge",
-      "text": "Saltire Cut's center hits have 20% increased power against targets below 50% HP.",
+      "text": "Saltire Cut's center hits have 6.5% increased power against targets below 50% HP.",
       "src": "B:V3:2.ea",
       "fx": [
         {
@@ -860,7 +860,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.065
           }
         }
       ]
@@ -904,7 +904,7 @@
     },
     "2.fa": {
       "name": "Heavy Cross",
-      "text": "Saltire Cut's center hits deal 30% increased damage, but its diagonal hits deal 50% less damage.",
+      "text": "Saltire Cut's center hits deal 9.5% increased damage, but its diagonal hits deal 50% less damage.",
       "src": "B:V3:2.fa",
       "fx": [
         {
@@ -914,7 +914,7 @@
             "targetIsCenter": true
           },
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.095
           }
         },
         {
@@ -952,7 +952,7 @@
     },
     "2.mb": {
       "name": "Endless Knives",
-      "text": "Each Saltire Cut hit that crits throws one more knife at the same target for 50%, up to 2 extra.",
+      "text": "Each Saltire Cut hit that crits throws one more knife at the same target for 16%, up to 2 extra.",
       "src": "B:V4:2.mb",
       "fx": [
         {
@@ -962,7 +962,7 @@
           "perCast": 2,
           "do": [
             {
-              "strike": 0.5,
+              "strike": 0.16,
               "to": "target"
             }
           ]
@@ -992,7 +992,7 @@
     },
     "3.f1": {
       "name": "Far Toss",
-      "text": "Smoke Bomb's Blinded has a 10% chance per rank to last 1 turn longer on back-row enemies.",
+      "text": "Smoke Bomb's Blinded has a 3.25% chance per rank to last 1 turn longer on back-row enemies.",
       "src": "A:V4:3.r",
       "fx": [
         {
@@ -1002,7 +1002,7 @@
           "when": {
             "targetRow": "back"
           },
-          "procChance": 0.1,
+          "procChance": 0.0325,
           "mod": {
             "turns": 1
           },
@@ -1012,7 +1012,7 @@
     },
     "3.f2": {
       "name": "Lungful of Ash",
-      "text": "Smoke Bomb's Blinded lowers accuracy by a further 3% per rank.",
+      "text": "Smoke Bomb's Blinded lowers accuracy by a further 1% per rank.",
       "src": "A:V2:3.f3",
       "fx": [
         {
@@ -1021,7 +1021,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.03
+              "accuracyDelta": -0.01
             }
           },
           "rank": true
@@ -1030,7 +1030,7 @@
     },
     "3.f3": {
       "name": "Gritty Ash",
-      "text": "Smoke Bomb's Blinded also lowers critical chance by 3% per rank.",
+      "text": "Smoke Bomb's Blinded also lowers critical chance by 1% per rank.",
       "src": "A:V5:3.f3",
       "fx": [
         {
@@ -1039,7 +1039,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "critDelta": -0.03
+              "critDelta": -0.01
             }
           },
           "rank": true
@@ -1064,7 +1064,7 @@
     },
     "3.r": {
       "name": "Coughing Fit",
-      "text": "Smoke Bomb has a 4% chance per rank to Hobble each enemy in it for 1 turn.",
+      "text": "Smoke Bomb has a 1.25% chance per rank to Hobble each enemy in it for 1 turn.",
       "src": "A:V5:3.f2",
       "fx": [
         {
@@ -1074,21 +1074,21 @@
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.04,
+              "chance": 0.0125,
               "side": "enemies"
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.08,
+              "chance": 0.025,
               "side": "enemies"
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.12,
+              "chance": 0.0375,
               "side": "enemies"
             }
           ]
@@ -1153,7 +1153,7 @@
     },
     "3.fa": {
       "name": "Sulfur Overload",
-      "text": "Smoke Bomb's Blinded is -45% accuracy, but it can no longer Shroud allies.",
+      "text": "Smoke Bomb's Blinded is -35% accuracy, but it can no longer Shroud allies.",
       "src": "A:V2:3.fb",
       "fx": [
         {
@@ -1162,7 +1162,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.15
+              "accuracyDelta": -0.05
             }
           }
         },
@@ -1198,7 +1198,7 @@
     },
     "3.mb": {
       "name": "Shrapnel Shell",
-      "text": "Smoke Bomb bursts into clay shards: 25% DEX damage to every enemy in it, all Wounded for 2 turns.",
+      "text": "Smoke Bomb bursts into clay shards: 8% DEX damage to every enemy in it, all Wounded for 2 turns.",
       "src": "A:V4:3.ma",
       "fx": [
         {
@@ -1207,7 +1207,7 @@
             "type": "damage",
             "damageType": "physical",
             "scale": "dex",
-            "power": 0.25,
+            "power": 0.08,
             "side": "enemies"
           }
         },
@@ -1315,7 +1315,7 @@
     },
     "4.r2": {
       "name": "First Blood",
-      "text": "Backstab has 20% increased power against targets at full HP.",
+      "text": "Backstab has 6.5% increased power against targets at full HP.",
       "src": "B:V3:4.l2",
       "fx": [
         {
@@ -1325,7 +1325,7 @@
             "targetFullHp": true
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.065
           }
         }
       ]
@@ -1349,7 +1349,7 @@
     },
     "4.d1": {
       "name": "Between the Plates",
-      "text": "Backstab ignores 25% of Armor.",
+      "text": "Backstab ignores 8% of Armor.",
       "src": "B:V3:4.d1",
       "fx": [
         {
@@ -1357,7 +1357,7 @@
           "sel": "damage",
           "f": "ignoreDefense",
           "op": "add",
-          "v": 0.25
+          "v": 0.08
         }
       ]
     },

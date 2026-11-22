@@ -1,6 +1,6 @@
 {
   "class": "gambler",
-  "version": 2,
+  "version": 3,
   "picked": {
     "rows": [
       "a",
@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Warm Hands",
-        "text": "Your first skill with a cooldown each battle has +8% Lucky Streak repeat chance.",
+        "text": "Your first skill with a cooldown each battle has +2% Lucky Streak repeat chance.",
         "src": "A:V3:bar0",
         "fx": [
           {
@@ -56,7 +56,7 @@
               "firstCooldownSkill": true
             },
             "mod": {
-              "repeatChance": 0.08
+              "repeatChance": 0.02
             }
           }
         ],
@@ -84,7 +84,7 @@
       {
         "at": 15,
         "name": "Blood Debt",
-        "text": "After a Bust costs you HP, your next skill deals 10% increased damage.",
+        "text": "After a Bust costs you HP, your next skill deals 2.5% increased damage.",
         "src": "A:V2:bar1",
         "fx": [
           {
@@ -95,7 +95,7 @@
             "do": [
               {
                 "buff": {
-                  "powerMul": 0.1
+                  "powerMul": 0.025
                 }
               }
             ]
@@ -105,7 +105,7 @@
       {
         "at": 20,
         "name": "Winning Run",
-        "text": "Each time your Streak grows, your skills deal +4% damage until your next Bust.",
+        "text": "Each time your Streak grows, your skills deal +1% damage until your next Bust.",
         "src": "A:V3:bar3",
         "fx": [
           {
@@ -115,7 +115,7 @@
             "do": [
               {
                 "buff": {
-                  "powerMul": 0.04
+                  "powerMul": 0.01
                 },
                 "uses": 0,
                 "stack": true
@@ -138,7 +138,7 @@
       {
         "at": 25,
         "name": "Death Shrug",
-        "text": "When Lucky Escape saves you, heal 8% of your max HP.",
+        "text": "When Lucky Escape saves you, heal 2% of your max HP.",
         "src": "A:V2:bar3",
         "fx": [
           {
@@ -147,7 +147,7 @@
             "on": "luckyEscape",
             "do": [
               {
-                "heal": 0.08
+                "heal": 0.02
               }
             ]
           }
@@ -158,7 +158,7 @@
   "nodes": {
     "0.f1": {
       "name": "Hot Hand",
-      "text": "After a Jackpot, your next skill has +4% Lucky Streak repeat chance per rank.",
+      "text": "After a Jackpot, your next skill has +1% Lucky Streak repeat chance per rank.",
       "src": "A:V3:0.f2",
       "fx": [
         {
@@ -169,7 +169,7 @@
           "do": [
             {
               "buff": {
-                "repeatChance": 0.04
+                "repeatChance": 0.01
               }
             }
           ]
@@ -179,7 +179,7 @@
     },
     "0.f2": {
       "name": "Cornered Dog",
-      "text": "While below 50% HP, Lucky Streak repeat chance +4% per rank.",
+      "text": "While below 50% HP, Lucky Streak repeat chance +1% per rank.",
       "src": "A:V2:0.f1",
       "fx": [
         {
@@ -189,7 +189,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "repeatChance": 0.04
+            "repeatChance": 0.01
           },
           "rank": true
         }
@@ -198,7 +198,7 @@
     },
     "0.f3": {
       "name": "Quick Shuffle",
-      "text": "Each time your Streak grows, your next turn comes 4% sooner per rank.",
+      "text": "Each time your Streak grows, your next turn comes 1% sooner per rank.",
       "src": "A:V3:0.f3",
       "fx": [
         {
@@ -208,7 +208,7 @@
           "rank": true,
           "do": [
             {
-              "sooner": 0.04
+              "sooner": 0.01
             }
           ]
         }
@@ -236,7 +236,7 @@
     },
     "0.r": {
       "name": "Scar Gambler",
-      "text": "Each Bust that costs HP gives +2% Lucky Streak repeat chance per rank until your next Jackpot.",
+      "text": "Each Bust that costs HP gives +0.5% Lucky Streak repeat chance per rank until your next Jackpot.",
       "src": "A:V2:0.r",
       "fx": [
         {
@@ -248,7 +248,7 @@
           "do": [
             {
               "buff": {
-                "repeatChance": 0.02
+                "repeatChance": 0.005
               },
               "uses": 0,
               "stack": true
@@ -270,7 +270,7 @@
     },
     "0.ea": {
       "name": "Lucky Run",
-      "text": "Each Lucky Streak repeat in a row adds +8% to the next repeat roll; a failed roll resets it.",
+      "text": "Each Lucky Streak repeat in a row adds +2% to the next repeat roll; a failed roll resets it.",
       "src": "A:V3:0.ea",
       "new": true,
       "approved": true,
@@ -282,7 +282,7 @@
           "do": [
             {
               "buff": {
-                "repeatChance": 0.08
+                "repeatChance": 0.02
               },
               "uses": 0,
               "stack": true
@@ -414,7 +414,7 @@
     },
     "0.v": {
       "name": "Run It Back",
-      "text": "When you spend a full Streak, that skill also fires again at once at 40% power.",
+      "text": "When you spend a full Streak, that skill also fires again at once at 10.5% power.",
       "src": "A:V3:0.v",
       "new": true,
       "approved": true,
@@ -426,7 +426,7 @@
           "do": [
             {
               "cast": "event",
-              "power": 0.4
+              "power": 0.105
             }
           ]
         }
@@ -435,7 +435,7 @@
     },
     "1.f1": {
       "name": "Steady Wrist",
-      "text": "Each repeat throw of Loaded Dice deals 6% increased damage per rank.",
+      "text": "Each repeat throw of Loaded Dice deals 1.5% increased damage per rank.",
       "src": "A:V1:1.r*",
       "fx": [
         {
@@ -445,7 +445,7 @@
             "repeatIndexAtLeast": 1
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -453,7 +453,7 @@
     },
     "1.f2": {
       "name": "Red Pips",
-      "text": "Loaded Dice Double Hit chance +2% per rank for every 20% of HP you are missing.",
+      "text": "Loaded Dice Double Hit chance +0.5% per rank for every 20% of HP you are missing.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -463,7 +463,7 @@
             "missingHp": 0.2
           },
           "mod": {
-            "repeatChance": 0.02
+            "repeatChance": 0.005
           },
           "rank": true
         }
@@ -471,7 +471,7 @@
     },
     "1.f3": {
       "name": "Rolling Dice",
-      "text": "Each Loaded Dice Double Hit adds 2% power per rank to Loaded Dice (+2%, +4%, ...) until one fails to Double Hit.",
+      "text": "Each Loaded Dice Double Hit adds 0.5% power per rank to Loaded Dice (+0.5%, +1%, ...) until one fails to Double Hit.",
       "src": "A:V3:1.f2",
       "fx": [
         {
@@ -482,7 +482,7 @@
           "do": [
             {
               "buff": {
-                "powerMul": 0.02
+                "powerMul": 0.005
               },
               "skill": "loaded_dice",
               "stack": true,
@@ -516,7 +516,7 @@
     },
     "1.r": {
       "name": "Nimble Fingers",
-      "text": "Each Loaded Dice Double Hit makes your next turn come 1% sooner per rank.",
+      "text": "Each Loaded Dice Double Hit makes your next turn come 0.25% sooner per rank.",
       "src": "A:V3:1.r",
       "fx": [
         {
@@ -526,7 +526,7 @@
           "rank": true,
           "do": [
             {
-              "sooner": 0.01
+              "sooner": 0.0025
             }
           ]
         }
@@ -534,7 +534,7 @@
     },
     "1.ea": {
       "name": "Hot Dice",
-      "text": "Loaded Dice Double Hit chance +5%; each repeat throw deals 5% increased damage over the last (+5%, +10%, ...).",
+      "text": "Loaded Dice Double Hit chance +1.25%; each repeat throw deals 1.25% increased damage over the last (+1.25%, +2.5%, ...).",
       "src": "A:V3:1.ea",
       "fx": [
         {
@@ -542,7 +542,7 @@
           "sel": "damage",
           "f": "repeatChance",
           "op": "add",
-          "v": 0.05
+          "v": 0.0125
         },
         {
           "k": "hook",
@@ -551,7 +551,7 @@
             "repeatIndex": true
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.0125
           }
         }
       ],
@@ -602,7 +602,7 @@
     },
     "1.fa": {
       "name": "Fever Dice",
-      "text": "Loaded Dice Double Hit chance +20%, but each throw deals 15% less damage.",
+      "text": "Loaded Dice Double Hit chance +5.25%, but each throw deals 4% less damage.",
       "src": "A:V3:1.fa",
       "fx": [
         {
@@ -610,20 +610,20 @@
           "sel": "damage",
           "f": "repeatChance",
           "op": "add",
-          "v": 0.2
+          "v": 0.0525
         },
         {
           "k": "skill",
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": -0.15
+          "v": -0.04
         }
       ]
     },
     "1.fb": {
       "name": "Spendthrift",
-      "text": "Loaded Dice costs 6 MP and has 40% increased power, but Rest restores half as much MP.",
+      "text": "Loaded Dice costs 6 MP and has 10.5% increased power, but Rest restores half as much MP.",
       "src": "A:V5:1.fb",
       "fx": [
         {
@@ -638,7 +638,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.4
+          "v": 0.105
         },
         {
           "k": "hook",
@@ -650,7 +650,7 @@
     },
     "1.mb": {
       "name": "Snake Eyes",
-      "text": "Rolling double 1 with Loaded Dice gives your next wager +15% Jackpot chance.",
+      "text": "Rolling double 1 with Loaded Dice gives your next wager +4% Jackpot chance.",
       "src": "A:V1:1.ma",
       "syn": "High Stakes / All In",
       "fx": [
@@ -666,7 +666,7 @@
           "do": [
             {
               "buff": {
-                "winChance": 0.15
+                "winChance": 0.04
               },
               "uses": 0
             }
@@ -712,7 +712,7 @@
     },
     "2.f1": {
       "name": "Steady Stake",
-      "text": "High Stakes Bust multiplier +0.05x per rank (0.6x → 0.75x).",
+      "text": "High Stakes Bust multiplier +0.015x per rank (0.6x → 0.645x).",
       "src": "B:V1:2.r",
       "fx": [
         {
@@ -720,14 +720,14 @@
           "sel": "bet",
           "f": "loseMult",
           "op": "add",
-          "v": 0.05,
+          "v": 0.015,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Cautious Wager",
-      "text": "High Stakes HP stake -1% of max HP per rank (15% → 10%).",
+      "text": "High Stakes HP stake -0.25% of max HP per rank (15% → 13.75%).",
       "src": "B:V1:2.f2",
       "fx": [
         {
@@ -735,14 +735,14 @@
           "sel": "bet",
           "f": "ratio",
           "op": "add",
-          "v": -0.01,
+          "v": -0.0025,
           "rank": true
         }
       ]
     },
     "2.f3": {
       "name": "Read the Room",
-      "text": "High Stakes +4% Jackpot chance per rank against a target below 50% HP.",
+      "text": "High Stakes +1% Jackpot chance per rank against a target below 50% HP.",
       "src": "B:V1:2.f3",
       "fx": [
         {
@@ -752,7 +752,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "winChance": 0.04
+            "winChance": 0.01
           },
           "rank": true
         }
@@ -760,7 +760,7 @@
     },
     "2.n0": {
       "name": "Due for a Win",
-      "text": "Each High Stakes Bust gives the next High Stakes +10% Jackpot chance, stacking until a Jackpot.",
+      "text": "Each High Stakes Bust gives the next High Stakes +2.5% Jackpot chance, stacking until a Jackpot.",
       "src": "B:V1:2.n0",
       "new": true,
       "approved": true,
@@ -772,7 +772,7 @@
           "do": [
             {
               "buff": {
-                "winChance": 0.1
+                "winChance": 0.025
               },
               "skill": "high_stakes",
               "uses": 0,
@@ -794,7 +794,7 @@
     },
     "2.r": {
       "name": "Let It Ride",
-      "text": "A High Stakes Jackpot has a 10% chance per rank to extend one target status by 1 turn.",
+      "text": "A High Stakes Jackpot has a 2.5% chance per rank to extend one target status by 1 turn.",
       "src": "B:V4:2.r",
       "fx": [
         {
@@ -803,7 +803,7 @@
           "when": {
             "betWon": true
           },
-          "procChance": 0.1,
+          "procChance": 0.025,
           "mod": {
             "extendStatus": {
               "status": "*",
@@ -983,7 +983,7 @@
     },
     "3.f1": {
       "name": "Sharp Corners",
-      "text": "Card Trick has 6% increased power per rank against Stunned targets.",
+      "text": "Card Trick has 1.5% increased power per rank against Stunned targets.",
       "src": "B:V4:3.f3",
       "fx": [
         {
@@ -993,7 +993,7 @@
             "targetStatus": "stun"
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -1001,7 +1001,7 @@
     },
     "3.f2": {
       "name": "Jack of Clubs",
-      "text": "Card Trick has 6% increased power per rank against targets with a status.",
+      "text": "Card Trick has 1.5% increased power per rank against targets with a status.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -1011,7 +1011,7 @@
             "targetHasAnyStatus": true
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -1153,14 +1153,14 @@
     },
     "3.r": {
       "name": "Long Con",
-      "text": "Card Trick's Stun has a 4% chance per rank to last 1 turn longer.",
+      "text": "Card Trick's Stun has a 1% chance per rank to last 1 turn longer.",
       "src": "B:V4:3.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:stun",
-          "procChance": 0.04,
+          "procChance": 0.01,
           "mod": {
             "turns": 1
           },
@@ -1249,12 +1249,15 @@
     },
     "3.fb": {
       "name": "Smoke Cards",
-      "text": "Card Trick Blinds both targets for 2 turns, but deals no damage.",
+      "text": "Card Trick Blinds both targets for 2 turns, but deals 50% less damage.",
       "src": "B:V4:3.fb",
       "fx": [
         {
-          "k": "removeEffect",
-          "sel": "damage"
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.5
         },
         {
           "k": "addEffect",
@@ -1283,7 +1286,7 @@
     },
     "3.v": {
       "name": "Returning Cards",
-      "text": "Every Card Trick card flies back for a second hit at 40% power, rolling a new status.",
+      "text": "Every Card Trick card flies back for a second hit at 10.5% power, rolling a new status.",
       "src": "B:V3:3.v",
       "fx": [
         {
@@ -1292,7 +1295,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.4,
+              "strike": 0.105,
               "to": "castTargets",
               "rollStatus": true
             }
@@ -1302,7 +1305,7 @@
     },
     "4.u1": {
       "name": "Fat Stack",
-      "text": "All In Jackpot pays +0.01x more per MP staked (0.0667x → 0.0767x).",
+      "text": "All In Jackpot pays +0.0025x more per MP staked (0.0667x → 0.0692x).",
       "src": "A:V5:4.u1",
       "fx": [
         {
@@ -1310,7 +1313,7 @@
           "sel": "bet",
           "f": "perStake",
           "op": "add",
-          "v": 0.01
+          "v": 0.0025
         }
       ]
     },
@@ -1330,7 +1333,7 @@
     },
     "4.u3": {
       "name": "High Roller",
-      "text": "An All In that stakes 25+ MP ignores 35% of Armor and cannot miss.",
+      "text": "An All In that stakes 25+ MP ignores 9% of Armor and cannot miss.",
       "src": "A:V5:4.u3",
       "fx": [
         {
@@ -1340,7 +1343,7 @@
             "stakeAtLeast": 25
           },
           "mod": {
-            "ignoreDefense": 0.35,
+            "ignoreDefense": 0.09,
             "sureHit": true
           }
         }
@@ -1384,7 +1387,7 @@
     },
     "4.r3": {
       "name": "Domino",
-      "text": "If All In kills, it strikes a random enemy for 40% of its damage.",
+      "text": "If All In kills, it strikes a random enemy for 10.5% of its damage.",
       "src": "A:V3:4.l3",
       "fx": [
         {
@@ -1393,7 +1396,7 @@
           "on": "kill",
           "do": [
             {
-              "damage": 0.4,
+              "damage": 0.105,
               "of": "dealt",
               "to": "randomEnemy"
             }
@@ -1403,14 +1406,14 @@
     },
     "4.d1": {
       "name": "Ride the Wave",
-      "text": "All In +8% Jackpot chance.",
+      "text": "All In +2% Jackpot chance.",
       "src": "A:V3:4.u1",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "winChance": 0.08
+            "winChance": 0.02
           }
         }
       ],
@@ -1446,7 +1449,7 @@
     },
     "4.l1": {
       "name": "Grudge Ledger",
-      "text": "All In deals 1% increased damage for each hit you took since its last use.",
+      "text": "All In deals 0.25% increased damage for each hit you took since its last use.",
       "src": "A:V2:4.l1",
       "fx": [
         {
@@ -1456,14 +1459,14 @@
             "hitsTakenSinceLastUse": true
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.0025
           }
         }
       ]
     },
     "4.l2": {
       "name": "Heartbeat",
-      "text": "All In deals 1% increased damage for every 1% of HP you are missing.",
+      "text": "All In deals 0.25% increased damage for every 1% of HP you are missing.",
       "src": "A:V2:4.u2",
       "fx": [
         {
@@ -1473,7 +1476,7 @@
             "missingHp": 0.01
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.0025
           }
         }
       ]

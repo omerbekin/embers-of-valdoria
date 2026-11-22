@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Avatar frame mockup</title>
+<!--
+  Taslak (ui-dev, 2026-11-21). Oyun kodu DEGIL. Omer: "battle ekraninda karakterin avatarina bir cerceve mockupi ... dost ve dusmansa ona gore hafif renk degistirsin".
+  Adres: #now (bugunku) | #a | #b | #c | #d (ally ustte, enemy altta)  |  #all (bugun + A-D, portre buyutulmus)
+  &z=169 (1920x1080, varsayilan) | 219 (2580x1080) | ph (844x390, html.short)   &clean = baslik ve MOCKUP seridi gizli
+  battle-hud.css = src/ui/battle-hud.css kopyasi (gercek olculer), tokens.css = src/ui/tokens.css; yerlesim (left degerleri) oyundan olculdu.
+-->
+<link rel="stylesheet" href="avatar-frame/tokens.css" />
+<link rel="stylesheet" href="avatar-frame/battle-hud.css" />
+<link rel="stylesheet" href="avatar-frame/avatar.css" />
+</head>
+<body>
+<div id="page"></div>
+<div id="mk-strip"><b>MOCKUP</b>Avatar frame &middot;
+<a href="#now">Today</a><a href="#a">A</a><a href="#b">B</a><a href="#c">C</a><a href="#d">D</a><a href="#e">E</a><a href="#f">F</a><a href="#g">G</a><a href="#h">H</a><a href="#i">I</a><a href="#all">All</a><a href="#all2">All 2</a> &middot;
+<a data-z="169">16:9</a><a data-z="219">21:9</a><a data-z="ph">Phone</a></div>
+<script src="avatar-frame/avatar.js"></script>
+</body>
+</html>

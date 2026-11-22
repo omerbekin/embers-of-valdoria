@@ -1,5 +1,5 @@
 {
-  "_not": "Harita pencereleri (src/ui/map-window.ts; taslak public/mockups/map-events.html). art = pencere üstündeki sahne şeridi: assets/campaign/windows/<dosya>.webp, pos = görselde odak noktası (0-1). Anahtarlar: event:<olay id>, treasure:<hazine id>, rest (tüm dinlenme noktaları), town:<kasaba arka planı>, hotspot:<kasaba yeri id> (varsa kasaba şeridinin odağını ezer). choices = seçenekli olayların plaka etiketi / vurgu rengi / kısa açıklaması (anahtar: <olay id>.<seçenek id>); yoksa seçeneğin verisinden türetilir (savaş = Fight, bedel = Gold, can kaybı = Blood, diğer = Free). acc: ember | gold | red | violet | green | dim. Metinler İngilizce.",
+  "_not": "Harita pencereleri (src/ui/map-window.ts; taslak public/mockups/map-events.html). art = pencere üstündeki sahne şeridi: assets/campaign/windows/<dosya>.webp, pos = görselde odak noktası (0-1). Anahtarlar: event:<olay id>, treasure:<hazine id>, rest (tüm dinlenme noktaları), town:<kasaba arka planı>, hotspot:<kasaba yeri id> (varsa kasaba şeridinin odağını ezer). choices = (isteğe bağlı) elle ezme: plaka etiketi / vurgu rengi / kısa açıklaması (anahtar: <olay id>.<seçenek id>). Şu an BOŞ: tüm olaylar rozeti veriden türetir (Fight / Blood / Gold / Final / Oath / Debuff / Gain / Lore, map-window.ts > choiceStyle; Ömer 2026-11-21 'hepsi yeni rozet'). acc: ember | gold | red | violet | green | dim. Metinler İngilizce.",
   "art": {
     "event:shepherds_fold": { "file": "shepherds_fold", "pos": [0.5, 0.5] },
     "event:witchs_hut": { "file": "witchs_hut", "pos": [0.5, 0.5] },
@@ -16,14 +16,5 @@
     "hotspot:board": { "file": "ashford", "pos": [0.63, 0.5] },
     "hotspot:barracks": { "file": "valdren", "pos": [0.5, 0.5] }
   },
-  "choices": {
-    "shepherds_fold.search": { "tag": "Fight", "acc": "ember", "desc": "Fight the ash-hounds that scattered the flock." },
-    "shepherds_fold.castle": { "tag": "Talk", "acc": "violet", "desc": "Hear what the shepherds know about the gate tower." },
-    "shepherds_fold.bread": { "tag": "Gift", "acc": "gold", "desc": "Share your supplies. Tonight's rest heals everyone fully." },
-    "shepherds_fold.rest": { "tag": "Free", "acc": "green", "desc": "Make camp as usual." },
-    "witchs_hut.pay": { "tag": "Gold", "acc": "gold", "desc": "Pay 60 gold. A Rare item from her chest, 8% chance of Epic." },
-    "witchs_hut.blood": { "tag": "Blood", "acc": "red", "desc": "Every hero loses 20% HP. No one dies. One item and a few coins." },
-    "witchs_hut.steal": { "tag": "Fight", "acc": "ember", "desc": "Fight the witch herself. Win: her chest and 25 gold." },
-    "witchs_hut.leave": { "tag": "Free", "acc": "dim", "desc": "Walk away with nothing." }
-  }
+  "choices": {}
 }

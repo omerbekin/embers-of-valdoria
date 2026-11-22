@@ -176,7 +176,7 @@ import { placementHints, type HintRules, type PlacementHint } from './formation-
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { CaveInRule, LanternRule, NoiseRule, UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { CaveInRule, FirstFireRule, LanternRule, NoiseRule, UrnRule, AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundReactionDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleDef {
   id: string;
@@ -399,6 +399,14 @@ export interface BattleRulesData {
   lanterns: Record<string, Omit<LanternRule, 'id' | 'def'>>;
   /** C5 Wake the Halls (`_not` anahtarı atılır). */
   noise: Record<string, Omit<NoiseRule, 'id' | 'rise'>>;
+  /** The First Fire's Verdict (her savaş; `_not` atılır). */
+  firstFire: FirstFireRule & { _not?: string };
+}
+/** The First Fire's Verdict kuralı (data/battle-rules.json > firstFire; `_` notları atılmış kopya). */
+export function firstFireRule(): FirstFireRule {
+  const { _not, ...r } = battleRulesData.firstFire;
+  void _not;
+  return { ...r };
 }
 export const battleRulesData = battleRulesJson as unknown as BattleRulesData;
 
@@ -869,6 +877,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     ...(teams?.surge ? { surge: Object.fromEntries(Object.entries(teams.surge).map(([k, v]) => [k, [...(v ?? [])]])) } : {}),
     ...(waves.length ? { waves, waveRules: { ...waveRules } } : {}),
     ...(rules ? { rules } : {}),
+    firstFire: firstFireRule(),
     skills,
     globalSkills,
     valorRules,

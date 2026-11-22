@@ -1,0 +1,23 @@
+{
+ "name": "redtithe-step1",
+ "outDir": "docs/anim-review/new-art/redtithe-step1",
+ "rules": "docs/anim-review/new-art/redtithe-step1/PROMPT.md",
+ "maxRounds": 3,
+ "threshold": 8,
+ "pages": [
+  {
+   "id": "step1",
+   "file": "step1.png",
+   "refs": [
+    "docs/anim-review/new-art/redtithe-step1/refs/base-step1-old.png",
+    "docs/anim-review/new-art/redtithe-step1/refs/redtithe-idle1.png"
+   ],
+   "checkRefs": [
+    "docs/anim-review/new-art/redtithe-step1/refs/base-step1-old.png",
+    "docs/anim-review/new-art/redtithe-step1/refs/redtithe-idle1.png"
+   ],
+   "task": "Image 1 is ALWAYS the untouched old step frame (pose source), image 2 is ALWAYS Redtithe's idle frame (identity + costume source). If a third image is given it is only your previous attempt: look at it to see what went wrong, but EDIT image 1 again. Steps: (1) Use the built-in image tool in EDIT mode with image 1 as the input image and image 2 as reference: repaint the character as Redtithe (face, braid, red shirt, leather vest, bandaged forearms, red sash and panels, vials, pouch, brass bowl, dark trousers, buckled boots) while keeping the exact pose, limb positions, fists and stride of image 1; remove the long coat, its tails and all purple. (2) Copy the generated PNG to docs/anim-review/new-art/redtithe-step1/raw/step1-raw-<round>.png (round number from 'Tur'). (3) Run exactly: node docs/anim-review/new-art/redtithe-step1/fit.mjs docs/anim-review/new-art/redtithe-step1/raw/step1-raw-<round>.png docs/anim-review/new-art/redtithe-step1/step1.png . It aligns the edit onto the old canvas by silhouette; report its output line. Do not post-process step1.png in any other way. (4) In NOTES.md write the fit output line and the approximate centre of each fist.",
+   "checkRules": "- Image 1 is the candidate, image 2 the old step frame (pose source), image 3 Redtithe's idle frame (identity source).\n- IDENTITY (any failing = KALDI, PUAN at most 5): same woman as image 3 (face, eyebrow scar, long dark braid down the back, shaved sides, no bun); costume as image 3: rust-red rolled-sleeve shirt, sleeveless dark brown leather vest, pale bandaged forearms with red marks, red sash with hanging panels, belt vials / pouch / brass bowl, dark baggy trousers, buckled boots. NO long coat, NO coat tails, NO purple anywhere, no spike bandolier.\n- POSE (any failing = KALDI, PUAN at most 5): pose and limb positions match image 2: rear fist within ~8 px of (111,191), front fist within ~8 px of (325,205), forearm directions the same, legs and boots in the same stride, same figure height and canvas position.\n- ARMS (any failing = KALDI, PUAN at most 5): each arm one continuous limb from shoulder to fist (no gap, offset, colour jump); elbows and wrists anatomically correct; empty clenched fists about the size of the fists in image 3.\n- Face readable at game size (both eyes, nose, mouth); nothing covers the face. Real transparent background, no halo, checkerboard or ground shadow.\n- In your answer give as numbers: each fist centre (x,y) and its distance from the image-2 fist."
+  }
+ ]
+}

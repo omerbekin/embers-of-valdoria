@@ -110,7 +110,7 @@ const hostOf =(target: HTMLElement): HTMLElement => (target.closest('.el-modal, 
  * `target` için A Band ipucu bağlar. `src` bir spec ya da (her açılışta çağrılan) üretici; üretici null dönerse ipucu açılmaz.
  * Dönen işlev bağı kaldırır. Aynı denetime tekrar bağlanırsa öncekini değiştirir.
  */
-export function attachBandTip(target: HTMLElement, src: BandTipSource, o: { host?: HTMLElement } = {}): () => void {
+export function attachBandTip(target: HTMLElement, src: BandTipSource, o: { host?: HTMLElement; /** Yalnız dokunmada açılır (fare üstüne gelmesi başka bir denetimin ipucuna bırakılır). */ touchOnly?: boolean } = {}): () => void {
   target.removeAttribute('title');
   target.dataset['bt'] = '1';
   let pop: HTMLElement | null = null;
@@ -160,7 +160,7 @@ export function attachBandTip(target: HTMLElement, src: BandTipSource, o: { host
     return false;
   };
   const onMove = (e: PointerEvent): void => {
-    if (e.pointerType !== 'mouse' || pinned || !alive()) return;
+    if (o.touchOnly || e.pointerType !== 'mouse' || pinned || !alive()) return;
     const now = inside(e);
     if (now === over) return;
     over = now;

@@ -1,0 +1,13 @@
+This is an IMAGE EDIT job, not a new drawing. The base is today's in-game idle frame of Redtithe (a blood hunter woman, painterly dark-medieval game sprite, facing right, 450x412 canvas, transparent background). Everything in the base stays EXACTLY as it is: face, hair, braid, scar, vest, shirt, bandages, sash, belt, vials, pouch, brass bowl, trousers, boots, the FRONT arm (right side of the image, horizontal forearm, fist at about (319,163)), the rear UPPER arm and its rolled red sleeve cuff, body proportions, palette, outline, lighting, stance width, scale and position on the canvas.
+
+The ONLY change: the REAR forearm and fist (left side of the image). Today it hangs down-left from the elbow with the fist beside the thigh at about (131,225). Rule it must meet (weapon grip standard): a weapon handle passes through the fist perpendicular to the forearm, and that grip axis must point UP and slightly FORWARD, 15-50 degrees clockwise from straight up. A hanging forearm cannot do this, so the elbow must bend.
+
+Required rear arm: shoulder, upper arm, red sleeve and its rolled cuff (ends at about y153) do NOT move. The elbow is just below the cuff at about (160,160) and stays there. From the elbow the bandaged forearm goes FORWARD (to the right) and DOWN, about 35-40 degrees below horizontal, in front of the leather pouch, and the fist rests in front of the belt / vials at about (215,205). The forearm keeps today's length (~70 px elbow to fist centre) and today's look (pale linen bandage with red cross marks, bare skin between cuff and bandage). The fist is a clenched, EMPTY fist (no weapon, no object), thumb on top, curled fingers forming a grip tunnel whose axis points up and slightly forward (~35 degrees).
+
+DEFECT BANS (any one = failure):
+- Both arms connect to the body without a break: shoulder -> upper arm -> elbow -> forearm -> wrist -> fist is one continuous limb on each side. No gap, no offset, no colour jump at the sleeve cuff / elbow.
+- Elbow and wrist anatomy correct: the elbow bends forward like a real elbow (not backwards, not rubbery), the wrist is straight in line with the forearm, not broken or twisted.
+- Fist the SAME size as today's fists (about 25 px wide, 24 px tall on the 450x412 canvas). Not bigger, not smaller.
+- No detached, floating or extra limb, no third hand, no leftover of the old hanging forearm/fist (the area beside the left thigh becomes transparent background or the braid end, nothing else).
+- Front arm and front fist unchanged.
+- Nothing in front of the face. No weapon, blood drop, magic, glow, text, ground shadow, halo, checkerboard, white background.

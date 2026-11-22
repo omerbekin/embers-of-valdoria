@@ -362,6 +362,8 @@ export class BattleHud {
   private readonly waveLbl: HTMLDivElement;
   /** Karşılaşma kuralı satırı (Harita 2-3: koşul · hedef · sayaç; dalga plakasının altında, yoksa onun yerinde). */
   private readonly goalLbl: HTMLDivElement;
+  /** The First Fire's Verdict rozeti (kural başlayınca; goalLbl'in altında). */
+  private readonly ffLbl: HTMLDivElement;
   private readonly actorBox: HTMLDivElement;
   private readonly skillBox: HTMLDivElement;
   private readonly globBox: HTMLDivElement;
@@ -440,6 +442,8 @@ export class BattleHud {
     this.waveLbl.hidden = true;
     this.goalLbl = el('div', 'bh-goal');
     this.goalLbl.hidden = true;
+    this.ffLbl = el('div', 'bh-ff');
+    this.ffLbl.hidden = true;
     this.actorBox = el('div', 'bh-actor');
     this.skillBox = el('div', 'bh-skills');
     this.globBox = el('div', 'bh-globs');
@@ -458,7 +462,7 @@ export class BattleHud {
     this.cardSc = { party: el('div', 'bh-card-sc'), enemy: el('div', 'bh-card-sc') };
     this.cardStats = { party: el('div', 'bh-cstats'), enemy: el('div', 'bh-cstats') };
     for (const side of ['party', 'enemy'] as const) this.cards[side].append(this.cardSc[side], this.cardStats[side]);
-    this.root.append(this.band, this.turn, this.turnLbl, this.waveLbl, this.goalLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
+    this.root.append(this.band, this.turn, this.turnLbl, this.waveLbl, this.goalLbl, this.ffLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
     parent.append(this.root);
 
     // Fare bırakması alttaki Phaser sahnesine gitmesin (Phaser window mouseup'ı dinler, defaultPrevented olanı yok sayar)
@@ -606,6 +610,11 @@ export class BattleHud {
 
   // ------------------------------------------------------------------ alt çubuk
 
+  /** Gambler: Lucky Streak dolu (3/3): skill 2-4 düğmelerine altın çerçeve (harcayan seçimi oyuncunun; 1. skill harcamaz). */
+  setStreakFull(on: boolean): void {
+    this.skillBox.classList.toggle('streak-full', on);
+  }
+
   setModel(m: HudModel): void {
     this.model = m;
     this.tips.clear();
@@ -697,6 +706,7 @@ export class BattleHud {
         </div>
       </div>`,
     );
+    this.actorBox.classList.toggle('en', !!a.enemy); // yan rengi (portre çerçevesi + karakter sayfası madalyonu): battle-hud.css > --pf-side
     if (wasOpen) this.actorBox.classList.add('open');
   }
 
@@ -793,6 +803,7 @@ export class BattleHud {
    */
   setGoal(g: { parts: string[]; counter?: string; state?: 'done' | 'failed'; tip: TipContent } | null): void {
     this.goalLbl.hidden = !g;
+    this.ffLbl.classList.toggle('below', !!g);
     this.cardTips.set('goal', g?.tip ?? { title: '', rows: [] });
     if (!g) {
       this.put(this.goalLbl, '');
@@ -804,9 +815,21 @@ export class BattleHud {
     this.put(this.goalLbl, `<span class="t" data-tip="goal">${parts}${g.counter ? `<span class="c">${esc(g.counter)}</span>` : ''}</span>`);
   }
 
+  /** The First Fire's Verdict rozeti: "First Fire · 40" (sıradaki vuruş hasarı) + ipucu; null = gizli (kural başlamadı). */
+  setFirstFire(f: { label: string; counter: string; tip: TipContent } | null): void {
+    this.ffLbl.hidden = !f;
+    this.cardTips.set('ff', f?.tip ?? { title: '', rows: [] });
+    if (!f) {
+      this.put(this.ffLbl, '');
+      return;
+    }
+    this.put(this.ffLbl, `<span class="t" data-tip="ff"><span class="p">${esc(f.label)}</span><span class="c">${esc(f.counter)}</span></span>`);
+  }
+
   setWave(round: { n: number; total: number } | null): void {
     this.waveLbl.hidden = !round;
     this.goalLbl.classList.toggle('low', !!round);
+    this.ffLbl.classList.toggle('low', !!round);
     if (!round) {
       this.waveLbl.innerHTML = '';
       return;

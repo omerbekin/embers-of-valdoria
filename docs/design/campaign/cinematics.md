@@ -19,6 +19,8 @@ Durum: UYGULANDI (metin 2026-10-23; oyunda). Veri: `data/campaign/cinematics.jso
 | `forward_camp` | Forward Camp (`camp`) ilk varış | `ember-road` | 5 |
 | `morvane_meets` | Castle Morvane (12) savaştan önce | `castle-hall` | 4 |
 | `morvane_falls` | Castle Morvane (12) zaferi | `cin_kneel`, `cin_lookup`, `cin_crown`, `cin_plain` | 5 + kapanış kartı |
+| `first_fire_mend` | Harita 3 bitti, Mend seçildi | `cin_hearth_still`, `cin_kharduin_gate`, `cin_long_descent`, `cin_crownbearer` | 5 + kapanış kartı + jenerik |
+| `first_fire_quench` | Harita 3 bitti, Quench seçildi | `cin_hearth_still`, `cin_kharduin_gate`, `cin_long_descent`, `cin_dark_hearth` | 5 + kapanış kartı + jenerik |
 
 ## Notlar
 
@@ -39,3 +41,13 @@ Durum: UYGULANDI (metin 2026-10-23; oyunda). Veri: `data/campaign/cinematics.jso
   - `morvane_meets`: Castle Morvane'de "Start battle?" kartında Fight'a basınca, savaş sahnesine geçmeden hemen önce; yenilip tekrar girince oynamaz.
   - `morvane_falls`: Castle Morvane zaferinden sonra ganimet ekranı kapanıp haritaya dönülünce; dört sahne + kapanış kartı, sonra "Valdoria Conquered" penceresi. Kartı az önce gösterdiysek pencere `texts.complete` cümlesini tekrar etmez (yalnızca zafer / yenilgi sayısı).
 - Eski kayıtlar: şema değişmedi. King's Bridge / Castle Morvane'yi geçmiş ve hâlâ o düğümde duran eski bir kayıt yüklenirse ilgili zafer sinematiği bir kez oynar.
+
+## Oyun sonu (Ömer 2026-11-21 form r38-r39; campaign-dev, dal agent/campaign-dev-oyun-sonu)
+
+- **Kural:** Harita 3 bitiş olayı Mend or Quench'in seçimi kayda yazılır (`CampaignState.crownChoice`, kayıt sürümü 15) ve kapanış sineması bu seçime göre dallanır. Seçimin başka mekanik etkisi yoktur (ödül, stat yok).
+- Akış: Ember zaferi -> Mend or Quench olayı (seçim + sonuç penceresi) -> kapanış sineması (dalın başlığı: Mend "The Crownbearer", Quench "The Dark Hearth"; düzen Harita 1 finaliyle aynı: 4 sahne 1 / 2 / 1 / 1 satır + kapanış kartı) -> jenerik (`data/credits.json`, taslak) -> harita sonu kartı (düğmeler değişmedi: "Stay on the map", "Main Menu"). Jenerik yalnız sinemanın ardından gelir; yeniden yüklemede kart doğrudan açılır. Ana menü > Credits jeneriği her zaman açar.
+- Tetik `mapComplete` (`map` + isteğe bağlı `crownChoice`); başlık verideki `title`. İlk üç sahne iki dalda aynı, son sahne ve başlık farklı; kapanış kartı = `hollow-crown.json > complete.text` (Harita 1 kuralı gibi).
+- Sahne görselleri (2026-11-21, r41: bu beş `cin_*` anahtarının özel çizimi `assets/cinematics/` altında hazır, `_fallback` artık kullanılmaz; aşağıdaki metin eski planı anlatır): YENİ ÇİZİM DEĞİL: `cin_*` anahtarları `_fallback` ile var olan savaş arka planlarına düşer (`forge-heart`, `kharduin`, `snowline`, `border-road`, `ashen-plain`). Çizilecekler listesi bu beş anahtar; dosya `assets/cinematics/<anahtar>.webp` gelince kod değişmez.
+- Harita sonu istatistik kartı her haritanın sonunda (Harita 1, 2, 3); başlık / metin haritanın `complete` alanından; sayılar `s.stats` = sefer toplamı (Harita 1 kartıyla aynı davranış). Harita 2'ye sinema yok.
+- Eski kayıt: Mend or Quench'i bitirmiş sürüm 14 kaydında seçim `eventChoice`tan kurtarılır (son düğüm), kurtarılamazsa `mend`. Böyle bir kayıt yüklenince kapanış sineması + jenerik bir kez oynar.
+

@@ -13,7 +13,7 @@ import { content } from '../engine';
 import { heroStats } from '../progression';
 import { TREE_RULES, type TreeData, type TreeRules } from '../progression/skill-tree-data';
 import { TREE_RESET_NOTICE, type TreeHero } from '../progression/skill-tree-hero';
-import { check, counter, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } from '../progression/skill-tree';
+import { check, counter, isInactive, rowSpent, ultSpent, ultArm, treeNodes, type TreeNode } from '../progression/skill-tree';
 import { skillCostAmount } from '../engine/cost';
 import type { SkillDef } from '../engine';
 import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
@@ -50,7 +50,7 @@ import {
   perRankTotal,
 } from './tree-tab-model';
 import { playNodeFx } from './reward-fx';
-import { buildCols, deadStub, link, ULT_X, type ColsLayout, type Hit } from './tree-tab-layout';
+import { buildCols, buildOne, deadStub, link, ULT_X, type ColsLayout, type Hit } from './tree-tab-layout';
 import { tipFrame } from './band-tip-attach';
 
 export type TreeTabHero = HoverHero & TreeHero;
@@ -135,6 +135,12 @@ function rowInfos(tree: TreeData, hero?: EvolveSource): RowInfo[] {
 }
 
 /** Satırların (pasif, 3 skill, ult) ikon / ad / türü: ağaçtaki plakalarla aynı (Gear > Sheet "Node cards" paneli, gear-screen.ts > masterySummary). */
+export const INACTIVE_TXT = 'Being reworked. Not available yet.';
+/** Kilitli düğüm ipucu içeriği: madde satırı yok, cümle yalnız `foot`ta (iki kez çıkma hatası). */
+export function inactiveTipSpec(kind: string, title: string, icon?: string): BandTipSpec {
+  return { kind, title, ...(icon ? { icon } : {}), chips: [{ text: 'Locked', tone: 'warn' }], foot: INACTIVE_TXT };
+}
+
 export function treeRowHeads(tree: TreeData, hero?: EvolveSource): Array<{ icon: string; name: string; kind: '' | 'pas' | 'ult' }> {
   return rowInfos(tree, hero).map((r) => ({ icon: r.icon, name: r.name, kind: r.kind }));
 }
@@ -212,6 +218,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   const TIP: { ref: string | null; pinned: HTMLElement | null } = { ref: null, pinned: null };
   const de = document.documentElement;
   const isShort = (): boolean => de.classList.contains('short');
+  /** Telefon TEK SÜTUN düzeni (Ömer 2026-11-21, mockup A): yalnız telefonda ve Gear tek başınayken (yanında pencere varsa dar, eski 4 sütun kalır). */
+  const isOne = (): boolean => isShort() && !host?.closest('.gr-pair');
+  let selCol = 0;
+  let selRef = '';
+  let selHero = '';
+  let selMemo: Record<number, string> = {};
   const reduced = (): boolean => reducedMotion();
 
   const $$ = <T extends HTMLElement = HTMLElement>(q: string, r: ParentNode = page ?? document): T[] => Array.from(r.querySelectorAll<T>(q));
@@ -241,7 +253,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     return art ?? r?.base ?? '';
   };
 
-  function nodeHTML(nd: TreeNode, p: { x: number; y: number }, hit?: Hit): string {
+  function nodeHTML(nd: TreeNode, p: { x: number; y: number }, hit?: Hit, c?: number): string {
     const k = nd.kind === 'evolve' ? 'v' : nd.kind === 'blood' ? 'b' : nd.kind === 'notable' ? 'n' : nd.kind === 'edge' ? 'e' : 'f';
     const name = sess?.tree.nodes[nd.key]?.name ?? nd.key;
     let inner: string;
@@ -250,12 +262,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     else inner = '<span class="dm"></span>';
     const pp = k === 'f' ? '<span class="pp"></span>' : '';
     const fx = '<span class="fx"></span>' + (k === 'v' ? '<span class="evx"><i></i><i></i><i></i><i></i></span>' : '');
-    return `<button type="button" class="gt-nd k-${k}" data-key="${nd.key}" data-tt="n:${nd.key}" aria-label="${escHtml(name)}" style="left:${p.x}px;top:${p.y}px${hit ? `;--hw:${hit.w}px;--hh:${hit.h}px` : ''}">${fx}<span class="lkic">${LOCK}</span>${inner}${pp}<span class="hb"></span><span class="hplus">+1</span></button>`;
+    return `<button type="button" class="gt-nd k-${k}"${c === undefined ? '' : ` data-c="${c}"`} data-key="${nd.key}" data-tt="n:${nd.key}" aria-label="${escHtml(name)}" style="left:${p.x}px;top:${p.y}px${hit ? `;--hw:${hit.w}px;--hh:${hit.h}px` : ''}">${fx}<span class="lkic">${LOCK}</span>${inner}${pp}<span class="hb"></span><span class="hplus">+1</span></button>`;
   }
 
   function barHTML(slim: boolean, s: TreeSession): string {
     const vis = Math.max(...rules.barAt);
-    const mk = rules.barAt.map((t, i) => `<span class="gt-mk" data-t="${t}" data-tt="b:${i}" style="left:${(t / vis) * 100}%"><em>${t}</em><i></i></span>`).join('');
+    const mk = rules.barAt.map((t, i) => `<span class="gt-mk${s.tree.mastery.bar[i]?.inactive ? ' tbd off' : ''}" data-t="${t}" data-tt="b:${i}" style="left:${(t / vis) * 100}%"><em>${t}</em><i></i></span>`).join('');
     const track = `<div class="gt-barrow"><div class="gt-track"><div class="bf"></div><div class="gt-bp"></div>${mk}</div></div>`;
     const head = `<span class="gt-bnm">${escHtml(s.tree.mastery.name)}</span><span class="gt-bval"><b data-bv>0</b> / ${vis}<i data-bp></i></span>`;
     return slim || isShort() ? `<div class="gt-barw slim">${head}${track}</div>` : `<div class="gt-barw"><div class="gt-bar-top">${head}<span class="gt-bar-r">Level<b data-lvl>${s.level}</b></span></div>${track}</div>`;
@@ -268,7 +280,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const tag = r.kind ? `<span class="pl-tag">${r.kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
     const chips = !L.short && p?.chips ? `<div class="pl-chips">${p.chips}</div>` : '';
     const desc = !L.short && p?.desc ? `<div class="pl-ds">${escHtml(p.desc)}</div>` : '';
-    return `<div class="gr-pl hz ${r.kind}" data-tt="p:${i}" style="left:${L.colX[i]! + 2}px;top:0;width:${L.cw - 4}px;height:${L.hh}px"><div class="pl-ico"><img src="${escHtml(r.icon)}" alt="" draggable="false"></div><div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(r.name)}</div>${tag}${chips}</div>${desc}</div><span class="gt-pts"><b data-pts="${i}">0</b><small>pts</small></span></div>`;
+    return `<div class="gr-pl hz ${r.kind}" data-tt="p:${i}" data-row="${i}" style="left:${L.colX[i]! + 2}px;top:0;width:${L.cw - 4}px;height:${L.hh}px"><div class="pl-ico"><img src="${escHtml(r.icon)}" alt="" draggable="false"></div><div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(r.name)}</div>${tag}${chips}</div>${desc}</div><span class="gt-pts"><b data-pts="${i}">0</b><small>pts</small></span></div>`;
   }
 
   /** Ağacın gövdesi (mutlak koordinat: body W x H): tier bandı + bantlar, sütun başlıkları, düğümler, yollar, ult bandı. */
@@ -319,6 +331,68 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     return `${bands}<svg class="gt-lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg>${tsh}${heads}${deco}${nds}`;
   }
 
+  /** Tek sütun düzeni: sekme şeridi (skill başına bir sekme; plaka satırıyla aynı dil). */
+  function tabsHTML(): string {
+    let out = '';
+    for (let i = 0; i < rules.rows; i++) {
+      const r = rows[i]!;
+      out += `<div class="gr-pl hz ${r.kind}${i === selCol ? ' sel' : ''}" role="tab" tabindex="0" data-col="${i}" data-row="${i}" aria-label="${escHtml(r.name)}"><div class="pl-ico"><img src="${escHtml(r.icon)}" alt="" draggable="false"></div><div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(r.name)}</div></div></div><span class="gt-pts"><b data-pts="${i}">0</b><small>pts</small></span></div>`;
+    }
+    return out;
+  }
+
+  /** Tek sütun düzeni gövdesi: ana ağaç (4 sütun AYNI koordinatta, `data-c` ile seçilir) + ult kutusu içeriği. */
+  function oneHTML(L: ColsLayout): { col: string; ult: string } {
+    const nodes = treeNodes(rules);
+    const u = rules.rows;
+    let svg = '';
+    let nds = '';
+    let usvg = '';
+    let unds = '';
+    let tsh = '';
+    let bands = '';
+    for (const t of L.tiers) {
+      tsh += `<div class="gt-ts${t.tier === 'E' ? ' evo' : ''}" data-tier="${t.tier}" data-tn="${t.tier}" style="left:0;top:${t.y}px;width:${L.labW}px;height:${t.h}px"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`;
+      bands += `<div class="gt-tb" data-tier="${t.tier}" style="left:${L.labW}px;top:${t.y}px;width:${L.W - L.labW}px;height:${t.h}px"></div>`;
+    }
+    for (const n of nodes.list) {
+      const B = L.pos[n.key];
+      if (!B) continue;
+      const ult = n.row === u;
+      const c = ult ? rules.ult.arms.indexOf(n.arm ?? '') : n.row;
+      let sv = '';
+      for (const term of n.req)
+        for (const src of term) {
+          const A = L.pos[src];
+          if (A) sv += `<path data-c="${c}" class="${term.length > 1 ? 'alt' : ''}" data-a="${src}" data-b="${n.key}" d="${link(A, B)}"/>`;
+        }
+      if (n.kind === 'blood') sv += `<path data-c="${c}" class="dead" data-b="${n.key}" data-dead="1" d="${deadStub(B, L.sz.B / 2)}"/>`;
+      const nd = nodeHTML(n, B, L.hit[n.key], c);
+      if (ult) {
+        usvg += sv;
+        unds += nd;
+      } else {
+        svg += sv;
+        nds += nd;
+      }
+    }
+    const o = L.one!;
+    let udeco = '';
+    const ur = rows[u]!;
+    udeco += `<div class="gt-ucore" data-tt="p:${u}" style="left:${L.core.x}px;top:${L.core.y}px;width:${L.core.d}px;height:${L.core.d}px"><span class="ud"></span><img src="${escHtml(ur.icon)}" alt="${escHtml(ur.name)}"></div>`;
+    rules.ult.arms.forEach((arm, j) => {
+      udeco += `<span class="gc-arm" data-c="${j}" data-arm="${arm}" style="left:${o.armX}px;top:${o.armY}px"><i>${ARM_NAME[arm]}</i><b>0 / ${rules.ult.levels.length}</b></span>`;
+      for (let st = 1; st <= rules.ult.levels.length; st++) {
+        const P = L.pos[`${u}.${arm}${st}`]!;
+        udeco += `<span class="gt-ulv" data-c="${j}" data-ulv="${u}.${arm}${st}" style="left:${P.x}px;top:${P.y + 24}px">Lv ${rules.ult.levels[st - 1]}</span>`;
+      }
+    });
+    return {
+      col: `${bands}<svg class="gt-lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg>${tsh}${nds}`,
+      ult: `<svg class="gt-lines" width="${o.uW}" height="${o.uH}" viewBox="0 0 ${o.uW} ${o.uH}">${usvg}</svg>${udeco}${unds}`,
+    };
+  }
+
   function actsHTML(h: TreeTabHero, s: TreeSession): string {
     const free = freePoints(s);
     const ri = respecInfo(h, ctx.gold());
@@ -343,7 +417,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   function treeHTML(s: TreeSession): string {
     const short = isShort();
     const bar = barHTML(true, s);
-    const top = short ? `<div class="gt-tools">${bar}<div class="gt-acts gt-inbar" data-dyn="acts"></div></div>` : bar;
+    const tools = `<div class="gt-tools">${bar}<div class="gt-acts gt-inbar" data-dyn="acts"></div></div>`;
+    if (isOne()) {
+      const hold = `<div class="gt-hold" data-hold role="button" tabindex="0" aria-label="Hold to add a point"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v6M5 8h6"/></svg><span>Hold to add</span></div>`;
+      return `<div class="gt q4 cols ph one" data-sel="${selCol}"><div class="gt-tabs" role="tablist">${tabsHTML()}</div><div class="gt-onebox"><div class="gt-body"></div><div class="gt-side">${tools}<div class="gt-sidebody"><div class="gt-dr" data-dr></div><div class="gt-aside"><div class="gt-body gt-ubox"></div>${hold}</div></div></div></div></div>`;
+    }
+    const top = short ? tools : bar;
     return `<div class="gt q4 cols${short ? ' ph' : ''}">${top}<div class="gt-body"></div></div>`;
   }
 
@@ -390,9 +469,17 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     return d;
   };
 
+  /** Yeniden tasarlanan (inactive) düğüm / bar bonusu: eski metin yok, cümle YALNIZ alt şeritte bir kez (Ömer r35 2026-11-20). */
+  function inactiveTip(kind: string, title: string, icon?: string): HTMLElement {
+    const el = bandTipEl(inactiveTipSpec(kind, title, icon));
+    el.querySelector('.bt-foot')?.classList.add('lock');
+    return el;
+  }
+
   function nodeTip(key: string, s: TreeSession, touch: boolean): HTMLElement {
     const nd = nodeOf(key, rules)!;
     const info = s.tree.nodes[key]!;
+    if (isInactive(s.tree, key)) return inactiveTip(`${KN[nd.kind]} · ${rows[nd.row]!.skill?.name ?? rows[nd.row]!.name}`, info.name, rows[nd.row]!.icon);
     const st = nodeStatus(s, key, rules);
     const pend = s.pending[key] ?? 0;
     const committed = st.rank - pend;
@@ -433,7 +520,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (failMsg) f = foot(failMsg, 'bad');
     else if (st.rank === 0 && st.block?.code === 'points') f = foot('No points left', '');
     else if (st.rank === 0 && st.block) f = foot((['ultCap', 'ultArm', 'direction', 'unapproved'].includes(st.block.code) ? '' : 'Locked: ') + st.block.text, 'lock');
-    else if (!st.block) f = foot(touch ? 'Hold the node to spend 1 point' : 'Hold to spend 1 point', '');
+    else if (!st.block) f = foot(touch ? 'Hold the node to spend 1 skill point' : 'Hold to spend 1 skill point', '');
     else if (committed > 0) f = foot(ctx.respec ? 'Spent: only a respec takes it back' : 'Spent: a Tome of Unlearning resets the tree', '');
     else f = foot(st.block.text, '');
     el.append(f);
@@ -470,6 +557,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   function bonusTip(i: number, s: TreeSession): HTMLElement {
     const t = rules.barAt[i]!;
     const b = s.tree.mastery.bar[i];
+    if (b?.inactive) return inactiveTip(`Mastery bonus · ${s.tree.mastery.name}`, b.name ?? `Bonus ${t}`);
     const E = effective(s);
     const sp = counter(E, rules);
     const on = sp >= t;
@@ -639,6 +727,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       b.textContent = String(free);
       b.style.visibility = free > 0 ? '' : 'hidden'; // display:none başlığı kısaltıp sayfayı kaydırıyordu (Ömer 2026-10-24)
     });
+    const one = isOne();
     // düğümler
     $$<FxEl>('.gt-nd').forEach((el) => {
       const key = el.dataset['key']!;
@@ -646,7 +735,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       const keep = (el.className.match(/anim-\S+|\bholding\b|\bnope\b|\bdone\b/g) ?? []).join(' ');
       const base = el.dataset['base'] ?? (el.dataset['base'] = el.className.replace(/\s*(st-\S+|pend|pin|anim-\S+)/g, ''));
       const pn = s.pending[key] ?? 0;
-      el.className = `${base} st-${st.st}${pn > 0 ? ' pend' : ''}${TIP.pinned === el ? ' pin' : ''}${keep ? ` ${keep}` : ''}`;
+      el.className = `${base} st-${st.st}${st.block?.code === 'inactive' ? ' st-off' : ''}${pn > 0 ? ' pend' : ''}${TIP.pinned === el || (one && selRef === `n:${key}`) ? ' pin' : ''}${keep ? ` ${keep}` : ''}`;
       nodeFx(el, st, pn);
       const pp = el.querySelector('.pp');
       if (pp) pp.innerHTML = `<span class="c">${'●'.repeat(st.rank - pn)}</span><span class="p">${'●'.repeat(pn)}</span>${'○'.repeat(st.max - st.rank)}`;
@@ -654,8 +743,8 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       if (el.classList.contains('k-v')) el.classList.toggle('evo-on', st.rank - pn > 0 && evoOn(nodeOf(key, rules)!.row));
     });
     // plaka ikonları: evolve onaylanınca (ya da respec'te geri dönünce) yeniden kurmadan değişir
-    $$<HTMLElement>('.gr-pl[data-tt^="p:"] .pl-ico img').forEach((img) => {
-      const i = Number(img.closest<HTMLElement>('.gr-pl')?.dataset['tt']?.slice(2));
+    $$<HTMLElement>('.gr-pl[data-row] .pl-ico img').forEach((img) => {
+      const i = Number(img.closest<HTMLElement>('.gr-pl')?.dataset['row']);
       const want = rows[i]?.icon;
       if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
     });
@@ -762,6 +851,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       if (l) l.textContent = String(s.level);
     });
     refreshTip();
+    if (one) panelFill();
     ctx.onChange?.();
   }
 
@@ -841,6 +931,65 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       });
     });
   }
+  // ---- tek sütun: seçim, açıklama paneli, basılı tutma düğmesi
+  const selKeyOf = (): string => (selRef.startsWith('n:') ? selRef.slice(2) : '');
+  const colOfKey = (key: string): number => {
+    const nd = nodeOf(key, rules);
+    if (!nd) return 0;
+    return nd.row === rules.rows ? Math.max(0, rules.ult.arms.indexOf(nd.arm ?? '')) : nd.row;
+  };
+  /** Sağ panel: seçili düğümün (ya da ult skill'inin) gerçek ipucu; kaydırma yeniden çizimde korunur. */
+  function panelFill(): void {
+    const dr = $('[data-dr]');
+    if (!dr || !sess || !selRef) return;
+    const node = tipFor(selRef, false);
+    if (!node) return;
+    const top = dr.scrollTop;
+    dr.replaceChildren(node);
+    dr.scrollTop = top;
+    const hb = $('[data-hold]');
+    const key = selKeyOf();
+    if (hb) hb.classList.toggle('off', !key || !!nodeStatus(sess, key, rules).block);
+  }
+  function selectRef(ref: string): void {
+    selRef = ref;
+    const key = selKeyOf();
+    if (key) selMemo[colOfKey(key)] = key;
+    refresh();
+  }
+  function selectCol(i: number, key?: string): void {
+    selCol = i;
+    selRef = `n:${key ?? selMemo[i] ?? `${i}.f1`}`;
+    selMemo[i] = selRef.slice(2);
+    hideTip();
+    const g = $('.gt.one');
+    if (g) g.dataset['sel'] = String(i);
+    $$('.gt-tabs .gr-pl').forEach((t) => t.classList.toggle('sel', Number(t.dataset['col']) === i));
+    refresh();
+  }
+  /** "Hold to add": seçili düğüm için düğümün kendi tutma yoluyla (aynı kural, sayaç, geri bildirim). */
+  function wireHoldBtn(hb: HTMLElement): void {
+    attachHoldSpend(hb, {
+      canStart: () => {
+        const s = session();
+        const key = selKeyOf();
+        return !!s && !!key && !nodeStatus(s, key, rules).block;
+      },
+      onRefuse: () => {
+        const s = session();
+        const key = selKeyOf();
+        const b = s && key ? nodeStatus(s, key, rules).block : null;
+        if (b && key && b.code !== 'points') refuse(key, b.text);
+        else if (key) shake(key);
+      },
+      onSpend: () => {
+        const key = selKeyOf();
+        if (key) spend(key);
+      },
+      onPreview: () => undefined,
+      swallowClick: () => false,
+    });
+  }
   function doRespec(): void {
     const h = ctx.hero();
     if (!h) return;
@@ -875,7 +1024,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   function onPointerOver(e: PointerEvent): void {
     if (e.pointerType !== 'mouse' || TIP.pinned) return;
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-tt]');
-    if (el) showTip(el, false);
+    if (el && !(isOne() && /^[np]:/.test(el.dataset['tt'] ?? ''))) showTip(el, false); // tek sütunda düğüm / skill ayrıntısı sağ panelde
   }
   function onPointerOut(e: PointerEvent): void {
     if (e.pointerType !== 'mouse' || TIP.pinned) return;
@@ -892,6 +1041,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (ab) {
       if (ab.dataset['a'] === 'respec') doRespec();
       return;
+    }
+    if (isOne()) {
+      const tab = t.closest<HTMLElement>('[data-col]');
+      if (tab) return selectCol(Number(tab.dataset['col']));
+      const nd = t.closest<HTMLElement>('.gt-nd, .gt-ucore');
+      if (nd) return selectRef(nd.dataset['tt']!);
     }
     const tt = t.closest<HTMLElement>('[data-tt]');
     if (!tt) return;
@@ -936,10 +1091,20 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const body = $('.gt-body', treeHost);
     if (!g || !body) return;
     built = { w: Math.floor(body.clientWidth), h: Math.floor(body.clientHeight) };
-    const L = buildCols({ W: built.w, H: built.h, short: isShort() }, rules);
+    const one = isOne();
+    const ubox = one ? $('.gt-ubox', treeHost) : null;
+    if (one && !selRef) selRef = `n:${selCol}.f1`;
+    const L = one && ubox ? buildOne({ W: built.w, H: built.h, uW: Math.floor(ubox.clientWidth), uH: Math.floor(ubox.clientHeight) }, rules) : buildCols({ W: built.w, H: built.h, short: isShort() }, rules);
     ro?.observe(body);
     g.style.cssText += `;--sF:${L.sz.F}px;--sE:${L.sz.E}px;--sB:${L.sz.B}px;--sN:${L.sz.N}px;--sV:${L.sz.V}px;--hit:${Math.min(L.pitch, 44)}px`;
-    body.innerHTML = bodyHTML(L);
+    if (one && ubox) {
+      const h1 = oneHTML(L);
+      body.innerHTML = h1.col;
+      ubox.innerHTML = h1.ult;
+      wireHolds(ubox);
+      const hb = $('[data-hold]', treeHost);
+      if (hb) wireHoldBtn(hb);
+    } else body.innerHTML = bodyHTML(L);
     wireHolds(body);
     if (!entered && !reduced()) {
       g.classList.add('enter');
@@ -964,10 +1129,16 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       noticed.add(h.id);
       ctx.toast(TREE_RESET_NOTICE, true);
     }
-    const pk = `${h.id}|${isShort()}`;
+    const pk = `${h.id}|${isShort()}|${isOne()}`;
     const reuse = page && host === hostEl && hostEl.contains(page) && page.dataset['pk'] === pk;
     if (!reuse) {
       host = hostEl;
+      if (selHero !== h.id) {
+        selHero = h.id;
+        selCol = 0;
+        selRef = '';
+        selMemo = {};
+      }
       const wrap = document.createElement('div');
       wrap.innerHTML = pageHTML(h);
       page = wrap.firstElementChild as HTMLElement;
@@ -1053,7 +1224,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       return !!s && !!treeNodes(rules).by.get(key) && !check(s.tree, s.level, effective(s), key, {}, rules);
     },
     take: (key) => spend(key),
-    node: (key) => (page ? $<HTMLElement>(`.gt-nd[data-key="${key}"]`) : null),
+    node: (key) => {
+      if (!page) return null;
+      if (isOne() && nodeOf(key, rules) && (colOfKey(key) !== selCol || selKeyOf() !== key)) selectCol(colOfKey(key), key); // gizli sütundaki düğüm (ders vurgusu) görünür olsun
+      return $<HTMLElement>(`.gt-nd[data-key="${key}"]`);
+    },
     head: () => (page ? $<HTMLElement>('.gt-head') : null),
   };
   return { enabled, button, syncButton, render, destroy, coach, tipOpen: () => tip.classList.contains('show'), closeTip: hideTip };

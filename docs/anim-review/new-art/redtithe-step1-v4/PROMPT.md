@@ -1,0 +1,11 @@
+IMAGE EDIT of image 1: a 450x412 game sprite of a woman fighter standing in a guard stance, facing right, transparent background. Image 2 is ANOTHER character (different person, different clothes) shown ONLY as a POSE EXAMPLE: a running step.
+
+TASK: redraw the woman of image 1 in the running-step pose of image 2, full body, same facing (right).
+POSE (copy from image 2):
+- Running forward: the torso is thrown forward from the hips about 8-10 degrees, the head stays up and level above the shoulders (neck visible, in line with the spine, chin level, eyes looking ahead to the right; the head does NOT sink between the shoulders).
+- Legs: the front (right side of image) knee is bent and the front foot lands flat on the ground under/just ahead of the hips; the rear leg is pushed back with the knee strongly bent and the rear boot lifted off the ground behind her (heel up, toe just above the ground). Only the front boot touches the ground line.
+- Arms in running swing, opposite to the legs: rear arm swung BACK and slightly down behind the body with the bandaged fist clenched; front arm bent forward at the elbow in front of the chest with the bandaged fist clenched, held about waist-to-chest height. Both fists are EMPTY and clenched (a dagger will be added later by the game); both hands clearly visible, not hidden behind the body.
+
+IDENTITY (copy from image 1 exactly, NOT from image 2): same face, eyebrow scar, shaved side with the scale-like tattoo, long dark braid swinging behind her, red shirt sleeves, dark leather vest with brass buckles, red sash and belt with blood vials, pouch, brass bowl hanging on a chain, red tattered sash panels, dark baggy trousers, brown boots, bandaged wrists with red cross-lacing. Same scale as image 1 (the figure is about 380 px tall from boot sole to top of head), same painterly pixel-art rendering, outline, palette, lighting. Each arm and each leg is one continuous limb.
+
+BANS: no weapon, no extra or missing limb, no floating parts, no motion lines, no dust, no blood, magic, glow, text, ground shadow, halo, checkerboard or white/coloured background. Output a 450x412 image with a real transparent background, figure centred, boots at the bottom near y=405.

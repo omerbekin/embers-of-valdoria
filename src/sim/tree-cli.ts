@@ -137,7 +137,7 @@ export function treeReport(res: ReturnType<typeof runTreeSim>): string[] {
     }
     const ids = content.randomPool;
     p('');
-    p(`SINIF FARKI (ölçülen tarafta class kazanma %; hedef: ağaçlı - ağaçsız +20..+25 puan, |a - b| <= 5 puan)`);
+    p(`SINIF FARKI (ölçülen tarafta class kazanma %; hedef: ağaçlı - ağaçsız +25..+30 puan, |a - b| <= 5 puan)`);
     p(`  sınıf      savaş  ağaçsız${dirs.map((d) => `      ${d}`).join('')}${dirs.map((d) => `   ${d}-ağaçsız`).join('')}${dirs.length === 2 ? '     a-b' : ''}`);
     for (const id of ids) {
       const o = off.classes[id]!;
@@ -205,6 +205,8 @@ export function treeReport(res: ReturnType<typeof runTreeSim>): string[] {
         const inert = v.inertNodes.filter((k) => k.startsWith(`${id}:`)).map((k) => k.slice(id.length + 1));
         p(`  [${d}] ${name(id).padEnd(9)} ${units} birim; en çok: ${top.slice(0, 4).map(([k, n]) => `${k.slice(id.length + 1)} ${fmt(n / units, 2)}`).join(', ') || '-'}`);
         if (dead.length) p(`        ölü: ${dead.join(', ')}`);
+        const dropped = (v.droppedNodes ?? []).filter((k) => k.startsWith(`${id}:`)).map((k) => k.slice(id.length + 1));
+        if (dropped.length) p(`        üst düğüm yerine geçti (drop): ${dropped.join(', ')}`);
         if (inert.length) p(`        fx yok: ${inert.join(', ')}`);
       }
     }

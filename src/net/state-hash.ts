@@ -37,5 +37,7 @@ export function stateHash(battle: Battle): string {
       .map((k) => [k, c.cooldowns[k]]),
   ]);
   const ground = battle.ground.map((g) => [g.id, g.ground, g.board, g.slots, g.turns, g.amount]);
-  return fnv1a(JSON.stringify([battle.currentUid, battle.turnsTaken, battle.winner, units, ground]));
+  // The First Fire's Verdict (form r40 + r41): kural başlayınca durumu özete girer (başlamadan önce özet birebir eskisi)
+  const ff = battle.firstFire ? [[battle.firstFire.first, battle.firstFire.damage, battle.firstFire.round, battle.firstFire.time, battle.firstFire.acts]] : [];
+  return fnv1a(JSON.stringify([battle.currentUid, battle.turnsTaken, battle.winner, units, ground, ...ff]));
 }

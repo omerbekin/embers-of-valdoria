@@ -392,7 +392,7 @@ Olay listesinin kodu: `tree-hooks.ts > TRIGGER_EVENTS` (47 olay). `enemyMissed`:
 | `enemyMissed` | düşman sahibin tarafına ıskalayınca / kaçırılınca | saldıran (`subject` = hedeflenen dost) | `who` self / ally / any | Woeful Turn: `when targetStatus jinxed`, `staggered to target` |
 | `shieldAbsorb` / `shieldBreak` S | sahibin attığı kalkan bir vuruşu emince / kırılınca | saldıran (`subject` = kalkanlı) | `once perShield` | Ice Mirror: `once perShield`, `slow 2 to target` |
 | `doom` S | sahibin Doom'u patlayınca | Doom yiyen | `amount` = Omen sayısı | Hour of Ruin: `once`, `cooldown -2, cd doom_mark` |
-| `dotTick` | sahibin uyguladığı DoT bir tik vurunca | konak | `status`; `amount` = tik hasarı | Bitter Balm: `heal 0.2, of amount, to lowestHpAlly` |
+| `dotTick` | sahibin uyguladığı DoT bir tik vurunca (r36: ek tikler de: Blood Brand, Bleeding yer değiştirme; `at: dot` kancaları ve tik sayacı da; `at: dot` kancasının skill kapsamı durumu veren skill'dir) | konak | `status`; `amount` = tik hasarı | Bitter Balm: `heal 0.2, of amount, to lowestHpAlly` |
 | `passiveHeal` | Divine Light (pasif şifa) bir dostu iyileştirince | iyileşen | `amount` = şifa | Anointed Arms: `buff powerMul 0.15, to target` |
 | `skip` | sahip Skip Turn yapınca | — | — | Held Breath: `buff guaranteedCrit + ignoreDefense 0.3` |
 | `enemyMoved` | bir düşman Move yapınca | hareket eden | `near` (en çok uzaklık) | — (Range Keeper freeCast ister) |
@@ -431,6 +431,7 @@ Olay listesinin kodu: `tree-hooks.ts > TRIGGER_EVENTS` (47 olay). `enemyMissed`:
 | `free: true` | sonraki skill bedelsiz (HP / MP / Rage) | `uses` | Red Reserve: `{ "free": true }` |
 | `clear: true \| "<düğüm>"` | o düğümün buff'ını ve `every` sayacını sıfırlar | — | Unbroken Run: `echoFail` → `{ "clear": true }` |
 | `charge: n` | Mana Overflow sayacına +n | — | Hunter's Read: `{ "charge": 3 }` |
+| `blood: n` | alıcının kan barına +n (bar sınırına kırpılır; yalnız kan barlı sınıf derlenir, Redtithe r36) | — | Open Veins: `dotTick`, `status bleeding`, `{ "blood": 2 }` |
 | `bell: n` | sahibin çan sayacı +n (alıcı yok; Vesper) | `skill` | Matins: `{ "bell": 1 }` |
 
 **Kullanım sırası:** kullanım sırasında kazanılan buff / free o kullanımda harcanmaz (`pending`); kullanım bitince etkinleşir.

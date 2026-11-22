@@ -162,7 +162,7 @@ Veri ve motor biçimi: `skill-tree-fx-reference.md` (Adlı skill biçimi).
 
 
 ## 11. Denge hedefi ve kalıcı kararlar (eski plan 9.2a ve 10a; günlüğün tamamı arşivde)
-- **Ağacın güç katkısı:** L15'te tam (odaklı) ağaç, aynı seed'le ağaçsız koşuya göre kazanma oranını yaklaşık **+20-25 puan** artırır (class başına; Ömer 2026-10-22). **Yön dengesi:** aynı class içinde a ve b yönü build'leri arasındaki fark en çok **5 puan**. Düşmanların ağacı yok; ayar tavanla değil karşılaşma ölçekleri ve takaslarla (tavan yok kuralı).
+- **Ağacın güç katkısı:** L15'te tam (odaklı) ağaç, aynı seed'le ağaçsız koşuya göre kazanma oranını yaklaşık **+25-30 puan** artırır (class başına; Ömer 2026-11-21 form r41, önceki hedef +20-25 Ömer 2026-10-22). **Yön dengesi:** aynı class içinde a ve b yönü build'leri arasındaki fark en çok **5 puan**. Düşmanların ağacı yok; ayar tavanla değil karşılaşma ölçekleri ve takaslarla (tavan yok kuralı).
 - **Sim:** bayraklar ve rapor `docs/arch/sims-and-deploy.md` > Skill ağacı modu (`--tree focus`, `--level`). Tek 1000'lik seed ±5-7 puan gürültü verir; class kararı için 2 x 3000. Her koşu Ömer onayıyla. Düğüm sayıları ve sınıf bandı: `data/skill-trees/`, `docs/balance.md`.
 - **Yüzde kuralı:** oransal (`_rules.json > percentRule`); metinde "A → B" yazan mutlak sayılar `set` / `base`.
 - **Respec:** onaydan önce bekleyen puan bedava geri alınır; onaylı ağacın TAMAMI altınla sıfırlanır (bedel `_rules.json > respec`), savaş dışında; tek düğüm geri alma yok; `version` değişince bir kez bedava.

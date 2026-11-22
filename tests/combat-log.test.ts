@@ -190,3 +190,14 @@ describe('combat log (HUD > Battle info)', () => {
     expect(log.push(ev({ type: 'moved', actor: 'a', from: 3, to: 0, advance: true, cause: 'x' }))).toBe(false);
   });
 });
+
+describe('combat log: Loaded Dice roll lines', () => {
+  it('each roll gets its own line, Double on matching dice', () => {
+    const log = new CombatLog(names);
+    log.push(ev({ type: 'skillUsed', actor: 'a', skill: 'loaded_dice', targets: ['b'] }));
+    log.push(ev({ type: 'dice', actor: 'a', target: 'b', values: [5, 1], double: false }));
+    log.push(ev({ type: 'dice', actor: 'a', target: 'b', values: [3, 3], double: true }));
+    expect(text(log, 0)).toBe('Cutthroat rolled 3 + 3 = 6 · Double');
+    expect(text(log, 1)).toBe('Cutthroat rolled 5 + 1 = 6');
+  });
+});

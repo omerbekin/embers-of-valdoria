@@ -168,5 +168,7 @@ export function perRankTotal(text: string, rank: number): string | null {
   const last = all[all.length - 1];
   if (!last || last.index === undefined) return null;
   const v = Math.round(Number(last[0]) * rank * 1000) / 1000;
-  return head.slice(0, last.index) + String(v) + head.slice(last.index + last[0].length) + text.slice(idx).replace(/^\s+per rank\b/, '');
+  const out = head.slice(0, last.index) + String(v) + head.slice(last.index + last[0].length) + text.slice(idx).replace(/^\s+per rank\b/, '');
+  // "..., per rank." atılınca ",." kalmasın; çift boşluk da temizlenir
+  return out.replace(/,(\s*[.;!?])/g, '$1').replace(/\s{2,}/g, ' ');
 }

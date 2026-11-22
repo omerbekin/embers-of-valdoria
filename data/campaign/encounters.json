@@ -437,7 +437,7 @@
       { "class": "sworn_guard", "slot": 2, "mods": { "hpMult": 0.5, "powerMult": 0.605 } },
       { "class": "ember_hierophant", "slot": 7, "mods": { "hpMult": 0.5, "powerMult": 0.605 } }
     ],
-    "background": "castle-hall"
+    "background": "castle-morvane"
   },
   "brackenridge": {
     "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Windy Moor ile aynı (0,782). Denge balance-tester'ın. ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için can/güç 0,782 -> 0,62 (iki dalga).",

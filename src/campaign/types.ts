@@ -170,6 +170,9 @@ export type Faction = 'order' | 'guild';
 /** Harita 3 Hall of Oaths seçimi (Stone Oath). */
 export type StoneOath = 'sworn' | 'refused';
 
+/** Harita 3 bitiş olayı Mend or Quench seçimi (Ömer 2026-11-21 form r39; kapanış sineması bu seçime göre dallanır). */
+export type CrownChoice = 'mend' | 'quench';
+
 /**
  * Harita 2 deniz kuralları (maps-2-3.md 5: M-J sea lanes, M-K Black Caravel, M-L faction, M-M lighthouse; src/campaign/reach.ts). Sayılar veride.
  */
@@ -644,6 +647,11 @@ export interface CampaignState {
    */
   mapsDone?: string[];
   /**
+   * Bu haritanın başındaki sefer toplamları (harita sonu kartı "bu harita" sayıları = şimdiki toplam - bu; Ömer 2026-11-21: "o harita + altında toplam").
+   * `continueToMap` yazar. Eski kayıtta yok = sıfırdan (Harita 1 ya da geçişsiz kayıt; isteğe bağlı alan, kayıt sürümü değişmez; bozuksa okunurken atılır).
+   */
+  mapStart?: { victories: number; defeats: number; goldEarned: number; playMs: number; fallen: number; day: number };
+  /**
    * Yedekteki kahramanlar (kışla değişimi, Ömer 2026-10-25 form K1 = b): takımdan çıkan kahraman level / XP / ağaç / ekipmanıyla burada bekler,
    * değişim kışlasında geri alınabilir. Savaşa girmez, XP almaz. İsteğe bağlı alan (kayıt sürümü değişmez); eski kayıtta yok = boş.
    */
@@ -680,6 +688,12 @@ export interface CampaignState {
    * ('refused': Gatehouse devriyesi güçlenir). Bir kez, geri alınmaz. İsteğe bağlı alan (kayıt sürümü değişmez).
    */
   stoneOath?: StoneOath;
+  /**
+   * Harita 3 bitiş olayı (hc86 Mend or Quench; Ömer 2026-11-21 form r39): 'mend' = lider tacı takar, 'quench' = ocak söndürülür. Bir kez, geri
+   * alınmaz; yalnız kapanış sinemasının dalını seçer (başka mekanik etkisi YOK). Kayıt sürümü 15 (save.ts > upgradeHollowCrown: olayı bitmiş eski
+   * kayıtta seçim `eventChoice`tan kurtarılır, kurtarılamazsa olayın ilk seçeneği).
+   */
+  crownChoice?: CrownChoice;
   /**
    * Bir sonraki savaşın başında takımın her (ayaktaki) kahramanına konan durum (The White Dark "Wait it out": Chilled 2 tur; Ömer 2026-10-29,
    * open-questions 454 d). Savaş bitince (zafer, yenilgi, geri çekilme) silinir. İsteğe bağlı alan (kayıt sürümü değişmez).

@@ -60,29 +60,7 @@
   --bu: 1px;
 }
 
-/* köşe elmasları: sol üst + sağ alt */
-.bt::before,
-.bt::after {
-  content: '';
-  position: absolute;
-  width: 0.58em;
-  height: 0.58em;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid var(--acl);
-  z-index: 2;
-}
-
-.bt::before {
-  left: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
-  top: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
-}
-
-.bt::after {
-  right: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
-  bottom: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
-}
-
+/* köşe süsü (sol üst + sağ alt üç nokta): corner-dots.css */
 /* başlık şeridi: ikon solda, değer sağda */
 .bt-head {
   display: flex;

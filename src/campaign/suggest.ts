@@ -58,6 +58,14 @@ export function suggestCompanion(team: string[], pool: string[], at: SuggestAt, 
   return first ? { ...first, also } : null;
 }
 
+/**
+ * Önerilen satırın neden önerildiği (Recruit / Choose a companion, "Recommended" satırının ipucu; Ömer 2026-11-21): rozeti koyan kuralın kendi gerekçesi
+ * (data/campaign/campaign.json > companySuggest.lines). Rozet yalnız `sug.heroes` (ilk eksik rol) için konur; ipucu da yalnız onlar için. Öneri yoksa boş.
+ */
+export function recommendReasons(sug: CompanySuggestion | null): Record<string, string> {
+  return sug ? Object.fromEntries(sug.heroes.map((h) => [h, sug.line])) : {};
+}
+
 /** Durumdan öneri: takım = etkin kadro, düğüm = bulunulan düğüm; adaylar veri listesinin (companyPool) sırasına dizilir (sunum sırası/seed etkilemez). */
 export function companySuggestionFor(s: CampaignState, pool: string[]): CompanySuggestion | null {
   const rank = (c: string): number => {

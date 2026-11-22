@@ -10,6 +10,7 @@
 import './gear.css';
 import './gear-plates.css';
 import './blacksmith.css';
+import './bottom-warn.css';
 import './econ.css';
 import {
   COMBINE_COUNT,

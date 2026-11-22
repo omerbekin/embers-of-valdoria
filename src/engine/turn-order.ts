@@ -51,7 +51,7 @@ function compare(a: TurnSlot, b: TurnSlot, firstSide: Side): number {
  * Sıradaki aktörü bulur. Sayaçları (yerinde) en erken oynayacak kişi eşiğe ulaşana kadar ilerletir;
  * seçilen aktörün sayacını DÜŞÜRMEZ (oyun bitirince düşer). SPD'si 0 olanlar hiç oynamaz.
  */
-export function advanceTurn(slots: TurnSlot[], threshold: number, firstSide: Side = 'party'): TurnSlot | null {
+export function advanceTurn(slots: TurnSlot[], threshold: number, firstSide: Side = 'party', out?: { ticks: number }): TurnSlot | null {
   const movers = slots.filter((s) => s.spd > 0);
   if (movers.length === 0) return null;
   // Tam sayı birimleri (bkz. COUNTER_SCALE): tik hesabı ve eşik karşılaştırması artıksız
@@ -59,6 +59,7 @@ export function advanceTurn(slots: TurnSlot[], threshold: number, firstSide: Sid
   const units = movers.map((s) => ({ s, c: Math.round(s.counter * COUNTER_SCALE), v: Math.max(1, Math.round(s.spd * COUNTER_SCALE)) }));
   const ticks = Math.min(...units.map((u) => Math.max(0, Math.ceil((target - u.c) / u.v))));
   for (const u of units) u.s.counter = (u.c + u.v * ticks) / COUNTER_SCALE + 0;
+  if (out) out.ticks = ticks; // geçen süre: hızı s olan birim s x ticks sayaç kazanır (First Fire's Verdict turu)
   return movers.filter((s) => s.counter >= threshold).sort((a, b) => compare(a, b, firstSide))[0] ?? null;
 }
 

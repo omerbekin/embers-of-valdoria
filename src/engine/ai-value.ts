@@ -67,6 +67,11 @@ export interface AiValueConfig {
   reserveValueShare: number;
   /** Mana yakmanın "engellenen hamle" değerinde ufuk çarpanı (MP kaybı yenilenene kadar sürer: birimin ufuktaki turu x bu). */
   manaHorizonMult: number;
+  /**
+   * MP kazancı açık tabanı (Ömer 2026-11-22, tr3_mp; ValueContext.manaGain): doldurulan MP x en iyi MP başı değer x (MP açığı / maks MP) x bu pay.
+   * Ufuk planı MP'yi zaten karşılasa da küçük kazançlar 0 değil; MP doluyken 0. Yoksa 0 (yalnız içbükey zarf).
+   */
+  manaGainDeficitShare: number;
   /** advanceToFront (Charge) sonrası ön sıraya geçiş: melee yeteneği kazanılırsa birimin tur değeri x bu pay (madde 271; yoksa 0,5). */
   advanceMeleeShare?: number;
   /** Spellbreaker's Instinct (open-questions 456): MP bedelli skill rakip AM'in takımını kapsıyorsa bedel = advance x AM'in tur değeri x bu pay (yoksa 1). */
@@ -74,9 +79,10 @@ export interface AiValueConfig {
   /**
    * Redtithe kan barı (Ömer 2026-11-17; PROVİZYON, sim YOK): costShare = bir kanın can-eşdeğeri (maks can x hpPerBlood x bu; kan yenilenir, can
    * yenilenmez); gainShare = kan kazancının payı (Tithe Cut; Mirror Vein kalkanlarının büyü emişinden beklenen kan da bu payla,
-   * 2026-11-18); brandTickShare = Blood Brand'in skill başı ek Bleeding tikinin payı; brandCostShare = işaretlinin MP bedel artışının payı.
+   * 2026-11-18); brandTickShare = Blood Brand'in skill başı ek Bleeding tikinin payı; brandCostShare = işaretlinin MP bedel artışının payı; wardTypeShare (r36) = Mirror Vein
+   * kalkanlısının hasar kancasında (Spell-Proof Vein büyü, Warded Steps fiziksel) beklenen hasarın o türe düşen payı.
    */
-  blood?: { costShare: number; gainShare: number; brandTickShare: number; brandCostShare: number };
+  blood?: { costShare: number; gainShare: number; brandTickShare: number; brandCostShare: number; wardTypeShare?: number };
   /**
    * Boşuna çağrı öldürme (Undead aynası tıkanması, 2026-10-10): çağrının tarafında onu ufuk içinde YENİDEN çağırabilecek canlı bir çağırıcı varsa
    * (skill'i cooldown'dan çıkıyor, MP'si yetiyor) o çağrıyı öldürmenin/ona baskının değeri bu payla çarpılır; hedef seçimi çağırıcıya kayar. Yoksa 1 (eski davranış).
@@ -230,7 +236,36 @@ export const DEFAULT_VALUE: AiValueConfig = {
   decidedMargin: 0.5,
   reserveValueShare: 0.85,
   manaHorizonMult: 2,
+  manaGainDeficitShare: 0,
 };
+
+/**
+ * (bedel, değer) noktalarının üst içbükey zarfı: x'te değeri veren parçalı doğrusal fonksiyon; en değerli noktadan sonra düz, 0'ın altında 0.
+ * Basamaklı "MP ile en iyi plan" eğrisinin sürekli hâli (manaGain).
+ */
+function upperEnvelope(pts: Array<[number, number]>): (x: number) => number {
+  const s = [...pts].sort((p, q) => p[0] - q[0] || q[1] - p[1]);
+  const hull: Array<[number, number]> = [];
+  for (const p of s) {
+    if (hull.length && p[1] <= hull[hull.length - 1]![1]) continue; // daha pahalı ama daha değerli değil: zarfa girmez (artan kısım)
+    while (hull.length >= 2) {
+      const [x1, y1] = hull[hull.length - 2]!;
+      const [x2, y2] = hull[hull.length - 1]!;
+      if ((y2 - y1) * (p[0] - x1) <= (p[1] - y1) * (x2 - x1)) hull.pop();
+      else break;
+    }
+    hull.push(p);
+  }
+  return (x: number) => {
+    if (!hull.length || x <= hull[0]![0]) return hull[0]?.[1] ?? 0;
+    for (let i = 1; i < hull.length; i++) {
+      const [x1, y1] = hull[i - 1]!;
+      const [x2, y2] = hull[i]!;
+      if (x <= x2) return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+    }
+    return hull[hull.length - 1]![1];
+  };
+}
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const ratio = (c: Combatant) => (c.maxHp > 0 ? c.hp / c.maxHp : 0);
@@ -562,6 +597,29 @@ export class ValueContext {
    */
   manaDenial(f: Combatant, amount: number): number {
     if (amount <= 0 || f.hp <= 0 || f.maxMp <= 0 || f.taint !== undefined) return 0; // Ley Brand: tainted mana ile hamle yapılmaz
+    const { uses, T, pool } = this.manaPlan(f);
+    const worth = (mp: number): number => {
+      let best = 0;
+      const rec = (i: number, turns: number, left: number, v: number) => {
+        if (i === uses.length) {
+          best = Math.max(best, v);
+          return;
+        }
+        const u = uses[i]!;
+        const max = Math.floor(Math.min(u.cap, turns, left / u.cost) + 1e-9);
+        for (let n = 0; n <= max; n++) rec(i + 1, turns - n, left - n * u.cost, v + n * u.delta);
+      };
+      rec(0, T, Math.max(0, mp), 0);
+      return best;
+    };
+    return Math.max(0, worth(pool) - worth(pool - amount));
+  }
+
+  /**
+   * Mana planı (manaDenial / manaGain ortak): ufuk T (tam tur), ufuktaki MP havuzu (MP + yenilenme x T) ve MP'li her skill'in bir kullanımının
+   * bedeli, bedelsiz en iyi hamleye göre fazladan değeri ve en çok kullanım sayısı (tur ve cooldown).
+   */
+  private manaPlan(f: Combatant): { uses: Array<{ cost: number; delta: number; cap: number }>; T: number; pool: number } {
     // Skill'in tek kullanımlık değeri: ham değer + zemin etkisi (güç x tur x 0,7), alan skill'inde x vurabileceği hedef (en çok 3; karşı tarafın canlı sayısı)
     const opp = Math.min(3, this.battle.living(f.side === 'party' ? 'enemy' : 'party').length);
     const raw = (sk: SkillDef) => {
@@ -583,35 +641,42 @@ export class ValueContext {
         return { cost: scoredMpCost(sk), delta: (raw(sk) - free) * this.vc.contributionShare, cap: cd > 0 ? Math.ceil(T / (cd + 1)) : T };
       })
       .filter((u) => u.delta > 0);
-    const worth = (mp: number): number => {
-      let best = 0;
-      const rec = (i: number, turns: number, left: number, v: number) => {
-        if (i === uses.length) {
-          best = Math.max(best, v);
-          return;
-        }
-        const u = uses[i]!;
-        const max = Math.floor(Math.min(u.cap, turns, left / u.cost) + 1e-9);
-        for (let n = 0; n <= max; n++) rec(i + 1, turns - n, left - n * u.cost, v + n * u.delta);
-      };
-      rec(0, T, Math.max(0, mp), 0);
-      return best;
-    };
-    return Math.max(0, worth(pool) - worth(pool - amount));
+    return { uses, T, pool };
   }
 
-  /** MP KAZANCININ değeri (manaDenial'ın tersi: Mana Steal gainRatio, Spell Ward giveMana, ağaç tetiği mp); maks MP ile sınırlı, MP'siz birimde 0. */
+  /**
+   * MP KAZANCININ değeri (Mana Steal gainRatio, Spell Ward giveMana, ağaç tetiği mp, Bell of Kings indirimi): maks MP ile sınırlı, MP'siz birimde 0.
+   * SÜREKLİ (Ömer 2026-11-22, tr3_mp): eski hâli manaDenial'ın tersiydi (tam sayılı kullanım planı: bir skill kullanımı açmayan 1-2 MP = 0). Şimdi
+   * iki parçanın büyüğü: (1) plan eğrisinin şimdiki noktadan başlayan İÇBÜKEY ZARFI (kesirli kullanım: bir kullanım açmayan kazanç, sonraki
+   * kullanıma doğru doğrusal pay alır; değer eski basamaklı değerden hiç az değil), (2) MP AÇIĞI tabanı: doldurulan MP x en iyi MP başı değer x (MP açığı / maks MP) x manaGainDeficitShare (ufuk
+   * yenilenmeyle MP'yi zaten karşılasa da açık kapandıkça azalan, doluyken 0 değer). Kesirli miktar kabul edilir (yuvarlanmaz).
+   */
   manaGain(f: Combatant, amount: number): number {
     const a = Math.min(Math.max(0, f.maxMp - f.mp), amount);
-    if (a <= 0 || f.hp <= 0) return 0;
-    // manaDenial(MP + a'lı birim, a) = a kazanmanın değeri (geçici okuma; hemen geri alınır)
-    const mp = f.mp;
-    f.mp = mp + a;
-    try {
-      return this.manaDenial(f, a);
-    } finally {
-      f.mp = mp;
-    }
+    if (a <= 0 || f.hp <= 0 || f.maxMp <= 0 || f.taint !== undefined) return 0;
+    const { uses, T, pool } = this.manaPlan(f);
+    if (!uses.length) return 0;
+    // Tüm uygun kullanım planlarının (bedel, değer) noktaları; basamaklı plan eğrisinin içbükey zarfı bu noktaların üst gövdesidir
+    const pts: Array<[number, number]> = [];
+    const rec = (i: number, turns: number, c: number, v: number) => {
+      if (i === uses.length) {
+        pts.push([c, v]);
+        return;
+      }
+      const u = uses[i]!;
+      const max = Math.min(u.cap, turns);
+      for (let n = 0; n <= max; n++) rec(i + 1, turns - n, c + n * u.cost, v + n * u.delta);
+    };
+    rec(0, T, 0, 0);
+    // Zarf ŞİMDİKİ noktadan başlar (havuzla yapılabilen en iyi plan): kazanç eski basamaklı değerden az olamaz, kullanım açmayan küçük kazanç da
+    // sonraki kullanıma doğru doğrusal pay alır
+    const now = Math.max(0, ...pts.filter(([c]) => c <= pool + 1e-9).map(([, v]) => v));
+    const env = upperEnvelope([[pool, now], ...pts.filter(([c, v]) => c > pool && v > now)]);
+    const curve = Math.max(0, env(pool + a) - now);
+    const priced = uses.filter((u) => u.cost > 0); // ai.scoreCost 0 olan skill MP başı orana girmez (sonsuz olmasın)
+    const rate = priced.length ? Math.max(...priced.map((u) => u.delta / u.cost)) : 0;
+    const floor = a * rate * ((f.maxMp - f.mp) / f.maxMp) * this.vc.manaGainDeficitShare;
+    return Math.max(curve, floor);
   }
 
   /** Bir Rage puanının değeri (Berserker rageOnHurt): Rage bedelli skill'lerin (ham değer - bedelsiz en iyi) / bedel'inin en büyüğü x contributionShare. */

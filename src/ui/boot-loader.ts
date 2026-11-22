@@ -36,7 +36,8 @@ export function setBootProgress(p: number, label?: string): void {
  */
 let miniNext = false;
 export function bootMiniNext(): void {
-  miniNext = true;
+  // Ömer 2026-11-21 (form r39): şimdilik oyundaki bütün yükleme ekranları aynı (açılış ekranı); küçük gösterge kapalı.
+  miniNext = false;
 }
 
 function show(label: string): void {

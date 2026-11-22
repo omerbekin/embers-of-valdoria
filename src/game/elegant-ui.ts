@@ -1,5 +1,6 @@
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
+import { drawCornerDots } from './corner-dots-gfx';
 import { BODY_FONT, DISPLAY_FONT, NUM_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-text';
 import { onStageResize, stageView } from './stage';
@@ -336,8 +337,9 @@ export function elButton(
 ): ElButton {
   const primary = (o.kind ?? 'primary') === 'primary';
   const preset = BTN_SIZE[o.sz ?? (primary ? 'screen' : 'dialog')];
-  const size = preset.size;
   const em = primary ? 0.12 : 0.1;
+  // Telefonda (Ömer 2026-11-20) iki düğme aynı boyda: komşusunun genişliğini alan ikincil düğme (Random both, START'ın üstünde) yazıyı da birincille AYNI boyda çizer
+  const size = !primary && o.w !== undefined && document.documentElement.classList.contains('short') ? BTN_SIZE.screen.size : preset.size;
   const probe = elText(scene, 0, 0, o.minLabel && o.minLabel.length > label.length ? o.minLabel : label, size, EL.DIM, { em });
   const w = o.w ?? Math.ceil(probe.width + (primary ? 112 : 80));
   probe.destroy();
@@ -499,17 +501,14 @@ export function elIconButton(scene: Phaser.Scene, content: { icon?: string; labe
 
 // --- Panel, başlık, durum ---
 
-/** İnce çerçeveli koyu panel / kart (sol üst köşe (x, y)). `corners` = köşelerde küçük içi boş elmas. */
+/** İnce çerçeveli koyu panel / kart (sol üst köşe (x, y)). `corners` = köşe süsü (yuvarlak üç nokta). */
 export function elPanel(scene: Phaser.Scene, x: number, y: number, w: number, h: number, o: { alpha?: number; corners?: boolean; border?: number } = {}): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
   g.fillStyle(0x000000, 0.3).fillRect(x + 4, y + 12, w, h);
   g.lineStyle(3, EL.INK, 0.7).strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
   g.fillGradientStyle(0x1e160e, 0x1e160e, 0x0c0906, 0x0c0906, o.alpha ?? 0.94).fillRect(x, y, w, h);
   g.lineStyle(1, EL.GOLD, o.border ?? 0.42).strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-  if (o.corners) for (const [cx, cy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]] as const) {
-    g.fillStyle(0x140e09, 1).fillPoints(diamondPts(cx, cy, 5), true);
-    g.lineStyle(1, EL.GOLD, 0.7).strokePoints(diamondPts(cx, cy, 5), true);
-  }
+  if (o.corners) drawCornerDots(g, x, y, w, h); // köşe süsü: üç nokta (dört karo yerine sol üst + sağ alt, mockup uc-nokta-3)
   return g;
 }
 

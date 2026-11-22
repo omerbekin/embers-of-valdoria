@@ -21,6 +21,23 @@ import { miscImage, uiImage } from '../game/icon-image-files';
 import { miscIconName } from './misc-icons';
 import { eventMedalIcon, eventPiece, type EventKit } from './node-card-events';
 
+/** İki satıra kırılan başlıkta kutu metnin gerçek genişliğine daralır; süs çizgileri başlığa yaklaşır (Ömer 2026-11-21). */
+function hugTitle(hd: HTMLElement): void {
+  const t = hd.querySelector<HTMLElement>('.sbc-t');
+  if (!t || typeof ResizeObserver === 'undefined') return;
+  const fit = (): void => {
+    t.style.width = '';
+    if (!t.isConnected) return;
+    const r = document.createRange();
+    r.selectNodeContents(t);
+    const w = Math.ceil(Math.max(...[...r.getClientRects()].map((x) => x.width), 0));
+    // getClientRects ölçüsü dönmüş sahnede (CSS rotate) da yerel birimde değil; offsetWidth ile oran alınır
+    const k = t.getBoundingClientRect().width / (t.offsetWidth || 1) || 1;
+    if (w > 0) t.style.width = `${Math.ceil(w / k) + 1}px`;
+  };
+  new ResizeObserver(fit).observe(hd);
+}
+
 /** Kart türü (oyundaki düğüm türlerinden; src/game/scenes/CampaignMapScene.ts > designFacts). */
 export type NodeCardKind = 'battle' | 'elite' | 'boss' | 'town' | 'rest' | 'merchant' | 'treasure' | 'treasure-open' | 'shrine' | 'dive' | 'event' | 'ahead';
 
@@ -368,6 +385,7 @@ export function buildNodeCard(card: HTMLElement, c: NodeCardCtx): HTMLElement | 
   }
   const medal = h('div', 'nc-medal', img((f.kind === 'event' ? eventMedalIcon(f.eventId) : undefined) ?? c.badge));
   const hd = h('div', 'nc-head', `<span class="rl" aria-hidden="true"></span><h2 class="sbc-t">${esc(c.name)}</h2><span class="rl r" aria-hidden="true"></span>`);
+  hugTitle(hd);
   const subEl = sub ? h('p', 'nc-sub', esc(sub)) : null;
   const lv = lvEl(c);
 

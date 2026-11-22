@@ -34,3 +34,4 @@ export * from './quests';
 export * from './surge';
 export * from './reach';
 export * from './hollow-crown';
+export * from './ending';

@@ -25,7 +25,7 @@ Varsayımlar ve sorular: `docs/archive/design/open-questions-archive.md` madde 2
 6. Savaş: herkes yalnızca kendi tarafının birimini, kendi sırasında oynar. Rakibin sırasında alt panelde **Opponent's turn**
    yazar ve giriş kilitlidir. Yapay zeka kullanılmaz. (İstisna: hiçbir eylemi kalmayan birim, örn. skill'i kalmayan çağrı, sahibi
    adına otomatik "pas" geçer; bu da normal bir hamle olarak gönderilir.)
-7. Sonuç ekranı: **Rematch** (ikisi de isterse yeniden takım seçimi, önceki takımlar korunur) / **Back to lobby** / **Main Menu**.
+7. Sonuç ekranı (iki takım aynı anda biterse **beraberlik**: başlık "DRAW", kazanan yok; Ömer 2026-11-21, form r39, kural `combat.md` > Savaş sonu): **Rematch** (ikisi de isterse yeniden takım seçimi, önceki takımlar korunur) / **Back to lobby** / **Main Menu**.
    Rematch aç/kapa düğmesidir (basınca "Cancel rematch"); Back to lobby ve Main Menu HER durumda çalışır (canlı hata 2026-10-10:
    Rematch'e basınca ortak "bir kez" kilidi diğer düğmeleri de kilitliyordu; düğme kapısı `src/game/result-actions.ts`). Düğmelerin
    üstünde durum satırı: "Waiting for your opponent...", "Your opponent wants a rematch", "Opponent disconnected" (geçici kopma:

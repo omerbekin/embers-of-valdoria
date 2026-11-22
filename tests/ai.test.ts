@@ -254,7 +254,7 @@ describe('yapay zeka: genel kurallar', () => {
   });
 
   it('YZ ile oynanan tam savaş her seed\'de sonuçlanır (sonsuz döngü yok)', () => {
-    const results = { party: 0, enemy: 0, none: 0 };
+    const results = { party: 0, enemy: 0, draw: 0, none: 0 };
     for (let seed = 1; seed <= 60; seed++) {
       const b = turnsBattle(seed);
       for (let i = 0; i < 500 && !b.winner; i++) {

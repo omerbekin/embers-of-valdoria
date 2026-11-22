@@ -21,6 +21,44 @@ const opt = (name, def) => {
 const url = opt('url', 'http://localhost:5173');
 const out = resolve(opt('out', 'ui-shots'));
 const views = opt('view', '1280x720,844x390').split(',').map((v) => v.trim()).filter(Boolean);
+const scanOut = opt('scan', '');
+const scanHits = new Map();
+// --scan <dosya.json>: her çekimde DOM taraması; 45 derece döndürülmüş küçük kare (karo / baklava) ve çapraz köşe konumu bulunur
+const scanFn = () => {
+  const out = [];
+  const key = (el, ps) => {
+    let p = el.tagName.toLowerCase();
+    if (el.classList.length) p += '.' + [...el.classList].join('.');
+    const par = el.parentElement;
+    if (par && par !== document.body) p = (par.classList.length ? '.' + [...par.classList].slice(0, 2).join('.') : par.tagName.toLowerCase()) + ' > ' + p;
+    return p + (ps || '');
+  };
+  for (const el of document.querySelectorAll('*')) {
+    for (const ps of ['', '::before', '::after']) {
+      const cs = getComputedStyle(el, ps || null);
+      if (ps && (cs.content === 'none' || cs.content === 'normal')) continue;
+      const t = cs.transform;
+      if (!t || t === 'none') continue;
+      const m = t.match(/matrix\(([^)]+)\)/);
+      if (!m) continue;
+      const [a, b] = m[1].split(',').map(Number);
+      if (!(Math.abs(Math.abs(a) - 0.7071) < 0.02 && Math.abs(Math.abs(b) - 0.7071) < 0.02)) continue;
+      const w = parseFloat(cs.width), h = parseFloat(cs.height);
+      if (!(w > 0 && w <= 30 && h > 0 && h <= 30)) continue;
+      const host = el.getBoundingClientRect();
+      if (host.width === 0 && host.height === 0 && !ps) continue;
+      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+      let vis = true;
+      for (let n = el; n && n !== document.body; n = n.parentElement) { const c = getComputedStyle(n); if (c.display === 'none' || c.visibility === 'hidden' || c.opacity === '0') { vis = false; break; } }
+      if (!vis) continue;
+      const num = (v) => (v === 'auto' ? null : parseFloat(v));
+      const hz = num(cs.left) !== null ? 'L' + cs.left : num(cs.right) !== null ? 'R' + cs.right : '';
+      const vt = num(cs.top) !== null ? 'T' + cs.top : num(cs.bottom) !== null ? 'B' + cs.bottom : '';
+      out.push({ k: key(el, ps), size: Math.round(w) + 'x' + Math.round(h), pos: cs.position + ' ' + hz + ' ' + vt });
+    }
+  }
+  return out;
+};
 const file = args.find((a) => !a.startsWith('--'));
 if (!file) {
   console.error('kullanım: node tools/ui-shot.mjs <senaryo.mjs> --url http://localhost:<port> --out <klasör> [--view 1280x720,844x390]');
@@ -51,6 +89,7 @@ try {
     page.on('pageerror', (e) => console.error(`[${v}] sayfa hatası: ${e.message.split('\n')[0]}`));
     const wait = (ms) => page.waitForTimeout(ms);
     const snap = async (name) => {
+      if (scanOut) for (const r of await page.evaluate(scanFn).catch(() => [])) { const id = r.k + ' | ' + r.size + ' | ' + r.pos; const e = scanHits.get(id) ?? { n: 0, shots: new Set() }; e.n++; e.shots.add(name); scanHits.set(id, e); }
       await page.screenshot({ path: `${out}/${name}.jpg`, type: 'jpeg', quality: 80 });
       count++;
     };
@@ -85,5 +124,6 @@ try {
 } finally {
   await browser.close();
 }
+if (scanOut) { const { writeFileSync } = await import('node:fs'); writeFileSync(resolve(scanOut), JSON.stringify([...scanHits].map(([id, e]) => ({ id, n: e.n, shots: [...e.shots].slice(0, 4) })), null, 1)); console.log('tarama:', scanHits.size, 'kayıt ->', resolve(scanOut)); }
 console.log(`${count} görüntü -> ${out}`);
 if (failed) process.exitCode = 1;

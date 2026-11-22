@@ -1,0 +1,42 @@
+[
+ {
+  "out": "docs/anim-review/new-art/icons-r41/cin-hearth-still.png",
+  "prompt": "Create ONE wide 16:9 landscape image (as wide as possible): a painted dark-fantasy campaign cinematic scene (final-chapter illustration of a medieval fantasy RPG). MATCH the attached reference 'ref-kneel.png' exactly in rendering: painterly cinematic digital illustration, realistic proportions, dramatic moody light, rich depth with foreground / midground / distance, wet or dusty surfaces catching light. A second attached image is only a location reference (do not copy its composition). Keep important content away from the extreme top and bottom edges. Absolutely NO text, no letters, no numbers, no UI, no frame, no border, no watermark, no modern objects. No face close-ups: figures are small or seen from behind.\nSCENE: The great hall of the First Hearth, deep under a mountain: a vast ancient dwarven stone hall with carved pillars, in its centre a huge cold stone hearth / forge with only a last faint amber glow in its coals. Complete stillness after a great ordeal: no figures at all, dust motes hanging in a single shaft of dim light, cool blue-grey shadows against the small warm glow, a quiet and heavy mood.",
+  "refs": [
+   "docs/anim-review/new-art/icons-r41/ref-kneel.png",
+   "docs/anim-review/new-art/icons-r41/ref-forge-heart.png"
+  ]
+ },
+ {
+  "out": "docs/anim-review/new-art/icons-r41/cin-kharduin-gate.png",
+  "prompt": "Create ONE wide 16:9 landscape image (as wide as possible): a painted dark-fantasy campaign cinematic scene (final-chapter illustration of a medieval fantasy RPG). MATCH the attached reference 'ref-kneel.png' exactly in rendering: painterly cinematic digital illustration, realistic proportions, dramatic moody light, rich depth with foreground / midground / distance, wet or dusty surfaces catching light. A second attached image is only a location reference (do not copy its composition). Keep important content away from the extreme top and bottom edges. Absolutely NO text, no letters, no numbers, no UI, no frame, no border, no watermark, no modern objects. No face close-ups: figures are small or seen from behind.\nSCENE: The great carved gate of Kharduin, a dwarven mountain fortress, at dusk in snow-dusted rock: a row of short, stocky bearded dwarves in iron helms and cloaks stand waiting before the huge open stone doors, each holding a glowing lantern; warm lantern light on cold blue stone and snow. Welcoming, solemn, quiet. Faces are not visible in detail.",
+  "refs": [
+   "docs/anim-review/new-art/icons-r41/ref-kneel.png",
+   "docs/anim-review/new-art/icons-r41/ref-kharduin.png"
+  ]
+ },
+ {
+  "out": "docs/anim-review/new-art/icons-r41/cin-long-descent.png",
+  "prompt": "Create ONE wide 16:9 landscape image (as wide as possible): a painted dark-fantasy campaign cinematic scene (final-chapter illustration of a medieval fantasy RPG). MATCH the attached reference 'ref-kneel.png' exactly in rendering: painterly cinematic digital illustration, realistic proportions, dramatic moody light, rich depth with foreground / midground / distance, wet or dusty surfaces catching light. A second attached image is only a location reference (do not copy its composition). Keep important content away from the extreme top and bottom edges. Absolutely NO text, no letters, no numbers, no UI, no frame, no border, no watermark, no modern objects. No face close-ups: figures are small or seen from behind.\nSCENE: View looking south from the snowy heights of the Windwall and Snowline: wind-swept snow ridges in the foreground, far below on an ash-grey plain the burnt black ruined keep of Castle Morvane with thin smoke, and beyond it a pale winding road leading to a distant grey coast and the faint dot of a mill (Mill Road). A small company of four travellers in cloaks walks away from the viewer down the slope, tiny against the vast landscape. Cold, tired, hopeful dawn light on the horizon.",
+  "refs": [
+   "docs/anim-review/new-art/icons-r41/ref-kneel.png",
+   "docs/anim-review/new-art/icons-r41/ref-snowline.png"
+  ]
+ },
+ {
+  "out": "docs/anim-review/new-art/icons-r41/cin-crownbearer.png",
+  "prompt": "Create ONE wide 16:9 landscape image (as wide as possible): a painted dark-fantasy campaign cinematic scene (final-chapter illustration of a medieval fantasy RPG). MATCH the attached reference 'ref-kneel.png' exactly in rendering: painterly cinematic digital illustration, realistic proportions, dramatic moody light, rich depth with foreground / midground / distance, wet or dusty surfaces catching light. A second attached image is only a location reference (do not copy its composition). Keep important content away from the extreme top and bottom edges. Absolutely NO text, no letters, no numbers, no UI, no frame, no border, no watermark, no modern objects. No face close-ups: figures are small or seen from behind.\nSCENE: Warm dusk over green-gold rolling hills of Valdoria: a wide valley dotted with villages whose windows and chimneys all glow warm golden-orange, hearth fires burning bright, long road leading to them. In the foreground, a lone cloaked leader seen from behind, small, stands on the road wearing an old iron crown that glows faintly warm on the brow, companions waiting a little behind. Hopeful but with a faint uneasy undertone, rich warm light.",
+  "refs": [
+   "docs/anim-review/new-art/icons-r41/ref-kneel.png",
+   "docs/anim-review/new-art/icons-r41/ref-border-road.png"
+  ]
+ },
+ {
+  "out": "docs/anim-review/new-art/icons-r41/cin-dark-hearth.png",
+  "prompt": "Create ONE wide 16:9 landscape image (as wide as possible): a painted dark-fantasy campaign cinematic scene (final-chapter illustration of a medieval fantasy RPG). MATCH the attached reference 'ref-kneel.png' exactly in rendering: painterly cinematic digital illustration, realistic proportions, dramatic moody light, rich depth with foreground / midground / distance, wet or dusty surfaces catching light. A second attached image is only a location reference (do not copy its composition). Keep important content away from the extreme top and bottom edges. Absolutely NO text, no letters, no numbers, no UI, no frame, no border, no watermark, no modern objects. No face close-ups: figures are small or seen from behind.\nSCENE: A long muddy country road in steady cold grey rain at twilight leading toward a distant village whose chimneys are cold and windows dark; no fire anywhere, no glow, no crown. In the foreground a small company of four hooded travellers trudges home along the road seen from behind, tiny, rain streaking, puddles reflecting grey sky. Quiet, melancholy, but peaceful, desaturated cool colours.",
+  "refs": [
+   "docs/anim-review/new-art/icons-r41/ref-kneel.png",
+   "docs/anim-review/new-art/icons-r41/ref-ashen-plain.png"
+  ]
+ }
+]

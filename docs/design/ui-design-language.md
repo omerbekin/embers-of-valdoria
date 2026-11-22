@@ -43,6 +43,15 @@ Bu belge, 2026-10-18 günü onaylanan mockup turlarından çıkan ANA MANTIKTIR.
 | Sefer haritası düğümleri | C çerçeveleri, biraz küçük; çift yol | `src/game/map-frames.ts`, `public/mockups/map-nodes.html` |
 | Sonuç ekranı | A (plaket, satır başına birim, özet şeridi) | `result-screen.ts`, `public/mockups/battle-result.html` |
 
+### 2.1 Çerçeve köşe süsü (Ömer 2026-11-21)
+
+**Köşe süsü = yuvarlak üç nokta** (Ömer 2026-11-21, mockup uc-nokta-3 onaylı, oyuna bağlandı). Bugün köşe karosu olan HER çerçevede karo yerine üç nokta (fildişi `#f6e8bc`); karosu olmayan yere nokta eklenmez. Süs karoları (düğme uçları, başlık süsü, madde imi, sıra göstergesi, seçim işareti: çanta `.gr-dia`, kenar ortası `.mw-notch` / `.sbc-notch`, hücre köşe işaretleri `shape-draw.ts`) KALIR.
+- **Boy (tek kural):** taban 4 px; kutunun KISA kenarına göre (masaüstü px): 80 altı +%25, 80-150 +%50, 150-300 +%75, 300 ve üstü +%100. Adım = en az 8 x kademe ve çapın 1,9 katı.
+- **Konum:** yalnız kısa kenar 70 altı VE kareye yakın (en / boy <= 1,25) kutularda üst + alt kenara ortalı (üçer nokta); öbür her yerde bugünkü köşe konumunda (sol üst + sağ alt; bugün üst iki köşede karosu olan çerçevede sol üst + sağ üst). Dört köşede karosu olan çerçeve (harita penceresi, Form your company, Phaser `elPanel`) sol üst + sağ alt olur.
+- **Telefon:** nokta kutu ölçeğinden türer (`--cd-u` = `--bu` / `--u`), oran masaüstünü aşmaz. Harita penceresinde telefonda noktalar kenarın 3 px içinde (kırpılma + yazıya değmesin). Telefonda bugün karosu olmayan yerde (`.bh-gcol`, `.vl-meter`) nokta da yok.
+- **Uygulama (TEK yapı):** kural `src/ui/corner-dots-rule.ts` (DOM + Phaser ortak), DOM işaretleyici `src/ui/corner-dots.ts` (host listesi `CD_HOSTS`: yeni çerçeve eklerken karo çizme, listeye yaz), çizim `src/ui/corner-dots.css`, Phaser `src/game/corner-dots-gfx.ts > drawCornerDots` (`bandTip`, `elPanel`, `kitCorners`, sonuç ekranı). Ölçüm: `?debug=1` ile `window.__cdProbe()`.
+- **Savaş avatarı portresi** bugünkü çift ince çizgi + yan renkli glow çerçevesinde kalır (nokta YOK). Hikâye diyaloğu portresi (`.sd-pic`) de aynı çift çizgi + ışımayı alır; konuşanın tarafı bilinmediği için ışıma NÖTR ALTIN, nokta yok.
+
 ## 3. Çalışma akışı
 
 1. **Mockup.** Ömer'in "mockup" isteği ui-dev (Sonnet) agent'ına gider. Mockup oyunun gerçek görünümündedir: gerçek CSS, sanat ve fontlar. `public/mockups/<ad>.html` içinde A / B / C seçenek olur, her biri tek satır Türkçe notla.

@@ -258,4 +258,43 @@ describe('Hexer ağacı (Faz 2b)', () => {
     }
     throw new Error('Doom Mark isabet etmedi');
   });
+
+  it("Doom Gaze (1.mb): Evil Eye'ın tamamladığı Doom güçlü; Doom Mark'ın patlattığı Doom değişmez (doomSource)", () => {
+    const mul = (H.nodes['1.mb']!.fx![0] as unknown as { mod: { powerMul: number }; when: { doomSource: string } });
+    expect(mul.when.doomSource).toBe('evil_eye');
+    const base = [...EYE, '1.r*3', '1.eb'];
+    /** Omen'i tamamlanmaya bir kala hedefe skill atar; Doom'un hasarı (sonrası) ve Doom Gaze sayacı. */
+    const doom = (steps: string[], skill: string, seed: number): { dmg: number; procs: number } => {
+      const b = make('mage', unit(steps), seed);
+      const e = E0(b);
+      e.hp = e.maxHp = 99999;
+      const max = content.statuses['omen']!.maxStacks!;
+      e.statuses.push({ kind: 'omen', turns: 4, source: P0(b).uid, stacks: max - 1 });
+      const evs = cast(b, skill);
+      const at = evs.findIndex((x) => x.type === 'doom');
+      const dmg = at < 0 ? -1 : evs.slice(at).reduce((s, x) => s + (x.type === 'damage' && x.target === e.uid ? x.amount + x.absorbed : 0), 0);
+      return { dmg, procs: b.treeProcs().find((p) => p.node === 'hexer:1.mb')?.count ?? 0 };
+    };
+    let checked = false;
+    for (let seed = 1; seed < 60 && !checked; seed++) {
+      const plain = doom(base, 'evil_eye', seed);
+      const gaze = doom([...base, '1.mb'], 'evil_eye', seed);
+      if (plain.dmg <= 0 || gaze.dmg <= 0) continue;
+      expect(gaze.procs).toBe(1);
+      expect(gaze.dmg / plain.dmg).toBeGreaterThan(1 + mul.mod.powerMul - 0.04);
+      expect(gaze.dmg / plain.dmg).toBeLessThan(1 + mul.mod.powerMul + 0.04);
+      checked = true;
+    }
+    expect(checked, 'Evil Eye isabet edip Doom getirmedi').toBe(true);
+    // başka skill'in getirdiği Doom: düğüm işlemez (aynı seed aynı hasar, sayaç 0)
+    let other = false;
+    for (let seed = 1; seed < 60 && !other; seed++) {
+      const plain = doom(base, 'doom_mark', seed);
+      const gaze = doom([...base, '1.mb'], 'doom_mark', seed);
+      if (plain.dmg <= 0) continue;
+      expect(gaze).toEqual({ dmg: plain.dmg, procs: 0 });
+      other = true;
+    }
+    expect(other, 'Doom Mark isabet etmedi').toBe(true);
+  });
 });

@@ -1,6 +1,6 @@
 {
   "class": "antimage",
-  "version": 6,
+  "version": 7,
   "picked": {
     "rows": [
       "b",
@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Ready Stance",
-        "text": "Blood Tithe moves your turn a further 3% sooner.",
+        "text": "Blood Tithe moves your turn a further 1.25% sooner.",
         "src": "B:V3:bar0",
         "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
         "fx": [
@@ -54,7 +54,7 @@
             "k": "passive",
             "f": "advance",
             "op": "add",
-            "v": 0.03
+            "v": 0.0125
           }
         ]
       },
@@ -80,7 +80,7 @@
       {
         "at": 15,
         "name": "Wide Basin",
-        "text": "Blood Brand gives your team 1 MP when it lands.",
+        "text": "Blood Brand gives your team 1 MP for each enemy it marks.",
         "src": "B:V3:bar2",
         "fx": [
           {
@@ -102,7 +102,7 @@
       {
         "at": 20,
         "name": "Warded Steps",
-        "text": "Allies under your Spell Ward take 2% less physical damage.",
+        "text": "Allies under your Mirror Vein take 1% less physical damage.",
         "src": "B:V4:bar1",
         "fx": [
           {
@@ -114,11 +114,10 @@
             "when": {
               "incomingType": "physical"
             },
-            "mul": -0.02
+            "mul": -0.01
           }
         ],
-        "inactive": true,
-        "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Allies under your Spell Ward take 2% less physical damage."
+        "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A, notu: %2 değil %5): damageTaken who team, shield spell_ward, physical. Sayı PROVİZYON. Eski: Allies under your Spell Ward take 2% less physical damage."
       },
       {
         "at": 25,
@@ -142,7 +141,7 @@
   "nodes": {
     "0.f1": {
       "name": "Keen Senses",
-      "text": "Blood Tithe moves your turn a further 2% sooner per rank.",
+      "text": "Blood Tithe moves your turn a further 0.75% sooner per rank.",
       "src": "B:V3:0.f1",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -150,14 +149,14 @@
           "k": "passive",
           "f": "advance",
           "op": "add",
-          "v": 0.02,
+          "v": 0.0075,
           "rank": true
         }
       ]
     },
     "0.f2": {
       "name": "Taut Thread",
-      "text": "Your skills deal 3% increased damage per rank to Blood Branded enemies.",
+      "text": "Your skills deal 1.25% increased damage per rank to Blood Branded enemies.",
       "src": "B:V3:0.f2",
       "_not": "engine-dev 2026-11-17 (Redtithe eşlemesi; Ömer onayı bekler, open-questions Q-NEW Redtithe): Ley Thread işareti -> Blood Brand işareti. Eski metin: Your skills deal 3% increased damage per rank to enemies with a Ley Thread.",
       "fx": [
@@ -168,7 +167,7 @@
             "targetStatus": "blood_brand"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.0125
           },
           "rank": true
         }
@@ -176,7 +175,7 @@
     },
     "0.f3": {
       "name": "Thread Sense",
-      "text": "Blood Branded enemies deal 2% less damage to you per rank.",
+      "text": "Blood Branded enemies deal 0.75% less damage to you per rank.",
       "src": "B:V3:0.f3",
       "_not": "engine-dev 2026-11-17 (Redtithe eşlemesi; Ömer onayı bekler, open-questions Q-NEW Redtithe): Ley Thread -> Blood Brand. Eski metin: Enemies with a Ley Thread deal 2% less damage to you per rank.",
       "fx": [
@@ -188,7 +187,7 @@
           "when": {
             "incomingStatus": "blood_brand"
           },
-          "mul": -0.02,
+          "mul": -0.0075,
           "rank": true
         }
       ]
@@ -231,7 +230,7 @@
     },
     "0.ea": {
       "name": "Quickened Instinct",
-      "text": "Blood Tithe moves your turn a further 10% sooner.",
+      "text": "Blood Tithe moves your turn a further 4% sooner.",
       "src": "B:V3:0.ea",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -239,32 +238,28 @@
           "k": "passive",
           "f": "advance",
           "op": "add",
-          "v": 0.1
+          "v": 0.04
         }
       ]
     },
     "0.eb": {
-      "name": "Twin Thread",
-      "text": "Mana Steal also leaves a Ley Thread on one enemy beside its target.",
+      "name": "Open Veins",
+      "text": "Each tick of your Bleeding gives you 1 blood.",
       "src": "B:V3:0.eb",
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Mana Steal also leaves a Ley Thread on one enemy beside its target.",
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi B): YENİ ağaç eylemi `blood` (kan ver; yalnız kan barlı sınıf). dotTick (senin verdiğin Bleeding) tur başı tiki + Blood Brand ek tikleri + yer değiştirme tiki. Sayılar PROVİZYON. Eski: Mana Steal also leaves a Ley Thread on one enemy beside its target.",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "hit",
-          "skill": "mana_burn",
+          "on": "dotTick",
+          "status": "bleeding",
           "do": [
             {
-              "status": "ley_thread",
-              "turns": 2,
-              "to": "beside",
-              "count": 1
+              "blood": 1
             }
           ]
         }
-      ],
-      "inactive": true
+      ]
     },
     "0.ma": {
       "name": "Ready Reflexes",
@@ -288,7 +283,7 @@
     },
     "0.fa": {
       "name": "Hair Trigger",
-      "text": "Blood Tithe moves your turn a further 15% sooner, but you take 10% more magic damage.",
+      "text": "Blood Tithe moves your turn a further 6% sooner, but you take 10% more magic damage.",
       "src": "B:V3:0.fa",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -296,7 +291,7 @@
           "k": "passive",
           "f": "advance",
           "op": "add",
-          "v": 0.15
+          "v": 0.06
         },
         {
           "k": "hook",
@@ -335,31 +330,30 @@
       ]
     },
     "0.mb": {
-      "name": "Snapping Thread",
-      "text": "When Ley Brand consumes a Ley Thread, the target takes 25% INT arcane damage.",
+      "name": "Final Tithe",
+      "text": "When your Blood Brand ends on an enemy (it runs out or is removed), it takes 12% DEX physical damage.",
       "src": "B:V4:0.mb",
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: When Ley Brand consumes a Ley Thread, the target takes 25% INT arcane damage.",
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): statusEnd (mine, blood_brand; Ömer 2026-11-21 form r38: işaret nasıl biterse bitsin, Reaping Brand ile aynı) + hasar. Sayılar PROVİZYON. Eski: When Ley Brand consumes a Ley Thread, the target takes 25% INT arcane damage.",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "threadConsumed",
+          "on": "statusEnd",
+          "status": "blood_brand",
+          "mine": true,
           "do": [
             {
-              "damage": 0.25,
-              "stat": "int",
-              "damageType": "magic",
-              "element": "arcane",
+              "damage": 0.12,
+              "stat": "dex",
               "to": "target"
             }
           ]
         }
-      ],
-      "inactive": true
+      ]
     },
     "0.v": {
       "name": "Blood Tithe's Fury",
-      "text": "Blood Tithe evolves: it moves your turn 5% further, and a magic hit on you makes your next skill deal 20% more damage (once per round).",
+      "text": "Blood Tithe evolves: it moves your turn 2% further, and a magic hit on you makes your next skill deal 8% more damage (once per round).",
       "src": "B:V3:0.v",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -367,7 +361,7 @@
           "k": "passive",
           "f": "advance",
           "op": "add",
-          "v": 0.05
+          "v": 0.02
         },
         {
           "k": "hook",
@@ -380,7 +374,7 @@
           "do": [
             {
               "buff": {
-                "powerMul": 0.2
+                "powerMul": 0.08
               }
             }
           ]
@@ -389,7 +383,7 @@
     },
     "1.f1": {
       "name": "Generous Cut",
-      "text": "Tithe Cut gives 0.2 more blood per MP it tears out, per rank.",
+      "text": "Tithe Cut gives 0.1 more blood per MP it tears out, per rank.",
       "src": "B:V3:1.f1",
       "fx": [
         {
@@ -397,7 +391,7 @@
           "sel": "manaBurn",
           "f": "bloodPerMp",
           "op": "add",
-          "v": 0.2,
+          "v": 0.1,
           "rank": true
         }
       ],
@@ -405,7 +399,7 @@
     },
     "1.f2": {
       "name": "Deep Pockets",
-      "text": "Tithe Cut +8% damage per rank against enemies above half MP.",
+      "text": "Tithe Cut +3.25% damage per rank against enemies above half MP.",
       "src": "B:V3:1.f3",
       "fx": [
         {
@@ -415,7 +409,7 @@
             "targetMpAbove": 0.5
           },
           "mod": {
-            "powerMul": 0.08
+            "powerMul": 0.0325
           },
           "rank": true
         }
@@ -423,7 +417,7 @@
     },
     "1.f3": {
       "name": "Deep Cut",
-      "text": "Tithe Cut also tears out 3% of the target's max MP per rank.",
+      "text": "Tithe Cut also tears out 1.25% of the target's max MP per rank.",
       "src": "B:V1:1.r",
       "fx": [
         {
@@ -431,7 +425,7 @@
           "sel": "manaBurn",
           "f": "pctMax",
           "op": "add",
-          "v": 0.03,
+          "v": 0.0125,
           "rank": true
         }
       ]
@@ -454,7 +448,7 @@
     },
     "1.r": {
       "name": "Bare Steel",
-      "text": "Tithe Cut deals 2% increased damage per rank against enemies with no buffs.",
+      "text": "Tithe Cut deals 0.75% increased damage per rank against enemies with no buffs.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -464,7 +458,7 @@
             "targetHasBuff": false
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.0075
           },
           "rank": true
         }
@@ -472,7 +466,7 @@
     },
     "1.ea": {
       "name": "Siphon Vein",
-      "text": "Tithe Cut gives 2.4 blood per MP it tears out instead of 2.",
+      "text": "Tithe Cut gives 2.2 blood per MP it tears out instead of 2.",
       "src": "B:V3:1.ea",
       "fx": [
         {
@@ -480,7 +474,7 @@
           "sel": "manaBurn",
           "f": "bloodPerMp",
           "op": "base",
-          "v": 2.4
+          "v": 2.2
         }
       ],
       "_not": "engine-dev 2026-11-17 (Redtithe eşlemesi; Ömer onayı bekler, open-questions Q-NEW Redtithe): gainRatio 0,5 -> 0,6 (x1,2) -> bloodPerMp 2 -> 2,4 (x1,2). Eski metin: Mana Steal gains 60% of the MP it burns instead of 50%."
@@ -509,7 +503,7 @@
     },
     "1.ma": {
       "name": "Drink Deep",
-      "text": "Tithe Cut also heals you for 30% of the MP it tears out.",
+      "text": "Tithe Cut also heals you for 12% of the MP it tears out.",
       "src": "B:V4:1.ma",
       "fx": [
         {
@@ -518,7 +512,7 @@
           "on": "manaBurned",
           "do": [
             {
-              "heal": 0.3,
+              "heal": 0.12,
               "of": "amount"
             }
           ]
@@ -527,19 +521,22 @@
     },
     "1.fa": {
       "name": "Drained Dry",
-      "text": "Tithe Cut tears out 50% more MP, but deals no damage.",
+      "text": "Tithe Cut tears out 100% more MP, but deals 50% less damage.",
       "src": "B:V3:1.fa",
       "fx": [
         {
-          "k": "removeEffect",
-          "sel": "damage"
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.5
         },
         {
           "k": "skill",
           "sel": "manaBurn",
           "f": "amount",
           "op": "pct",
-          "v": 0.5
+          "v": 1
         }
       ]
     },
@@ -566,7 +563,7 @@
     },
     "1.mb": {
       "name": "Tempo Thief",
-      "text": "If Tithe Cut empties its target, your next turn comes 8% sooner.",
+      "text": "If Tithe Cut empties its target, your next turn comes 3.25% sooner.",
       "src": "B:V3:1.mb",
       "fx": [
         {
@@ -575,7 +572,7 @@
           "on": "mpEmptied",
           "do": [
             {
-              "sooner": 0.08
+              "sooner": 0.0325
             }
           ]
         }
@@ -583,7 +580,7 @@
     },
     "1.v": {
       "name": "Spellsplitter",
-      "text": "Tithe Cut becomes Spellsplitter: it removes every buff from its target and deals 8% more damage per buff removed.",
+      "text": "Tithe Cut becomes Spellsplitter: it removes every buff from its target and deals 3.25% more damage per buff removed.",
       "src": "B:V5:1.v",
       "fx": [
         {
@@ -601,14 +598,14 @@
             "buffsRemoved": true
           },
           "mod": {
-            "powerMul": 0.08
+            "powerMul": 0.0325
           }
         }
       ]
     },
     "2.f1": {
       "name": "Deep Taint",
-      "text": "Blood Brand's Bleeding deals 10% more damage per rank.",
+      "text": "Blood Brand's Bleeding deals 4% more damage per rank.",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -616,7 +613,7 @@
           "sel": "dot",
           "f": "power",
           "op": "pct",
-          "v": 0.1,
+          "v": 0.04,
           "rank": true
         }
       ],
@@ -624,7 +621,7 @@
     },
     "2.f2": {
       "name": "Searing Brand",
-      "text": "Tithe Cut and Exsanguinate deal a further 5% more damage per rank to Blood Branded enemies.",
+      "text": "Tithe Cut and Exsanguinate deal a further 2% more damage per rank to Blood Branded enemies.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -632,7 +629,7 @@
           "sel": "bloodBrand",
           "f": "markDamagePct",
           "op": "add",
-          "v": 0.05,
+          "v": 0.02,
           "rank": true
         }
       ],
@@ -656,68 +653,79 @@
     },
     "2.n0": {
       "name": "Hush of the Brand",
-      "text": "A Branded enemy whose mana reaches 0 is Silenced for 1 turn.",
+      "text": "When you empty a Blood Branded enemy's MP, it is Silenced for 1 turn.",
       "src": "A:V1:2.n0",
       "fx": [
         {
-          "k": "skill",
-          "sel": "brand",
-          "f": "silenceOnEmpty",
-          "op": "set",
-          "v": 1
+          "k": "hook",
+          "h": "trigger",
+          "on": "mpEmptied",
+          "skill": "*",
+          "when": {
+            "targetStatus": "blood_brand"
+          },
+          "do": [
+            {
+              "status": "silence",
+              "turns": 1,
+              "to": "target"
+            }
+          ]
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: A Branded enemy whose mana reaches 0 is Silenced for 1 turn."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): mpEmptied (her skill: Tithe Cut, Searing Grasp) + targetStatus blood_brand + Silence. Sayılar PROVİZYON. Eski: A Branded enemy whose mana reaches 0 is Silenced for 1 turn."
     },
     "2.r": {
-      "name": "Bitter Burst",
-      "text": "When Ley Brand runs out, leftover tainted mana deals damage equal to a further 10% of itself per rank.",
+      "name": "Widening Cut",
+      "text": "Blood Brand's Bleeding deals 1.25% more damage per rank for each tick it has already dealt.",
       "src": "A:V1:2.r",
       "fx": [
         {
-          "k": "skill",
-          "sel": "brand",
-          "f": "explodePct",
-          "op": "add",
-          "v": 0.1,
+          "k": "hook",
+          "h": "cond",
+          "at": "dot",
+          "scale": {
+            "dotTickIndex": 1
+          },
+          "mod": {
+            "powerMul": 0.0125
+          },
           "rank": true
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: When Ley Brand runs out, leftover tainted mana deals damage equal to a further 10% of itself per rank."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi B): dot noktası powerMul x dotTickIndex (yalnız Blood Brand'in verdiği Bleeding: durumun fromSkill'i); ek tikler (Brand, yer değiştirme) de sayar ve güçlenir. Sayılar PROVİZYON. Eski: When Ley Brand runs out, leftover tainted mana deals damage equal to a further 10% of itself per rank."
     },
     "2.ea": {
-      "name": "Focused Brand",
-      "text": "The enemy in Ley Brand's centre cell gets a 50% larger tainted mana pool.",
+      "name": "Deep Brand",
+      "text": "When a Blood Branded enemy uses a skill, its Bleeding ticks one more extra time.",
       "src": "A:V1:2.ea",
       "fx": [
         {
           "k": "skill",
-          "sel": "brand",
-          "f": "centerTaintMul",
-          "op": "set",
-          "v": 0.5
+          "sel": "bloodBrand",
+          "f": "ticks",
+          "op": "add",
+          "v": 1
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: The enemy in Ley Brand's centre cell gets a 50% larger tainted mana pool."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): bloodBrand ticks +1. Sayılar PROVİZYON. Eski: The enemy in Ley Brand's centre cell gets a 50% larger tainted mana pool."
     },
     "2.eb": {
-      "name": "Wider Brand",
-      "text": "Ley Brand covers one more column (3x3 → 3x4).",
+      "name": "Stripping Brand",
+      "text": "Blood Brand also removes one random buff from each enemy it hits.",
       "src": "A:V1:2.eb",
       "fx": [
         {
-          "k": "hook",
-          "h": "target",
-          "area": {
-            "rows": 4
+          "k": "addEffect",
+          "effect": {
+            "type": "dispel",
+            "status": "buff",
+            "count": 1,
+            "random": true
           }
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Ley Brand covers one more column (3x3 → 3x4)."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi B): addEffect dispel buff count 1 random (Prying Blade dili; işaret tutmasa da isabet zarı yok: Blood Brand hasarsız). Sayılar PROVİZYON. Eski: Ley Brand covers one more column (3x3 → 3x4)."
     },
     "2.ma": {
       "name": "Lasting Brand",
@@ -735,35 +743,26 @@
       "_not": "engine-dev 2026-11-17 (Redtithe eşlemesi; Ömer onayı bekler, open-questions Q-NEW Redtithe): Aynı anlam (işaret süresi). Eski metin: Ley Brand lasts 1 more turn."
     },
     "2.fa": {
-      "name": "Narrow Brand",
-      "text": "Ley Brand hits only its centre cell, but that enemy's tainted mana pool is 40% of its max HP and its MP costs are doubled.",
+      "name": "Heavy Brand",
+      "text": "Blood Branded enemies' MP costs are x2.5 instead of x1.5, but Blood Brand costs 10 more blood.",
       "src": "A:V1:2.fa",
       "fx": [
         {
-          "k": "hook",
-          "h": "target",
-          "area": {
-            "rows": 1,
-            "cols": 1
-          }
-        },
-        {
           "k": "skill",
-          "sel": "brand",
-          "f": "taintPct",
-          "op": "base",
-          "v": 0.4
-        },
-        {
-          "k": "skill",
-          "sel": "brand",
+          "sel": "bloodBrand",
           "f": "costMult",
           "op": "base",
-          "v": 2
+          "v": 2.5
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": 10
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Ley Brand hits only its centre cell, but that enemy's tainted mana pool is 40% of its max HP and its MP costs are doubled."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): bloodBrand costMult taban 2,5 (Ömer r36 notu: öneri 2 idi) + kan bedeli +10; 2.f3 eki tabanın üstüne. Sayılar PROVİZYON. Eski: Ley Brand hits only its centre cell, but that enemy's tainted mana pool is 40% of its max HP and its MP costs are doubled."
     },
     "2.fb": {
       "name": "Thin Brand",
@@ -789,37 +788,48 @@
     },
     "2.mb": {
       "name": "Searing Grasp",
-      "text": "Blood Brand also burns 15% of its target's max MP.",
+      "text": "Blood Brand also burns 6% of the max MP of each enemy it hits.",
       "src": "A:V1:2.mb",
       "fx": [
         {
           "k": "addEffect",
           "effect": {
             "type": "manaBurn",
-            "pctMax": 0.15
+            "pctMax": 0.06
           }
         }
       ],
       "_not": "engine-dev 2026-11-17 (Redtithe eşlemesi; Ömer onayı bekler, open-questions Q-NEW Redtithe): fx aynı (manaBurn pctMax 0,15); tainted mana kalktı. Eski metin: Ley Brand also burns 15% of each Branded enemy's max MP, tainted mana included."
     },
     "2.v": {
-      "name": "Spreading Brand",
-      "text": "Ley Brand becomes Spreading Brand: when a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand.",
+      "name": "Reaping Brand",
+      "text": "Blood Brand becomes Reaping Brand: when its mark ends, the bearer takes 16% DEX damage and Blood Brand's cooldown resets.",
       "src": "A:V1:2.v",
       "fx": [
         {
-          "k": "skill",
-          "sel": "brand",
-          "f": "spread",
-          "op": "on"
+          "k": "hook",
+          "h": "trigger",
+          "on": "statusEnd",
+          "status": "blood_brand",
+          "mine": true,
+          "do": [
+            {
+              "damage": 0.16,
+              "stat": "dex",
+              "to": "target"
+            },
+            {
+              "cooldown": "reset",
+              "cd": "drain_field"
+            }
+          ]
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Ley Brand becomes Spreading Brand: when a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): statusEnd (mine, blood_brand; süre dolunca ya da silinince) + hasar + Blood Brand cooldown sıfırlama. Sayılar PROVİZYON. Eski: Ley Brand becomes Spreading Brand: when a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand."
     },
     "3.f1": {
       "name": "Layered Ward",
-      "text": "Mirror Vein's shields are 4% larger per rank.",
+      "text": "Mirror Vein's shields are 1.5% larger per rank.",
       "src": "B:V4:3.f1",
       "fx": [
         {
@@ -827,7 +837,7 @@
           "sel": "shield",
           "f": "power",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.015,
           "rank": true
         },
         {
@@ -835,7 +845,7 @@
           "sel": "shield",
           "f": "flat",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.015,
           "rank": true
         }
       ],
@@ -843,7 +853,7 @@
     },
     "3.f2": {
       "name": "Ward Mending",
-      "text": "Mirror Vein also heals your lowest-HP ally for 4% of its max HP per rank when cast.",
+      "text": "Mirror Vein also heals your lowest-HP ally for 1.5% of its max HP per rank when cast.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -853,7 +863,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.04,
+              "heal": 0.015,
               "to": "lowestHpAlly"
             }
           ]
@@ -862,25 +872,28 @@
       "_not": "engine-dev 2026-11-18 (Mirror Vein = Kan Örtüsü yeniden tasarımı; Ömer onayı bekler, open-questions Q-NEW Mirror Vein ağaç eşlemesi): Mirror Vein artık bütün takıma; 'hedef dost' yerine canı en düşük dost iyileşir (tek dost, eski güç)."
     },
     "3.f3": {
-      "name": "Deep Reserve",
-      "text": "Spell Ward's shield takes +6% per rank from your remaining MP.",
+      "name": "Spell-Proof Vein",
+      "text": "Allies under Mirror Vein take 0.5% less magic damage per rank.",
       "src": "B:V3:3.f2",
       "fx": [
         {
-          "k": "skill",
-          "sel": "shield",
-          "f": "bonusPerMana",
-          "op": "add",
-          "v": 0.06,
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "team",
+          "shield": "spell_ward",
+          "when": {
+            "incomingType": "magic"
+          },
+          "mul": -0.005,
           "rank": true
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Spell Ward's shield takes +6% per rank from your remaining MP."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi B): damageTaken who team, shield spell_ward, incomingType magic. Sayılar PROVİZYON. Eski: Spell Ward's shield takes +6% per rank from your remaining MP."
     },
     "3.n0": {
       "name": "Purging Ward",
-      "text": "Mirror Vein first removes every debuff from your allies (you included).",
+      "text": "Mirror Vein first removes every debuff from your lowest-HP ally that has one (you included). If Mirror Vein shields only you, it cleanses only you.",
       "src": "B:V4:3.n0",
       "fx": [
         {
@@ -888,15 +901,16 @@
           "before": "shield",
           "effect": {
             "type": "dispel",
-            "status": "debuff"
+            "status": "debuff",
+            "lowestHp": true
           }
         }
       ],
-      "_not": "engine-dev 2026-11-18 (Mirror Vein = Kan Örtüsü yeniden tasarımı; Ömer onayı bekler, open-questions Q-NEW Mirror Vein ağaç eşlemesi): before mirrorVein -> before shield; skill bütün takıma olduğundan silme de bütün takıma (eski: tek dost). Eski metin: Spell Ward first removes every debuff from the warded ally."
+      "_not": "Ömer 2026-11-20 (form r36, open-questions 542): silme, debuff'ı olan dostlar arasında canı (oran) en düşük olana, Redtithe dahil (canı en düşük dostta debuff yoksa sıradakine geçer; kimsede yoksa bir şey olmaz); Cloistered Ward (3.fb) alınmışsa yalnız Redtithe. Tek kural Battle.purgeTargetOf (motor, önizleme, YZ, ipucu). r35: yalnız canı en düşük dost (Ward Mending ile aynı seçim). Önce: 2026-11-18 bütün takım (before shield). Eski metin: Spell Ward first removes every debuff from the warded ally."
     },
     "3.r": {
       "name": "Shelter Echo",
-      "text": "When Spell Ward breaks, the warded ally heals 2% of its max HP per rank.",
+      "text": "When a Mirror Vein shield breaks, its bearer heals 0.75% of its max HP per rank.",
       "src": "B:V4:3.r",
       "fx": [
         {
@@ -906,37 +920,28 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.02,
+              "heal": 0.0075,
               "to": "subject"
             }
           ]
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: When Spell Ward breaks, the warded ally heals 2% of its max HP per rank."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): eski fx aynen (shieldBreak + heal subject); kalkan takımda olduğundan birkaç kez tetiklenebilir. Sayılar PROVİZYON. Eski: When Spell Ward breaks, the warded ally heals 2% of its max HP per rank."
     },
     "3.ea": {
-      "name": "Split Ward",
-      "text": "Spell Ward also wards the ally with the least MP at 25% strength.",
+      "name": "Long Vein",
+      "text": "Mirror Vein's shields last 1 turn longer.",
       "src": "B:V3:3.eb",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "skillUse",
-          "do": [
-            {
-              "cast": "event",
-              "power": 0.25,
-              "to": "lowestMpAlly",
-              "noChain": true,
-              "notTarget": true
-            }
-          ]
+          "k": "skill",
+          "sel": "shield",
+          "f": "turns",
+          "op": "add",
+          "v": 1
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Spell Ward also wards the ally with the least MP at 25% strength."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): shield turns +1. Sayılar PROVİZYON. Eski: Spell Ward also wards the ally with the least MP at 25% strength."
     },
     "3.eb": {
       "name": "Ward Taunt",
@@ -957,62 +962,62 @@
       ]
     },
     "3.ma": {
-      "name": "Second Ward",
-      "text": "When Spell Ward breaks, a 25% ward forms on the ally with the lowest HP.",
+      "name": "Blood for Blood",
+      "text": "When a Mirror Vein shield absorbs a spell, the caster Bleeds for 2 turns (6% DEX per turn).",
       "src": "B:V4:3.mb",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "shieldBreak",
-          "skill": "spell_ward",
+          "on": "shieldAbsorb",
+          "when": {
+            "incomingType": "magic"
+          },
           "do": [
             {
-              "shield": 0.25,
-              "of": "shieldSize",
-              "magic": true,
-              "to": "lowestHpAlly"
+              "status": "bleeding",
+              "turns": 2,
+              "power": 0.06,
+              "stat": "dex",
+              "to": "target"
             }
           ]
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: When Spell Ward breaks, a 25% ward forms on the ally with the lowest HP."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): shieldAbsorb + incomingType magic + Bleeding (alıcı büyüyü atan). Sayılar PROVİZYON. Eski: When Spell Ward breaks, a 25% ward forms on the ally with the lowest HP."
     },
     "3.fa": {
-      "name": "Stretched Ward",
-      "text": "Split Ward is full strength, but Spell Ward costs 18 MP.",
+      "name": "Opened Veins",
+      "text": "Mirror Vein's shields are 16% larger, but it costs 10 more blood.",
       "src": "B:V3:3.fb",
       "fx": [
         {
-          "k": "hook",
-          "h": "trigger",
-          "on": "skillUse",
-          "drop": "3.ea",
-          "do": [
-            {
-              "cast": "event",
-              "power": 1,
-              "to": "lowestMpAlly",
-              "noChain": true,
-              "notTarget": true
-            }
-          ]
+          "k": "skill",
+          "sel": "shield",
+          "f": "power",
+          "op": "pct",
+          "v": 0.16
+        },
+        {
+          "k": "skill",
+          "sel": "shield",
+          "f": "flat",
+          "op": "pct",
+          "v": 0.16
         },
         {
           "k": "skill",
           "sel": "self",
           "f": "cost.amount",
-          "op": "set",
-          "v": 18
+          "op": "add",
+          "v": 10
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Split Ward is full strength, but Spell Ward costs 18 MP."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): kalkan power / flat +%40 + kan bedeli +10. Sayılar PROVİZYON. Eski: Split Ward is full strength, but Spell Ward costs 18 MP."
     },
     "3.fb": {
       "name": "Cloistered Ward",
-      "text": "Mirror Vein shields only you, but your shield is 30% larger.",
+      "text": "Mirror Vein shields only you, but your shield is 60% larger and Mirror Vein costs 10 less blood.",
       "src": "B:V4:3.fa",
       "fx": [
         {
@@ -1025,21 +1030,28 @@
           "sel": "shield",
           "f": "power",
           "op": "pct",
-          "v": 0.3
+          "v": 0.6
         },
         {
           "k": "skill",
           "sel": "shield",
           "f": "flat",
           "op": "pct",
-          "v": 0.3
+          "v": 0.6
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "add",
+          "v": -10
         }
       ],
       "_not": "engine-dev 2026-11-18 (Mirror Vein = Kan Örtüsü yeniden tasarımı; Ömer onayı bekler, open-questions Q-NEW Mirror Vein ağaç eşlemesi): yansıma %30 -> kalkan boyu %30 (asıl anlam), skill yalnız kendine. Eski metin: Spell Ward on yourself is 30% larger, but it can no longer target allies."
     },
     "3.mb": {
       "name": "Bastion of Null",
-      "text": "While you hold Mirror Vein's shield and a taunt, you take 30% less physical damage.",
+      "text": "While you hold Mirror Vein's shield and a taunt, you take 12% less physical damage.",
       "src": "B:V4:3.ma",
       "fx": [
         {
@@ -1052,14 +1064,14 @@
             "selfTaunting": true,
             "incomingType": "physical"
           },
-          "mul": -0.3
+          "mul": -0.12
         }
       ],
       "_not": "engine-dev 2026-11-18 (Mirror Vein = Kan Örtüsü yeniden tasarımı; Ömer onayı bekler, open-questions Q-NEW Mirror Vein ağaç eşlemesi): selfStatus mirror_vein -> selfHasShield spell_ward (asıl biçime dönüş; kalkan süreli katman olduğundan koşul kalkan sürdükçe tutar). Eski metin: While you hold Spell Ward and a taunt, you take 30% less physical damage."
     },
     "3.v": {
       "name": "Mirror Ward",
-      "text": "Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 25% of their damage.",
+      "text": "Mirror Vein becomes Mirror Ward: spells its shields absorb are thrown back at the caster for 10% of the absorbed damage.",
       "src": "B:V4:3.v",
       "new": true,
       "approved": true,
@@ -1073,15 +1085,14 @@
           },
           "do": [
             {
-              "damage": 0.25,
+              "damage": 0.1,
               "of": "amount",
               "to": "target"
             }
           ]
         }
       ],
-      "inactive": true,
-      "_not": "engine-dev 2026-11-17 (Redtithe): bağlı olduğu mekanik kitten çıktı, yakın karşılığı yok; Ömer karar verene kadar PASİF (inactive). Eski: Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 25% of their damage."
+      "_not": "engine-dev 2026-11-20 (Ömer form r36 seçimi A): eski fx aynen (shieldAbsorb magic, emilen miktarın %25 hasarı saldırana); yansıtma dönüşümde geri geliyor, Ömer bilerek seçti. Sayılar PROVİZYON. Eski: Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 25% of their damage."
     },
     "4.u1": {
       "name": "Crippling Void",
@@ -1101,7 +1112,7 @@
     },
     "4.u2": {
       "name": "Spell Shatter",
-      "text": "Exsanguinate's target deals 20% less magic damage for 2 turns.",
+      "text": "Exsanguinate's target deals 8% less magic damage for 2 turns.",
       "src": "B:V4:4.u2",
       "fx": [
         {
@@ -1120,7 +1131,7 @@
           "mod": {
             "statusPotency": {
               "physicalDealtMult": 0.15,
-              "magicDealtMult": -0.2
+              "magicDealtMult": -0.08
             }
           }
         }
@@ -1164,7 +1175,7 @@
     },
     "4.r2": {
       "name": "Shared Spoils",
-      "text": "Allies that hit the Overextended target gain 4 MP.",
+      "text": "Allies that hit the Overextended target gain 2 MP.",
       "src": "B:V3:4.l2",
       "fx": [
         {
@@ -1176,7 +1187,7 @@
           },
           "do": [
             {
-              "mp": 4,
+              "mp": 2,
               "to": "source"
             }
           ]
@@ -1185,7 +1196,7 @@
     },
     "4.r3": {
       "name": "Feeding Frenzy",
-      "text": "If an ally kills Exsanguinate's target before its next turn, your team gains 15 MP.",
+      "text": "If an ally kills Exsanguinate's target before its next turn, your team gains 6 MP.",
       "src": "B:V3:4.l3",
       "fx": [
         {
@@ -1209,7 +1220,7 @@
           "by": "ally",
           "do": [
             {
-              "mp": 15,
+              "mp": 6,
               "to": "allAllies"
             }
           ]
@@ -1254,7 +1265,7 @@
     },
     "4.d3": {
       "name": "Threaded Void",
-      "text": "After Exsanguinate, your next turn comes 10% sooner.",
+      "text": "After Exsanguinate, your next turn comes 4% sooner.",
       "src": "B:V3:4.d3",
       "_not": "engine-dev 2026-11-17 (Redtithe eşlemesi; Ömer onayı bekler, open-questions Q-NEW Redtithe): Ley Thread bırakma kısmı kalktı (iplik yok); yalnız tur öne alma kaldı. Eski metin: Void Strike leaves a Ley Thread on its target for 2 turns, and your next turn comes 10% sooner.",
       "fx": [
@@ -1264,7 +1275,7 @@
           "on": "skillUse",
           "do": [
             {
-              "sooner": 0.1
+              "sooner": 0.04
             }
           ]
         }
@@ -1294,7 +1305,7 @@
     },
     "4.l2": {
       "name": "Turned Boons",
-      "text": "Allies hasted by Rallying Break also gain 4 MP.",
+      "text": "Allies hasted by Rallying Break also gain 2 MP.",
       "src": "B:V5:4.l2",
       "fx": [
         {
@@ -1312,7 +1323,7 @@
               "to": "allAllies"
             },
             {
-              "mp": 4,
+              "mp": 2,
               "to": "allAllies"
             }
           ]

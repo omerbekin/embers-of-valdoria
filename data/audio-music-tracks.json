@@ -2229,6 +2229,326 @@
           }
         }
       ]
+    },
+    "first_fire": {
+      "label": "The First Fire's Verdict",
+      "desc": "Battle rule music: replaces the battle / boss track when The First Fire's Verdict begins. E phrygian 4/4, very low trembling drone (B-E), a low lute ostinato an octave down that grows from a lone creeping pulse to a grinding frenzy, war drum that accelerates from a slow heartbeat to a roll; five sections (creep, tread, grind, frenzy, grind) loop, tension never resolves. Drone and pad sit under everything; same family as the warning sounds (low trembling drone + pulse).",
+      "bpm": 88,
+      "beatsPerBar": 4,
+      "tonic": "E",
+      "mode": "phrygian",
+      "master": 0.62,
+      "fadeInMs": 1600,
+      "fadeInFrom": 0,
+      "softLowpass": 3000,
+      "reverb": {
+        "seconds": 2.2,
+        "decay": 3.8,
+        "damp": 0.8,
+        "wet": 0.26,
+        "dry": 0.86
+      },
+      "voices": {
+        "harp": {
+          "gain": 0.5,
+          "decay": 1.1,
+          "bassDecay": 2,
+          "bassGain": 0.5,
+          "bright": 0.22,
+          "pick": 0.3,
+          "pan": -0.1,
+          "shift": -12
+        },
+        "flute": {
+          "gain": 0.06,
+          "lowGain": 0.9
+        },
+        "pad": {
+          "gain": 0.03,
+          "cutoff": 420,
+          "octave": 2
+        },
+        "drone": {
+          "gain": 0.06,
+          "notes": [
+            "B1",
+            "E2"
+          ],
+          "cutoff": 260,
+          "lfoHz": 4.5,
+          "lfoDepth": 90
+        },
+        "drum": {
+          "gain": 0.5
+        }
+      },
+      "harpPatterns": {
+        "creep": [
+          0,
+          null,
+          null,
+          null,
+          0,
+          null,
+          null,
+          null,
+          0,
+          null,
+          null,
+          null,
+          0,
+          null,
+          0,
+          null
+        ],
+        "tread": [
+          0,
+          null,
+          0,
+          null,
+          2,
+          null,
+          0,
+          null,
+          0,
+          null,
+          0,
+          null,
+          2,
+          null,
+          1,
+          null
+        ],
+        "grind": [
+          0,
+          0,
+          null,
+          0,
+          2,
+          0,
+          null,
+          0,
+          0,
+          0,
+          null,
+          0,
+          1,
+          0,
+          2,
+          0
+        ],
+        "frenzy": [
+          0,
+          0,
+          2,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0,
+          2,
+          0,
+          3,
+          1,
+          2,
+          0
+        ]
+      },
+      "drumPatterns": {
+        "beat1": [
+          0.8,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "beat2": [
+          0.85,
+          0,
+          0,
+          0.3,
+          0.7,
+          0,
+          0,
+          0
+        ],
+        "beat3": [
+          0.9,
+          0,
+          0.5,
+          0.3,
+          0.8,
+          0,
+          0.5,
+          0.3
+        ],
+        "beat4": [
+          0.95,
+          0.4,
+          0.6,
+          0.5,
+          0.9,
+          0.5,
+          0.7,
+          0.6
+        ],
+        "roll": [
+          0.9,
+          0.5,
+          0.6,
+          0.5,
+          0.8,
+          0.6,
+          0.7,
+          0.85
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "E3",
+          "E4"
+        ],
+        "low": [
+          "B2",
+          "B3"
+        ]
+      },
+      "rhythms": {
+        "high": [
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4
+          ]
+        ],
+        "low": [
+          [
+            4
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "cadence": [
+          [
+            4
+          ]
+        ]
+      },
+      "sections": {
+        "creep": {
+          "chords": [
+            "Em",
+            "Em",
+            "Em",
+            "F",
+            "Em",
+            "Em",
+            "Dm",
+            "F"
+          ],
+          "harp": "creep",
+          "bass": true,
+          "pad": 1,
+          "drum": "beat1",
+          "melody": null
+        },
+        "tread": {
+          "chords": [
+            "Em",
+            "F",
+            "Em",
+            "Dm",
+            "Em",
+            "F",
+            "C",
+            "Dm"
+          ],
+          "harp": "tread",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "beat2",
+          "drumLast": "beat3",
+          "melody": "gen:low"
+        },
+        "grind": {
+          "chords": [
+            "Em",
+            "F",
+            "Dm",
+            "Em",
+            "Em",
+            "F",
+            "Am",
+            "Dm"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "beat3",
+          "drumLast": "beat4",
+          "melody": null
+        },
+        "frenzy": {
+          "chords": [
+            "Em",
+            "F",
+            "Em",
+            "F",
+            "Dm",
+            "F",
+            "Em",
+            "Em"
+          ],
+          "harp": "frenzy",
+          "bass": true,
+          "pad": 1.2,
+          "drum": "beat4",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        }
+      },
+      "form": [
+        "creep",
+        "tread",
+        "grind",
+        "frenzy",
+        "grind"
+      ],
+      "cycles": [
+        {},
+        {
+          "creep": {
+            "drum": "beat2"
+          },
+          "tread": {
+            "melody": null
+          },
+          "frenzy": {
+            "melody": null
+          }
+        },
+        {
+          "tread": {
+            "harp": "grind"
+          },
+          "grind": {
+            "melody": "gen:low"
+          }
+        }
+      ]
     }
   }
 }

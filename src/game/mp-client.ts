@@ -126,6 +126,8 @@ export function resultInfo(r: MatchResult, local: 'party' | 'enemy'): MpResultIn
       return won ? { victory: true, subtitle: 'Your opponent left the battle' } : { victory: false, subtitle: 'You left the battle' };
     case 'failed':
       return { victory: false, title: 'NO CONTEST', subtitle: 'The connection could not be restored' };
+    case 'draw':
+      return { victory: false, draw: true, title: 'DRAW', subtitle: 'Both teams fell at the same time' };
     case 'desync':
       return { victory: false, title: 'NO CONTEST', subtitle: 'The two sides fell out of sync - the match was stopped' };
     default:
@@ -419,7 +421,8 @@ export class MpClient {
         if (e.remote) for (const cb of [...this.remoteCbs]) cb();
         break;
       case 'ended':
-        if (e.result.reason !== 'battle') {
+        // Savaşın kendi sonu (zafer ya da beraberlik) sahnenin battleEnd olayıyla gösterilir; burada yalnız savaş dışı sebepler
+        if (e.result.reason !== 'battle' && e.result.reason !== 'draw') {
           const info = resultInfo(e.result, s.localSide);
           for (const cb of [...this.endedCbs]) cb(info);
         }

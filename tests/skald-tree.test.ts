@@ -15,7 +15,9 @@ const PE = content.classes.skald!.passive!.effect as Extract<NonNullable<Combata
 type Fx = { k: string; h?: string; f?: string; v?: number; mod?: Record<string, unknown>; mul?: number; do?: Array<Record<string, unknown>> };
 const fxOf = (key: string) => TREE.nodes[key]!.fx as unknown as Fx[];
 const doOf = (key: string, i = 0) => fxOf(key).find((f) => f.h === 'trigger')!.do![i] as Record<string, number>;
-const setupFor = (r: Record<string, number>) => compileTree(TREE, { v: TREE.version, r })!;
+// Ağaç sayıları veriden okunur (ağaç kazancı ayarı 2026-11-21).
+const vOf = (key: string, i = 0): number => (TREE.nodes[key]!.fx as unknown as Array<{ v: number }>)[i]!.v;
+const setupFor =(r: Record<string, number>) => compileTree(TREE, { v: TREE.version, r })!;
 type Ev<T extends BattleEvent['type']> = Extract<BattleEvent, { type: T }>;
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T) => events.filter((e): e is Ev<T> => e.type === type);
 const cells = (u: Record<number, string>) => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
@@ -75,16 +77,16 @@ describe('Skald ağacı: veri', () => {
   });
   it('Conductor bonusu: Copper Coil rank başı, Overdrive düşürür (Rolling Thunder yerine), Living Storm artırır', () => {
     const bonus = (r: Record<string, number>) => (setupFor(r).passive!.effect as typeof PE).bonus;
-    expect(bonus({ '0.f1': 3 })).toBeCloseTo(PE.bonus + 0.03 * 3, 6);
+    expect(bonus({ '0.f1': 3 })).toBeCloseTo(PE.bonus + vOf('0.f1') * 3, 6);
     expect(bonus({ '0.ea': 1, '0.fa': 1 })).toBeCloseTo(PE.bonus - 0.1, 6);
     expect(setupFor({ '0.ea': 1, '0.fa': 1 }).hooks!.some((h) => h.node === 'skald:0.ea')).toBe(false);
-    expect(bonus({ '0.v': 1 })).toBeCloseTo(PE.bonus + 0.1, 6);
+    expect(bonus({ '0.v': 1 })).toBeCloseTo(PE.bonus + vOf('0.v'), 6);
   });
   it('skill yamaları: Hammerfall, Heavy Throw, Iron Sky, Wild Dance, Long Arc, Storm March, Saga of Storms, Returning Hammer', () => {
     const sk = (r: Record<string, number>, id: string) => setupFor(r).skills![id]!;
     const dmg = (d: SkillDef) => d.effects.find((e) => e.type === 'damage') as DamageEffect;
     expect(sk({ '0.eb': 1, '0.fb': 1 }, 'thunder_strike').cost.amount).toBe(S.thunder_strike!.cost.amount + 4);
-    expect(sk({ '1.ea': 1, '1.fa': 1 }, 'hammer_spark').cost.amount).toBe(S.hammer_spark!.cost.amount + 4);
+    expect(sk({ '1.ea': 1, '1.fa': 1 }, 'hammer_spark').cost.amount).toBe(S.hammer_spark!.cost.amount + (TREE.nodes['1.fa']!.fx![1] as { v: number }).v);
     const iron = sk({ '2.ea': 1, '2.fa': 1 }, 'thunder_strike');
     expect(statusEff(iron, 'slow')!.turns).toBe(2);
     expect(iron.cooldown).toBe((S.thunder_strike!.cooldown ?? 0) + 1);
@@ -92,10 +94,10 @@ describe('Skald ağacı: veri', () => {
     expect(statusEff(wild, 'shrouded')!.turns).toBe(4); // Ömer 2026-11-16: Fleet -> yarım güçte Shrouded
     expect(statusEff(wild, 'shrouded')!.strength).toBe(0.5);
     expect(wild.cost.amount).toBe(S.war_drum!.cost.amount + 6);
-    expect(dmg(sk({ '4.u1': 1 }, 'stormcall')).falloff).toBeCloseTo((dmg(S.stormcall!).falloff ?? 0) + 0.1, 6);
+    expect(dmg(sk({ '4.u1': 1 }, 'stormcall')).falloff).toBeCloseTo((dmg(S.stormcall!).falloff ?? 0) + vOf('4.u1'), 6);
     expect(sk({ '4.r1': 1 }, 'stormcall').initialCooldown).toBe((S.stormcall!.initialCooldown ?? 0) - 1);
     expect(statusEff(sk({ '3.v': 1 }, 'war_drum'), 'haste')!.turns).toBe(statusEff(S.war_drum!, 'haste')!.turns + 1);
-    expect(dmg(sk({ '1.v': 1 }, 'hammer_spark')).power).toBeCloseTo(dmg(S.hammer_spark!).power * 1.15, 6);
+    expect(dmg(sk({ '1.v': 1 }, 'hammer_spark')).power).toBeCloseTo(dmg(S.hammer_spark!).power * (1 + vOf('1.v')), 6);
     expect(statusEff(sk({ '4.l1': 1 }, 'stormcall'), 'haste')).toMatchObject({ turns: 2, self: true });
     expect(statusEff(sk({ '4.d1': 1 }, 'stormcall'), 'slow')!.turns).toBe(1);
   });
@@ -229,6 +231,8 @@ describe('Skald ağacı: savaşta', () => {
       const ally = b.combatants.find((c) => c.side === 'party' && c.defId === 'warrior')!;
       const foe = foeAt(b, 1);
       foe.cooldowns = {};
+      foe.stats.str *= 10; // küçük yüzde (ağaç ayarı 2026-11-21) tam sayı hasarda kaybolmasın
+      ally.hp = ally.maxHp = 99999;
       const ev = b.useSkill(foe.uid, foe.skills[0]!, ally.uid);
       expect(ev.ok).toBe(true);
       return dealt(ev.ok ? ev.events : [], ally.uid);

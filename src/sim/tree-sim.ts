@@ -187,18 +187,38 @@ export interface VariantOut {
   /** Alınan, tetiklenmesi beklenen ama hiç tetiklenmeyen düğümler (ölü) ve fx'i olmayan alınan düğümler (etkisiz). Sürekli etkiler sayılmaz. */
   deadNodes: string[];
   inertNodes: string[];
+  /** r41 B3: alınmış ama aynı build'deki üst düğümün `drop`u ile kancası yerine geçilmiş düğümler (ölü sayılmaz; etkisi üst düğümün sayacında). */
+  droppedNodes?: string[];
 }
 
 const TRIGGER_UNIT_FX = new Set(['secondWind', 'shieldRefresh', 'lastStand', 'vengeance', 'retortStatus', 'openerStatus', 'executeLifesteal', 'onHitDot', 'restBlessing', 'critStatuses', 'tierStatus', 'killRush']);
 
-/** Düğümün ölçüm türü: none = fx yok; static = sürekli (sayı yaması / sürekli unitFx; treeProc yazmaz); proc = tetiklenince sayılır. */
+/**
+ * Düğümün ölçüm türü: none = fx yok; static = sürekli (sayı yaması / sürekli unitFx / skill'i kalıcı değiştiren 'target' kancası; treeProc yazmaz);
+ * proc = tetiklenince sayılır. 'target' kancasından yalnız yan vuruş (splash) ve zemin genişletme (groundWide) sayılır (r41 B1: motor işaretler).
+ */
 export function procKind(fx: TreeFx[] | null | undefined): 'none' | 'static' | 'proc' {
   if (!fx || !fx.length) return 'none';
   for (const f of fx) {
+    if (f.k === 'hook' && (f as { h?: string }).h === 'target') {
+      const t = f as { splash?: unknown; groundWide?: unknown };
+      if ((t.splash !== undefined && t.splash !== null) || t.groundWide !== undefined) return 'proc';
+      continue;
+    }
     if (f.k === 'hook' || f.k === 'addEffect' || f.k === 'replaceEffect' || f.k === 'groundStatus') return 'proc';
     if (f.k === 'unitFx' && Object.keys((f as { fx?: object }).fx ?? {}).some((k) => TRIGGER_UNIT_FX.has(k))) return 'proc';
   }
   return 'static';
+}
+
+/** r41 B3: build'de alınmış bir düğümün kancası `drop` ile kaldırdığı (yerine geçtiği) düğüm anahtarları. */
+export function droppedBy(cls: string, taken: readonly string[]): Set<string> {
+  const out = new Set<string>();
+  for (const k of taken) for (const f of nodeFx(cls, k) ?? []) {
+    const d = (f as { drop?: unknown }).drop;
+    if (f.k === 'hook' && typeof d === 'string' && taken.includes(d)) out.add(d);
+  }
+  return out;
 }
 
 const nodeFx = (cls: string, key: string): TreeFx[] | null | undefined => {
@@ -335,13 +355,15 @@ export function runVariant(runs: number, seeds: number[], v: VariantSpec): Varia
   // Ölü / etkisiz düğümler: ağacı en az bir birimde savaşa girmiş class'ların alınan düğümleri
   const deadNodes: string[] = [];
   const inertNodes: string[] = [];
+  const droppedNodes: string[] = [];
   for (const [id, b] of Object.entries(builds)) {
     if (!treedUnits[id]) continue;
+    const dropped = droppedBy(id, b.taken);
     for (const k of b.taken) {
       const kind = procKind(nodeFx(id, k));
       const node = `${id}:${k}`;
       if (kind === 'none') inertNodes.push(node);
-      else if (kind === 'proc' && !procs[node]) deadNodes.push(node);
+      else if (kind === 'proc' && !procs[node]) (dropped.has(k) ? droppedNodes : deadNodes).push(node);
     }
   }
   const total = r.runs;
@@ -365,6 +387,7 @@ export function runVariant(runs: number, seeds: number[], v: VariantSpec): Varia
     treedUnits,
     builds,
     deadNodes,
+    droppedNodes,
     inertNodes,
   };
 }

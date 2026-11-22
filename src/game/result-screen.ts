@@ -7,6 +7,7 @@ import { debugState } from './debug-state';
 import { copyMatchData } from '../ui/match-copy';
 import { fitText } from './menu-ui';
 import { EL, elBody, elButton, elText, diamondPts, hGradient, vGradient, type ElButton } from './elegant-ui';
+import { drawCornerDots } from './corner-dots-gfx';
 import { tierStyle, unitName } from './unit-label';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
 import { stageView } from './stage-view';
@@ -106,6 +107,8 @@ export interface ResultScreenOptions {
   actions?: ResultAction[];
   /** Multiplayer: yerel oyuncunun tarafı (katılan sağ taraf = 'enemy'); yoksa 'party'. */
   localSide?: 'party' | 'enemy';
+  /** Multiplayer beraberliği (Ömer 2026-11-21, form r39): iki sütun da kazanan sayılmaz, MVP yok. Başlık `title` ile ('DRAW'). */
+  draw?: boolean;
   /** Multiplayer: başlık ve alt yazı yerine (ör. 'NO CONTEST', 'Your opponent left the battle'). */
   title?: string;
   subtitle?: string;
@@ -251,6 +254,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const topPad = 26; // sağdaki Turns / Standing kutularının üstünde şeritle arasında nefes payı
   const boxH = Math.round(60 * (short ? 1.35 : 1));
   const boxGap = 10;
+  const boxW = short ? 240 : 160; // telefonda etiket büyük yazılır (Turns / Standing); kutu genişler, yazı sayıya binmez
   const mainH = topPad + boxH * 2 + boxGap + 22;
   const plaqueH = bandH + mainH;
   const px = W / 2 - plaqueW / 2;
@@ -266,10 +270,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     hGradient(g, px, py, plaqueW, bandH, victory ? 0xd9b26a : 0xb0584c, [[0, 0.26], [0.6, 0.07], [1, 0.18]]);
     g.lineStyle(1, accent.edge, 0.55).lineBetween(px, py + bandH, px + plaqueW, py + bandH);
     g.lineStyle(1, accent.edge, victory ? 0.5 : 0.75).strokeRect(px + 0.5, py + 0.5, plaqueW - 1, plaqueH - 1);
-    for (const [cx, cy] of [[px, py], [px + plaqueW, py + plaqueH]] as const) {
-      g.fillStyle(0x130d07, 1).fillPoints(diamondPts(cx, cy, 6), true);
-      g.lineStyle(1, 0xf0dca8, 1).strokePoints(diamondPts(cx, cy, 6), true);
-    }
+    drawCornerDots(g, px, py, plaqueW, plaqueH); // köşe süsü: üç nokta
     plaque.add(g);
   }
   plaque.add(elText(scene, px + 22, py + bandH / 2, 'Battle result', sz(15), victory ? EL.ON : '#e0a79c', { em: 0.3 }).setOrigin(0, 0.5));
@@ -290,8 +291,8 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     loadEmblemImage(scene, plaque, art, ex, midY, 124, victory);
   }
   // Başlık + süs + alt yazı (ortadaki alan: kutu ile sağdaki sütun arası)
-  const midX = px + 28 + 104 + (plaqueW - 28 - 104 - 28 - 160) / 2 + 26;
-  const midW = plaqueW - 28 - 104 - 26 - 160 - 26 - 28;
+  const midX = px + 28 + 104 + (plaqueW - 28 - 104 - 28 - boxW) / 2 + 26;
+  const midW = plaqueW - 28 - 104 - 26 - boxW - 26 - 28;
   const fit = (t: Phaser.GameObjects.Text, maxW = midW) => {
     if (t.width > maxW) t.setScale(maxW / t.width);
     return t;
@@ -305,17 +306,17 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   plaque.add(fit(elBody(scene, midX, midY + 46, sub, sz(26), accent.text).setOrigin(0.5)));
   // Sağ sütun: Turns / Standing
   {
-    const bx = px + plaqueW - 28 - 160;
+    const bx = px + plaqueW - 28 - boxW;
     const items: Array<[string, string, string]> = [[uiIconName('cooldown'), String(stats.turns), 'Turns'], [stat('hp'), `${standing} / ${myUnits.length}`, 'Standing']];
     items.forEach(([ic, val, label], i) => {
       const by0 = mainY + topPad + i * (boxH + boxGap);
       const g = scene.add.graphics();
-      g.fillStyle(0xffffff, 0.04).fillRect(bx, by0, 160, boxH);
-      g.lineStyle(1, EL.GOLD, EL.LINE.a1 + 0.06).strokeRect(bx + 0.5, by0 + 0.5, 159, boxH - 1);
+      g.fillStyle(0xffffff, 0.04).fillRect(bx, by0, boxW, boxH);
+      g.lineStyle(1, EL.GOLD, EL.LINE.a1 + 0.06).strokeRect(bx + 0.5, by0 + 0.5, boxW - 1, boxH - 1);
       plaque.add(g);
       plaque.add(icon(ic, bx + 10 + 17, by0 + boxH / 2, 34));
-      plaque.add(elText(scene, bx + 56, by0 + boxH / 2 - 9, val, 28, accent.value, { em: 0.02, upper: false, weight: '700' }).setOrigin(0, 0.5));
-      plaque.add(elText(scene, bx + 56, by0 + boxH / 2 + 16, label, sz(11), EL.MUTED, { em: 0.14 }).setOrigin(0, 0.5));
+      plaque.add(elText(scene, bx + 56, by0 + boxH / 2 - (short ? 15 : 9), val, 28, accent.value, { em: 0.02, upper: false, weight: '700' }).setOrigin(0, 0.5));
+      plaque.add(elText(scene, bx + 56, by0 + boxH / 2 + (short ? 20 : 16), label, sz(11), EL.MUTED, { em: 0.14 }).setOrigin(0, 0.5));
     });
   }
   plaque.setSize(plaqueW, plaqueH);
@@ -333,9 +334,9 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const areaBottom = barBottom - primaryH - (short ? 14 : 22);
 
   // ============ Takım panelleri ============
-  const winnerSide = victory ? local : local === 'party' ? 'enemy' : 'party';
+  const winnerSide: Side | null = o.draw ? null : victory ? local : local === 'party' ? 'enemy' : 'party';
   const roster = (side: Side) => battle.combatants.filter((c) => c.side === side && !c.summoned).sort((a, b) => a.slot - b.slot);
-  const winners = roster(winnerSide);
+  const winners = winnerSide ? roster(winnerSide) : [];
   const mvp = !victory ? undefined : winners.reduce<Combatant | undefined>((best, c) => ((stats.dealt.get(c.uid) ?? 0) > (stats.dealt.get(best?.uid ?? '') ?? 0) ? c : best), undefined);
   const mvpUid = mvp && (stats.dealt.get(mvp.uid) ?? 0) > 0 ? mvp.uid : null;
 
@@ -363,10 +364,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     g.lineStyle(2, EL.INK, 0.8).strokeRect(x - 1, y - 1, w + 2, h + 2);
     g.fillGradientStyle(0x140e0a, 0x140e0a, 0x090604, 0x090604, 0.92).fillRect(x, y, w, h);
     g.lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-    for (const [cx, cy] of [[x, y], [x + w, y + h]] as const) {
-      g.fillStyle(0x130d07, 1).fillPoints(diamondPts(cx, cy, 5), true);
-      g.lineStyle(1, 0xf0dca8, 1).strokePoints(diamondPts(cx, cy, 5), true);
-    }
+    drawCornerDots(g, x, y, w, h); // köşe süsü: üç nokta
     area.add(g);
   };
 
@@ -497,7 +495,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
 
       // Can çubuğu (karakter kartı dili: rakam çubuğun içinde)
       const hpX = nameX + idW + 14;
-      const hpW = 150;
+      const hpW = short ? 118 : 150; // telefonda Dealt sütunu geniş: can çubuğu daralır, "4 / 104" sayıya bitişmez
       const hpH = Math.round((tight ? 20 : 24) * (short ? 1.4 : 1));
       const ratio = Phaser.Math.Clamp(c.hp / Math.max(1, c.maxHp), 0, 1);
       const bar = scene.add.graphics();

@@ -12,7 +12,7 @@ import { leaveMerchant } from './merchant';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
 import { applyXp, battleXp, fixedXp, fixedXpNode, joinLevel } from './xp';
-import { countFallen, earnGold } from './ledger';
+import { countFallen, earnGold, snapshotMapStart } from './ledger';
 import { LEVELS, campaignMaxLevel, nodeXpMult, setLevel, splitXp } from '../progression/levels';
 import { nodeLevel } from './power';
 import { freeTemperItem, freeTemperPreview } from './smith';
@@ -822,7 +822,7 @@ export function ownsClass(s: CampaignState, classId: string): boolean {
 /** Bulunulan olayda "Walk away" (A5) seçeneği var mı: olay bitmeden kafile yola çıkabilir. */
 export function walkAwayHere(s: CampaignState): boolean {
   const step = nextStep(s);
-  return step.kind === 'event' && !s.eventChoice && eventChoicesFor(s, step.event).some((c) => c.walkAway);
+  return step.kind === 'event' && !s.eventChoice && eventChoicesFor(s, step.event).some((c) => c.walkAway || c.closer); // Tur 40: X ile kapatılan olay açık kalır; "çık" seçeneği olan olaydan (Walk away / Leave / Not yet) kafile yola çıkabilir
 }
 
 /** Seçenek seçilebilir mi (altın yetiyor mu)? null = evet, yoksa sebep. */
@@ -857,6 +857,7 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   if (c.gift) grantGift(t, t.at, activeHeroes(t), `choice-${c.id}`, c.gift.rarity ?? 'common', c.gift.slots); // Monk's Isle relic (M-L)
   if (c.faction && !t.faction) t.faction = c.faction; // M-L: bir kez, geri alınmaz
   if (c.stoneOath && !t.stoneOath) t.stoneOath = c.stoneOath; // Harita 3 Hall of Oaths (open-questions 454 a): bir kez, geri alınmaz
+  if (c.crownChoice && !t.crownChoice) t.crownChoice = c.crownChoice; // Harita 3 Mend or Quench (Ömer 2026-11-21 r39): kapanış sinemasının dalı, bir kez
   if (c.nextBattleStatus && c.nextBattleStatus.turns > 0) t.pendingStatus = { status: c.nextBattleStatus.status, turns: Math.floor(c.nextBattleStatus.turns) }; // The White Dark "Wait it out"
   if (c.charter && !t.sea) {
     t.sea = true; // M-J: deniz yolları açılır; Caravel rotasının başından dolaşmaya başlar (M-K)
@@ -1338,6 +1339,7 @@ export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ??
   }
   delete t.inn;
   t.mapsDone = [...(t.mapsDone ?? []), s.mapId];
+  t.mapStart = snapshotMapStart(t); // harita sonu kartı: yeni haritanın kendi sayıları buradan sayılır
   t.mapId = map.id;
   t.at = map.start;
   t.path = [map.start];

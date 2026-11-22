@@ -8,6 +8,7 @@ import {
   WAYSHRINES,
   debugFinishMap1,
   debugFinishMap2,
+  debugFinishMap3,
   debugValdrenReserve,
   debugJumpHollowCrown,
   debugJumpHollowNode,
@@ -333,11 +334,37 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
     tab: TAB,
     section: MAPS23_SECTION,
     icon: 'burst',
-    label: 'Finish Map 2 → transition',
-    hint: 'Walk The Drowned Reach to its end (every stop on the way counts as won, same seed) and stop at the Two Crowns ending: the "Map Complete" window with "Continue to The Hollow Crown". Turns Map 3 on.',
+    label: 'Finish Map 2 → end card',
+    hint: 'Walk The Drowned Reach to its end (every stop on the way counts as won, same seed) and stop at the Two Crowns ending: the end card (stats, company, best finds) with "Continue to The Hollow Crown". Turns Map 3 on.',
     run: () => {
       enable3();
       apply(debugFinishMap2(ensureState()));
+    },
+  });
+  // Oyun sonu (Ömer 2026-11-21 r38-r39): Mend or Quench seçimi kayda yazılır, kapanış sineması dala göre; sonra jenerik ve harita sonu kartı
+  for (const [choice, label] of [['mend', 'Mend'], ['quench', 'Quench']] as const)
+    debug.register({
+      id: `maps23.finish3.${choice}`,
+      tab: TAB,
+      section: MAPS23_SECTION,
+      icon: 'burst',
+      label: `Finish Map 3 (${label}) → ending`,
+      hint: `Walk The Hollow Crown to Mend or Quench (slow the first time; every stop counts as won, same seed), pick "${label}" and save it. The map then plays the closing cinematic for ${label}, the credits and the end card ("Stay on the map" / "Main Menu"). Replaces the current campaign in its slot. Turns Map 3 on.`,
+      run: () => {
+        enable3();
+        apply(debugFinishMap3(ensureState(), choice));
+      },
+    });
+  debug.register({
+    id: 'maps23.credits',
+    tab: TAB,
+    section: MAPS23_SECTION,
+    icon: 'book',
+    label: 'Play credits',
+    hint: 'Show the credits screen (draft text in data/credits.json) on top of the current screen. Tap / Space / Enter = next page, X / Esc = close. Changes nothing.',
+    run: () => {
+      const root = document.getElementById('ui-root');
+      if (root) void import('./credits').then((m) => m.openCredits(root));
     },
   });
   debug.register({

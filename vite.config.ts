@@ -65,7 +65,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    testTimeout: 30000, // ağır AI savaş testleri (yük altında 5 sn varsayılanı aşabiliyor)
+    testTimeout: 60000, // ağır AI savaş testleri; 2026-11-23 Ömer onayıyla 30 sn > 60 sn (tam koşu yükünde 3-4x yavaşlama, tek başına 5-19 sn'lik testler 30 sn'yi aşıyordu)
     // Worker thread havuzu (2026-10-14 ölçüm: hızlı set forks ~15,5 sn -> threads ~12,8 sn; kapsam aynı).
     // isolate: false denendi ve REDDEDİLDİ (dosyalar arası paylaşılan durum testleri kırıyor).
     pool: 'threads',

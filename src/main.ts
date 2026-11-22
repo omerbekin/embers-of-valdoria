@@ -25,6 +25,7 @@ import { installContextMenuBlock, installPhaserButtonFilter } from './ui/right-c
 import { installStage, setStageMetrics } from './game/stage';
 import { installPerfMode } from './game/perf-apply';
 import { installFpsMeter } from './ui/fps-meter';
+import { installCornerDots } from './ui/corner-dots';
 import { installWiki, openWiki } from './wiki/open';
 import { debugState } from './game/debug-state';
 import { whenMenuFontsReady } from './ui/menu-fonts';
@@ -163,6 +164,7 @@ installViewport(game, document.getElementById('stage')!, parseRotateMode(window.
 
 // --- Show FPS (Settings > Gameplay) göstergesi + Auto performans modu için kare ölçümü ---
 installFpsMeter(document.getElementById('ui-root')!);
+installCornerDots(); // köşe süsü: yuvarlak üç nokta (src/ui/corner-dots.ts)
 applyA11y(); // yazı boyu + renk körlüğü sınıfları (Settings > Accessibility)
 installTapExpand(); // telefonda kesik metne dokununca tam metin
 installBackGuard(); // Android geri tuşu oyunu kapatmaz (src/ui/close-stack.ts)

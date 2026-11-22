@@ -203,7 +203,7 @@ describe('Faz 4a: Warrior', () => {
     const b = make({ 0: 'warrior' }, { 0: 'mage' }, withTree(0, only('warrior', { '0.eb': 1 })));
     const me = P(b);
     const big = Math.ceil(me.maxHp * 0.3);
-    expect(X(b).bigHitCut(me, E(b), big)).toBe(Math.round(big * 0.75));
+    expect(X(b).bigHitCut(me, E(b), big)).toBe(Math.round(big * (1 + num('warrior', '0.eb', '0.mul')))); // azalma veriden
     expect(X(b).bigHitCut(me, E(b), big - 1)).toBe(big - 1);
   });
 
@@ -235,7 +235,7 @@ describe('Faz 4a: Warrior', () => {
     expect(procs(plain, 'warrior:2.f2')).toBe(hits);
     // Blood Glut Whirlwind kullanımındaki TÜM şifaların fazlasını çevirir (Berserker can çalma dahil); Spin Recovery'nin her şifası en az 5 Rage
     expect(procs(glut, 'warrior:2.ma')).toBeGreaterThanOrEqual(hits);
-    expect((P(glut).rage ?? 0) - (P(plain).rage ?? 0)).toBeGreaterThanOrEqual(5 * hits);
+    expect((P(glut).rage ?? 0) - (P(plain).rage ?? 0)).toBeGreaterThanOrEqual(Math.floor((num('warrior', '2.f2', '0.do.0.heal') * 5 * 100) / 3) * hits); // şifa yüzdesi veriden (eski: 5)
     // Can eksikken şifa verir: vurulan düşman başına %5
     const b = make({ 0: 'warrior' }, { 0: 'mage' }, withTree(0, only('warrior', { '2.f2': 5 })), 7);
     E(b).hp = E(b).maxHp = 99999;
@@ -543,7 +543,7 @@ describe('Faz 4a: öbür sınıflar', () => {
     const b = make({ 0: 'cutthroat' }, { 0: 'mage' }, withTree(0, only('cutthroat', {}, 1)));
     P(b).mp = 0;
     X(b).trig([P(b)], { on: 'dodge', target: E(b), source: E(b), subject: P(b) }, emitOf(b));
-    expect(P(b).mp).toBe(2);
+    expect(P(b).mp).toBe(num('cutthroat', 'bar1', '0.do.0.mp')); // MP veriden
     seeds('Venom Edge kill', (s) => {
       const c = make({ 0: 'cutthroat' }, { 0: 'mage', 1: 'mage' }, withTree(0, only('cutthroat', {}, 4)), s);
       const me = P(c);

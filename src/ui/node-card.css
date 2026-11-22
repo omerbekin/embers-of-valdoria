@@ -26,7 +26,7 @@
 .nc .nc-head .rl.r { background: linear-gradient(270deg, transparent, rgba(217, 178, 106, 0.7)); }
 .nc .nc-head .rl::after { content: ''; position: absolute; right: -4px; top: -3px; width: 6px; height: 6px; transform: rotate(45deg); border: 1px solid var(--g-gold); background: #120c08; }
 .nc .nc-head .rl.r::after { right: auto; left: -4px; }
-.nc .sbc-t { flex: none; max-width: 80%; text-align: center; }
+.nc .sbc-t { flex: none; max-width: 80%; text-align: center; text-wrap: balance; }
 
 /* Lv: kartın üst kenarı ile ad satırı arasındaki boşlukta dikeyde ortalı (Ömer 2026-11-14). Madalyonun solunda "Lv N", sağında "Company X.X"; eski kartın düz yazısı (aynı font / boy / renk, çerçeve yok). Zorluk rengi Company'de (satır içi). */
 .nc .nc-lv { position: absolute; left: 0; right: 0; top: 0; height: var(--pt); display: grid; grid-template-columns: 1fr var(--lvmid) 1fr; align-items: baseline; align-content: center; z-index: 4; pointer-events: none; white-space: nowrap; }

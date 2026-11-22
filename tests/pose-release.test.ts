@@ -21,6 +21,10 @@ describe('pose texture release', () => {
     expect(isReleasablePoseTexture('poseweapon:axes:plain:s', inUse, { atlases: true, keepBodies })).toBe(false);
     expect(isReleasablePoseTexture('bg:grave-field', inUse, { atlases: true, keepBodies })).toBe(false);
   });
+  it('thrown off-hand dagger copy (Tithe Cut) lives with its atlas: kept during the battle, released at the next battle setup', () => {
+    expect(isReleasablePoseTexture('posethrow:daggers.plain', inUse)).toBe(false);
+    expect(isReleasablePoseTexture('posethrow:daggers.plain', inUse, { atlases: true })).toBe(true);
+  });
   it('detects a blank (transparent) baked frame', () => {
     const blank = new Uint8ClampedArray(4 * 100);
     expect(pixelsBlank(blank, 3)).toBe(true);

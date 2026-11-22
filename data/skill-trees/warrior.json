@@ -1,6 +1,6 @@
 {
   "class": "warrior",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "b",
@@ -64,7 +64,7 @@
       {
         "at": 10,
         "name": "Second Wind",
-        "text": "The first time you drop below 30% HP in a battle, heal 8% of your max HP.",
+        "text": "The first time you drop below 30% HP in a battle, heal 2.25% of your max HP.",
         "src": "B:V3:bar0",
         "fx": [
           {
@@ -72,7 +72,7 @@
             "fx": {
               "secondWind": {
                 "below": 0.3,
-                "heal": 0.08
+                "heal": 0.0225
               }
             }
           }
@@ -81,7 +81,7 @@
       {
         "at": 15,
         "name": "Crushing Weight",
-        "text": "Your skills deal 3% increased damage to Stunned or Hobbled enemies.",
+        "text": "Your skills deal 0.75% increased damage to Stunned or Hobbled enemies.",
         "src": "B:V4:bar2",
         "fx": [
           {
@@ -94,7 +94,7 @@
               ]
             },
             "mod": {
-              "powerMul": 0.03
+              "powerMul": 0.0075
             }
           }
         ]
@@ -102,7 +102,7 @@
       {
         "at": 20,
         "name": "Stubborn Heart",
-        "text": "At the start of your turn below 25% HP, heal 2% of your max HP.",
+        "text": "At the start of your turn below 25% HP, heal 0.5% of your max HP.",
         "src": "B:V3:bar3",
         "fx": [
           {
@@ -114,7 +114,7 @@
             },
             "do": [
               {
-                "heal": 0.02
+                "heal": 0.005
               }
             ]
           }
@@ -123,7 +123,7 @@
       {
         "at": 25,
         "name": "Stagger Step",
-        "text": "Once per battle, when you Stun an enemy, your next turn comes 30% sooner.",
+        "text": "Once per battle, when you Stun an enemy, your next turn comes 8.75% sooner.",
         "src": "B:V4:bar4",
         "fx": [
           {
@@ -134,7 +134,7 @@
             "once": true,
             "do": [
               {
-                "sooner": 0.3
+                "sooner": 0.0875
               }
             ]
           }
@@ -145,7 +145,7 @@
   "nodes": {
     "0.f1": {
       "name": "Thick Hide",
-      "text": "While below 50% HP, you take 4% less damage per rank.",
+      "text": "While below 50% HP, you take 1.25% less damage per rank.",
       "src": "B:V3:0.f1",
       "fx": [
         {
@@ -153,7 +153,7 @@
           "fx": {
             "lowHpReduce": {
               "below": 0.5,
-              "reduce": 0.04
+              "reduce": 0.0125
             }
           },
           "rank": true
@@ -162,7 +162,7 @@
     },
     "0.f2": {
       "name": "Grit",
-      "text": "While below 25% HP, healing you receive is 6% higher per rank.",
+      "text": "While below 25% HP, healing you receive is 1.75% higher per rank.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -172,14 +172,14 @@
           "when": {
             "selfHpBelow": 0.25
           },
-          "mul": 0.06,
+          "mul": 0.0175,
           "rank": true
         }
       ]
     },
     "0.f3": {
       "name": "Shared Scars",
-      "text": "Your Berserker bonus is 2% higher per rank for each ally below 50% HP.",
+      "text": "Your Berserker bonus is 0.5% higher per rank for each ally below 50% HP.",
       "src": "B:V5:0.f3",
       "fx": [
         {
@@ -189,7 +189,7 @@
             "alliesHpBelow": 0.5
           },
           "mod": {
-            "maxBonus": 0.02
+            "maxBonus": 0.005
           },
           "rank": true
         }
@@ -218,7 +218,7 @@
     },
     "0.r": {
       "name": "Hardened",
-      "text": "Each time you become Fortified, heal 1% of your max HP per rank.",
+      "text": "Each time you become Fortified, heal 0.25% of your max HP per rank.",
       "src": "B:V3:0.r",
       "fx": [
         {
@@ -229,7 +229,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.01
+              "heal": 0.0025
             }
           ]
         }
@@ -237,7 +237,7 @@
     },
     "0.ea": {
       "name": "Measured Mending",
-      "text": "Healing you receive is 12% higher below 50% HP, but halved above it.",
+      "text": "Healing you receive is 3.5% higher below 50% HP, but halved above it.",
       "src": "B:V3:0.ea",
       "fx": [
         {
@@ -247,7 +247,7 @@
           "when": {
             "selfHpBelow": 0.5
           },
-          "mul": 0.12
+          "mul": 0.035
         },
         {
           "k": "hook",
@@ -264,7 +264,7 @@
     },
     "0.eb": {
       "name": "Stand Firm",
-      "text": "A single hit that would take 30%+ of your max HP deals 25% less damage.",
+      "text": "A single hit that would take 30%+ of your max HP deals 7.25% less damage.",
       "src": "B:V3:0.eb",
       "fx": [
         {
@@ -272,7 +272,7 @@
           "h": "heal",
           "on": "bigHit",
           "min": 0.3,
-          "mul": -0.25
+          "mul": -0.0725
         }
       ]
     },
@@ -294,7 +294,7 @@
     },
     "0.fa": {
       "name": "Grave Pact",
-      "text": "While below 25% HP, your skills lifesteal 15%, but above 50% HP they deal 15% less damage.",
+      "text": "While below 25% HP, your skills lifesteal 4.25%, but above 50% HP they deal 15% less damage.",
       "src": "B:V3:0.fa",
       "fx": [
         {
@@ -304,7 +304,7 @@
             "selfHpBelow": 0.25
           },
           "mod": {
-            "lifesteal": 0.15
+            "lifesteal": 0.0425
           }
         },
         {
@@ -382,7 +382,7 @@
     },
     "1.f1": {
       "name": "Knee Cutter",
-      "text": "Double Strike has a 5% chance per rank to Hobble the target for 1 turn.",
+      "text": "Double Strike has a 1.5% chance per rank to Hobble the target for 1 turn.",
       "src": "B:V4:1.f2",
       "fx": [
         {
@@ -392,19 +392,19 @@
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.05
+              "chance": 0.015
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.03
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.15
+              "chance": 0.045
             }
           ]
         }
@@ -412,7 +412,7 @@
     },
     "1.f2": {
       "name": "Notched Axe",
-      "text": "Double Strike's second hit has 4% increased power per rank.",
+      "text": "Double Strike's second hit has 1.25% increased power per rank.",
       "src": "B:V1:1.f1",
       "fx": [
         {
@@ -420,14 +420,14 @@
           "sel": "damage:1",
           "f": "power",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.0125,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Hard Knocks",
-      "text": "Double Strike's second hit +4% critical chance per rank against Hobbled targets.",
+      "text": "Double Strike's second hit +1.25% critical chance per rank against Hobbled targets.",
       "src": "B:V4:1.f3",
       "fx": [
         {
@@ -438,7 +438,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "critBonus": 0.04
+            "critBonus": 0.0125
           },
           "rank": true
         }
@@ -446,7 +446,7 @@
     },
     "1.n0": {
       "name": "Gut Strike",
-      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for 8% increased damage.",
+      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for 2.25% increased damage.",
       "src": "B:V1:1.n0",
       "fx": [
         {
@@ -466,14 +466,14 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.08
+            "powerMul": 0.0225
           }
         }
       ]
     },
     "1.r": {
       "name": "Bone Saw",
-      "text": "Double Strike ignores 3% of Armor per rank on Wounded targets.",
+      "text": "Double Strike ignores 0.75% of Armor per rank on Wounded targets.",
       "src": "B:V1:1.r",
       "fx": [
         {
@@ -483,7 +483,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "ignoreDefense": 0.03
+            "ignoreDefense": 0.0075
           },
           "rank": true
         }
@@ -522,7 +522,7 @@
     },
     "1.ma": {
       "name": "Hobble",
-      "text": "Double Strike on a Hobbled target extends the Hobble by 1 turn and deals 5% increased damage.",
+      "text": "Double Strike on a Hobbled target extends the Hobble by 1 turn and deals 1.5% increased damage.",
       "src": "B:V4:1.mb",
       "fx": [
         {
@@ -546,14 +546,14 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.015
           }
         }
       ]
     },
     "1.fa": {
       "name": "Crippling Pair",
-      "text": "Double Strike's Hobble lasts 2 turns, but Double Strike deals 15% less damage.",
+      "text": "Double Strike's Hobble lasts 2 turns, but Double Strike deals 4.25% less damage.",
       "src": "B:V4:1.fb",
       "fx": [
         {
@@ -569,13 +569,13 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": -0.15
+          "v": -0.0425
         }
       ]
     },
     "1.fb": {
       "name": "Third Cut",
-      "text": "Against a Wounded target Double Strike hits a third time at 40% power, but it can no longer be a critical hit.",
+      "text": "Against a Wounded target Double Strike hits a third time at 11.5% power, but it can no longer be a critical hit.",
       "src": "B:V1:1.fa",
       "fx": [
         {
@@ -587,7 +587,7 @@
           },
           "do": [
             {
-              "strike": 0.4,
+              "strike": 0.115,
               "to": "target"
             }
           ]
@@ -606,7 +606,7 @@
     },
     "1.mb": {
       "name": "Butcher's Carve",
-      "text": "Each Double Strike hit deals 2% increased damage for every turn of Wound left on the target.",
+      "text": "Each Double Strike hit deals 0.5% increased damage for every turn of Wound left on the target.",
       "src": "B:V1:1.ma",
       "fx": [
         {
@@ -616,7 +616,7 @@
             "targetStatusTurns": "wound"
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.005
           }
         }
       ]
@@ -660,7 +660,7 @@
     },
     "2.f1": {
       "name": "Steady Spin",
-      "text": "Whirlwind lifesteal +4% per rank.",
+      "text": "Whirlwind lifesteal +1.25% per rank.",
       "src": "A:V3:2.r",
       "fx": [
         {
@@ -668,14 +668,14 @@
           "sel": "damage",
           "f": "lifesteal",
           "op": "add",
-          "v": 0.04,
+          "v": 0.0125,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Spin Recovery",
-      "text": "Whirlwind heals you 3% of your max HP per rank for each enemy it hits.",
+      "text": "Whirlwind heals you 0.75% of your max HP per rank for each enemy it hits.",
       "src": "A:V3:2.f1",
       "fx": [
         {
@@ -685,7 +685,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.03
+              "heal": 0.0075
             }
           ]
         }
@@ -693,7 +693,7 @@
     },
     "2.f3": {
       "name": "Hungry Arc",
-      "text": "Whirlwind has 6% increased power per rank while you are below 50% HP.",
+      "text": "Whirlwind has 1.75% increased power per rank while you are below 50% HP.",
       "src": "A:V3:2.f3",
       "fx": [
         {
@@ -703,7 +703,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.0175
           },
           "rank": true
         }
@@ -728,7 +728,7 @@
     },
     "2.r": {
       "name": "Red Arc",
-      "text": "Whirlwind has 2% increased power per rank against Wounded enemies.",
+      "text": "Whirlwind has 0.5% increased power per rank against Wounded enemies.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -738,7 +738,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.005
           },
           "rank": true
         }
@@ -789,7 +789,7 @@
     },
     "2.fa": {
       "name": "Glass Cyclone",
-      "text": "Whirlwind lifesteal +12%, but you are Exposed until your next turn (hits against you have +15% critical chance).",
+      "text": "Whirlwind lifesteal +3.5%, but you are Exposed until your next turn (hits against you have +15% critical chance).",
       "src": "A:V3:2.fa",
       "fx": [
         {
@@ -797,7 +797,7 @@
           "sel": "damage",
           "f": "lifesteal",
           "op": "add",
-          "v": 0.12
+          "v": 0.035
         },
         {
           "k": "addEffect",
@@ -812,7 +812,7 @@
     },
     "2.fb": {
       "name": "Reaper's Spin",
-      "text": "Whirlwind deals 15% increased damage to Wounded enemies, but no damage at all to enemies that are not Wounded.",
+      "text": "Whirlwind deals 4.25% increased damage to Wounded enemies, but no damage at all to enemies that are not Wounded.",
       "src": "A:V1:2.fa",
       "fx": [
         {
@@ -822,7 +822,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.15
+            "powerMul": 0.0425
           }
         },
         {
@@ -841,7 +841,7 @@
     },
     "2.mb": {
       "name": "Crimson Wheel",
-      "text": "Whirlwind deals 4% increased damage to all enemies it hits for each Wounded enemy among its targets.",
+      "text": "Whirlwind deals 1.25% increased damage to all enemies it hits for each Wounded enemy among its targets.",
       "src": "A:V1:2.ma",
       "fx": [
         {
@@ -851,14 +851,14 @@
             "hitWithStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.0125
           }
         }
       ]
     },
     "2.v": {
       "name": "Exsanguinate",
-      "text": "Whirlwind evolves: it tears open the Wound on each enemy hit, ending it for 20% more damage and double lifesteal on that hit.",
+      "text": "Whirlwind evolves: it tears open the Wound on each enemy hit, ending it for 5.75% more damage and double lifesteal on that hit.",
       "src": "A:V1:2.v",
       "fx": [
         {
@@ -868,7 +868,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.2,
+            "powerMul": 0.0575,
             "lifestealMul": 1,
             "removeStatus": "wound"
           }
@@ -877,7 +877,7 @@
     },
     "3.f1": {
       "name": "Rolling Start",
-      "text": "Charge has 6% increased power per rank against a target that has not acted yet this battle.",
+      "text": "Charge has 1.75% increased power per rank against a target that has not acted yet this battle.",
       "src": "A:V2:3.f2",
       "fx": [
         {
@@ -887,7 +887,7 @@
             "targetNotActed": true
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.0175
           },
           "rank": true
         }
@@ -895,7 +895,7 @@
     },
     "3.f2": {
       "name": "Vengeful Run",
-      "text": "Charge has 6% increased power per rank against the enemy that hit you last.",
+      "text": "Charge has 1.75% increased power per rank against the enemy that hit you last.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -905,7 +905,7 @@
             "targetLastHitMe": true
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.0175
           },
           "rank": true
         }
@@ -913,14 +913,14 @@
     },
     "3.f3": {
       "name": "War Gallop",
-      "text": "Charge grants 3 Rage per rank when it hits.",
+      "text": "Charge grants 1 Rage per rank when it hits.",
       "src": "A:V2:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "rage",
           "on": "hit",
-          "gain": 3,
+          "gain": 1,
           "rank": true
         }
       ]
@@ -975,7 +975,7 @@
     },
     "3.eb": {
       "name": "Blood Up",
-      "text": "If Charge hits a target at full HP, gain 10 Rage.",
+      "text": "If Charge hits a target at full HP, gain 3 Rage.",
       "src": "A:V2:3.ea",
       "fx": [
         {
@@ -985,13 +985,13 @@
           "when": {
             "targetFullHp": true
           },
-          "gain": 10
+          "gain": 3
         }
       ]
     },
     "3.ma": {
       "name": "Payback",
-      "text": "Charge on the enemy that hit you last deals 20% increased damage and heals you for half of it.",
+      "text": "Charge on the enemy that hit you last deals 5.75% increased damage and heals you for 14.5% of it.",
       "src": "A:V3:3.ma",
       "fx": [
         {
@@ -1001,8 +1001,8 @@
             "targetLastHitMe": true
           },
           "mod": {
-            "powerMul": 0.2,
-            "lifesteal": 0.5
+            "powerMul": 0.0575,
+            "lifesteal": 0.145
           }
         }
       ]
@@ -1032,7 +1032,7 @@
     },
     "3.fb": {
       "name": "Reckless Heat",
-      "text": "Charge grants 20 Rage, but its Stun lasts 1 turn instead of 2.",
+      "text": "Charge grants 30 Rage and its cooldown is 4 → 3, but its Stun lasts 1 turn instead of 2.",
       "src": "A:V2:3.fa",
       "fx": [
         {
@@ -1045,7 +1045,14 @@
         {
           "k": "hook",
           "h": "rage",
-          "gain": 20
+          "gain": 30
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 3
         }
       ]
     },
@@ -1066,7 +1073,7 @@
     },
     "3.v": {
       "name": "Herald of Ruin",
-      "text": "Charge evolves: it gains 1% more power per Rage you hold, without spending it, and refunds 10 Rage when its Stun ends.",
+      "text": "Charge evolves: it gains 0.25% more power per Rage you hold, without spending it, and refunds 3 Rage when its Stun ends.",
       "src": "A:V2:3.v",
       "fx": [
         {
@@ -1076,7 +1083,7 @@
             "selfRage": 1
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.0025
           }
         },
         {
@@ -1088,7 +1095,7 @@
           "fromSkill": "charge",
           "do": [
             {
-              "rage": 10,
+              "rage": 3,
               "to": "self"
             }
           ]
@@ -1097,7 +1104,7 @@
     },
     "4.u1": {
       "name": "Headsman's Feast",
-      "text": "Headsman's Blow lifesteals 10%.",
+      "text": "Headsman's Blow lifesteals 3%.",
       "src": "B:V3:4.u1",
       "fx": [
         {
@@ -1105,7 +1112,7 @@
           "sel": "damage",
           "f": "lifesteal",
           "op": "set",
-          "v": 0.1
+          "v": 0.03
         }
       ]
     },
@@ -1128,7 +1135,7 @@
     },
     "4.u3": {
       "name": "Grave Robber",
-      "text": "If Headsman's Blow kills, heal 12% of your max HP and become Fortified for 1 turn.",
+      "text": "If Headsman's Blow kills, heal 3.5% of your max HP and become Fortified for 1 turn.",
       "src": "B:V3:4.u3",
       "fx": [
         {
@@ -1137,7 +1144,7 @@
           "on": "kill",
           "do": [
             {
-              "heal": 0.12
+              "heal": 0.035
             },
             {
               "status": "fortify",

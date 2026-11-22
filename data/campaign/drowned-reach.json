@@ -795,6 +795,7 @@
     },
     {
       "id": "dr35",
+      "battleBackground": "flooded-crypt",
       "type": "treasure",
       "name": "The Crypt Stair",
       "subtitle": "Treasure · Guarded",
@@ -905,6 +906,7 @@
     },
     {
       "id": "dr43",
+      "battleBackground": "sea-cave",
       "type": "treasure",
       "name": "Smugglers' Cave",
       "subtitle": "Treasure · Guarded",
@@ -997,6 +999,7 @@
     },
     {
       "id": "dr50",
+      "battleBackground": "wreckers-hall",
       "type": "elite",
       "name": "The Wrecker's Hall",
       "subtitle": "Elite · The Wrecker-Captain",
@@ -1010,6 +1013,7 @@
     },
     {
       "id": "dr51",
+      "battleBackground": "sea-cave",
       "type": "treasure",
       "name": "Sea Cave Hoard",
       "subtitle": "Treasure · Salvage Dive",
@@ -1230,6 +1234,7 @@
     },
     {
       "id": "dr63",
+      "battleBackground": "pirate-cove",
       "type": "battle",
       "name": "Pirate Cove",
       "subtitle": "Battle · Cove Corsairs",
@@ -1271,6 +1276,7 @@
     },
     {
       "id": "dr66",
+      "battleBackground": "pirate-cove",
       "type": "boss",
       "name": "Gallows Cove",
       "subtitle": "Boss · Admiral Vane",
@@ -1307,7 +1313,8 @@
         0.9539,
         0.2869
       ],
-      "encounter": "dr_68"
+      "encounter": "dr_68",
+      "battleBackground": "sunken-court"
     },
     {
       "id": "dr69",
@@ -1657,6 +1664,7 @@
     },
     {
       "id": "dr93",
+      "battleBackground": "pirate-cove",
       "type": "event",
       "name": "The Dicing Hulk",
       "subtitle": "Quest · Gambler",

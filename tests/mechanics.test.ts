@@ -591,14 +591,21 @@ describe('Redtithe (id antimage): mana sökme, eksik manaya göre hasar, Mirror 
     expect(content.skills.mana_burn!.cost.amount).toBe(0);
   });
 
-  it('Blood Brand tek düşmana işaret + Bleeding bırakır; MP yakmaz, atışta hasar vermez', () => {
+  it('Blood Brand 2x2 alandaki her düşmana işaret + Bleeding bırakır (alan dışına değil); MP yakmaz, atışta hasar vermez', () => {
     const b = make(TA);
     const am = unit(b, 'party', 'antimage');
+    expect(content.skills.drain_field!.target).toBe('area_enemies'); // Ömer 2026-11-21 form r40: 2x2
     const t = b.validTargets(am.uid, 'drain_field')[0]!;
+    const cells = b.areaCells('drain_field', t.slot, t.board, am.uid);
+    const area = content.skills.drain_field!.area!;
+    expect(cells).toHaveLength((area.rows ?? 1) * (area.cols ?? 1));
+    const inside = b.living('enemy').filter((c) => c.board === t.board && cells.includes(c.slot));
     const events = act(b, am.uid, 'drain_field', t.uid);
     expect(t.statuses.some((s) => s.kind === 'blood_brand')).toBe(true);
     expect(t.statuses.some((s) => s.kind === 'bleeding')).toBe(true);
-    expect(b.combatants.filter((c) => c.side === 'enemy' && c.statuses.some((s) => s.kind === 'blood_brand'))).toHaveLength(1);
+    for (const c of inside) expect(c.statuses.some((s) => s.kind === 'blood_brand') && c.statuses.some((s) => s.kind === 'bleeding'), c.uid).toBe(true);
+    expect(b.combatants.filter((c) => c.side === 'enemy' && c.statuses.some((s) => s.kind === 'blood_brand')).map((c) => c.uid).sort()).toEqual(inside.map((c) => c.uid).sort());
+    expect(inside.length).toBeGreaterThan(1); // TA dizilimi: alan birden çok düşmanı kapsar
     expect(ofType(events, 'manaBurn')).toHaveLength(0);
     expect(ofType(events, 'damage')).toHaveLength(0);
   });

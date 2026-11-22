@@ -1,0 +1,18 @@
+/* TEK jeton dosyası (Ömer 2026-11-09, UI birleştirme): yazı tipleri, sayı fontu, kaydırma çubuğu. Ekran CSS'leri bunları yeniden TANIMLAMAZ.
+   JS ikizi: src/ui/menu-style.ts (DISPLAY_FONT / BODY_FONT / NUM_FONT). Düğme boyları: elegant.css (--btn-scr-h / --btn-dlg-h / --btn-cmp-h / --btn-tab-h). */
+:root {
+  --font-display: Cinzel, Georgia, 'Palatino Linotype', serif;
+  --font-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  --font-num: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --g-disp: var(--font-display);
+  --g-body: var(--font-body);
+  --el-display: var(--font-display);
+  --el-body: var(--font-body);
+  --el-num: var(--font-num);
+  --bt-disp: var(--font-display);
+  --bt-body: var(--font-body);
+  --gar: var(--font-body);
+  /* ince altın kaydırma çubuğu: scrollbar-color: var(--scroll-thumb) transparent */
+  --scroll-thumb: rgba(217, 178, 106, 0.4);
+  --scroll-thumb-soft: rgba(217, 178, 106, 0.3);
+}

@@ -1,0 +1,262 @@
+/* Avatar cerceve taslagi (NOT game code). Gercek savas HUD'i battle-hud.css (src/ui/battle-hud.css kopyasi). Bu dosya yalniz sayfa kabugu + 4 cerceve varyanti.
+   Dost / dusman rengi: oyundaki --party (#4fa3ff) ve --enemy (#ff5a5a) (sira cubugu hucreleri ayni renkleri kullanir). Cizgi / tas olculeri var(--rp)
+   (1 gercek piksel) ile: telefonda (HUD ~0,36 olcekli) cizgiler 1 gercek pikselden, taslar ~6 gercek pikselden asagi inmez. */
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+html { overflow: hidden; }
+html, body { margin: 0; background: #0b0907; color: #d9c8a2; font-family: var(--font-body); }
+body { padding: 14px 0 54px; }
+body.clean { padding-top: 0; }
+body.nostrip { padding-bottom: 0; }
+#page { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.vw { position: relative; overflow: hidden; flex: none; background: #120d09 url(img/bg.webp) center top / cover; }
+.bh-root.mk { position: absolute; z-index: 1; height: 1080px; transform-origin: 0 0; }
+.cap { display: flex; align-items: center; gap: 12px; margin: 10px 14px 6px; font: 600 14px var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; color: #f3d999; }
+.cap i { font-style: normal; font-size: 11px; padding: 2px 9px; border: 1px solid; letter-spacing: 0.14em; }
+.cap i.al { color: #4fa3ff; border-color: rgba(79, 163, 255, 0.6); }
+.cap i.en { color: #ff5a5a; border-color: rgba(255, 90, 90, 0.6); }
+.cap:first-child { margin-top: 0; }
+
+/* karsilastirma gorunumu */
+body.all { padding: 6px 8px 0; }
+.grid { display: grid; grid-template-columns: 150px auto auto; gap: 8px 14px; align-items: center; zoom: 1.15; }
+.gr-h { font: 600 12px var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: #f3d999; line-height: 1.3; }
+html.short .grid { zoom: 1; grid-template-columns: 70px auto auto; gap: 3px 6px; }
+html.short .gr-h { font-size: 8px; letter-spacing: 0.04em; }
+html.short body.all, html.short body { padding-top: 4px; }
+
+#mk-strip { position: fixed; left: 0; bottom: 0; z-index: 99; display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 8px; background: rgba(0, 0, 0, 0.82); border-top: 1px solid #555; border-right: 1px solid #555; font: 12px system-ui, sans-serif; color: #bbb; }
+#mk-strip b { background: #c33; color: #fff; padding: 1px 6px; letter-spacing: 0.08em; font-size: 10px; }
+#mk-strip a { color: #ccc; cursor: pointer; text-decoration: none; padding: 1px 7px; border: 1px solid #555; }
+#mk-strip a.on { background: #444; color: #fff; }
+#mk-strip a:hover { border-color: #aaa; }
+body.clean #mk-strip, body.nostrip #mk-strip, body.clean .cap { display: none; }
+
+/* ================= ortak: varyant cercevesi ================= */
+.pf-v {
+  --s: 79, 163, 255; /* dost = --party */
+  --w1: var(--rp);
+  --w2: calc(var(--rp) * 2);
+  --gem: max(8px, calc(var(--rp) * 5.5));
+  border: 0;
+  background: #0a0705;
+  box-shadow: none;
+  transition: none;
+}
+.pf-v.en { --s: 255, 90, 90; /* düşman = --enemy */ }
+.pf-v::before, .pf-v::after { content: none; }
+.pf-v > i { position: absolute; display: none; pointer-events: none; z-index: 2; }
+
+/* ================= A · Twin line: ince çift çizgi (iç altın, dış yan renk) + 4 köşe taşı ================= */
+.pf-a {
+  box-shadow:
+    0 0 0 var(--w1) rgba(var(--gold), 0.8),
+    0 0 0 calc(var(--w1) * 3) rgba(8, 6, 4, 0.96),
+    0 0 0 calc(var(--w1) * 4) rgba(var(--s), 0.62),
+    0 0 16px 2px rgba(var(--s), 0.2);
+}
+.pf-a .f-ln { display: block; inset: 0; box-shadow: inset 0 0 0 var(--w1) rgba(0, 0, 0, 0.55), inset 0 0 12px rgba(0, 0, 0, 0.45); }
+.pf-a .f-a, .pf-a .f-b, .pf-a .f-c, .pf-a .f-d {
+  display: block;
+  width: var(--gem);
+  height: var(--gem);
+  transform: rotate(45deg);
+  background: rgb(var(--s));
+  border: var(--w1) solid #f0dca8;
+  box-shadow: inset 0 0 0 calc(var(--gem) * 0.2) #130d07, 0 0 8px rgba(var(--s), 0.45);
+}
+.pf-a .f-a { left: calc(var(--w1) * -4 - var(--gem) / 2); top: calc(var(--w1) * -4 - var(--gem) / 2); }
+.pf-a .f-b { right: calc(var(--w1) * -4 - var(--gem) / 2); top: calc(var(--w1) * -4 - var(--gem) / 2); }
+.pf-a .f-c { left: calc(var(--w1) * -4 - var(--gem) / 2); bottom: calc(var(--w1) * -4 - var(--gem) / 2); }
+.pf-a .f-d { right: calc(var(--w1) * -4 - var(--gem) / 2); bottom: calc(var(--w1) * -4 - var(--gem) / 2); }
+
+/* ================= B · Plate: kalın bronz-altın plaka çerçeve (portre boyu aynı, plaka dışarı taşar) + yan renkli perçinler ================= */
+.pf-b { --pad: max(8px, calc(var(--rp) * 3.6)); --rv: max(5px, calc(var(--rp) * 3.4)); }
+.pf-b .f-ln {
+  display: block;
+  inset: calc(var(--pad) * -1 - var(--w1) * 2);
+  border: var(--pad) solid;
+  border-image: linear-gradient(135deg, #6f5226 0%, #e9c880 24%, #9a7634 46%, #d9b26a 70%, #6b4f22 100%) 1;
+  box-shadow:
+    inset 0 0 0 var(--w1) rgba(0, 0, 0, 0.9),
+    inset 0 0 0 var(--w2) rgba(var(--s), 0.72),
+    0 0 0 var(--w1) #0a0705,
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(var(--s), 0.22);
+}
+.pf-b .f-a, .pf-b .f-b, .pf-b .f-c, .pf-b .f-d {
+  display: block;
+  width: var(--rv);
+  height: var(--rv);
+  z-index: 3;
+  transform: rotate(45deg);
+  background: rgb(var(--s));
+  box-shadow: 0 0 0 var(--w1) #1a1209, 0 0 7px rgba(var(--s), 0.6);
+}
+.pf-b .f-a { left: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); top: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); }
+.pf-b .f-b { right: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); top: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); }
+.pf-b .f-c { left: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); bottom: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); }
+.pf-b .f-d { right: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); bottom: calc((var(--pad) + var(--w1) * 2) * -1 + (var(--pad) - var(--rv)) / 2); }
+
+/* ================= C · Crest: ince altın çerçeve + üstte küçük arma (dost: sivri kalkan, düşman: boynuzlu kalkan) + altta yan renk çizgisi ================= */
+.pf-c {
+  --cw: max(32px, calc(var(--rp) * 12));
+  --ch: max(34px, calc(var(--rp) * 12.5));
+  border: var(--w1) solid rgba(var(--gold), 0.72);
+  box-shadow: 0 0 0 var(--w2) rgba(8, 6, 4, 0.92), 0 0 14px rgba(var(--gold), 0.22), 0 0 14px rgba(var(--s), 0.14);
+}
+.pf-c .f-ln {
+  display: block;
+  left: 12%;
+  right: 12%;
+  bottom: calc(var(--w2) * -1 - var(--w1));
+  height: var(--w2);
+  background: linear-gradient(90deg, rgba(var(--s), 0), rgb(var(--s)) 22%, rgb(var(--s)) 78%, rgba(var(--s), 0));
+  box-shadow: 0 0 8px rgba(var(--s), 0.5);
+}
+.pf-c .f-cr {
+  display: block;
+  left: 50%;
+  top: calc(var(--ch) * -0.53);
+  width: var(--cw);
+  height: var(--ch);
+  margin-left: calc(var(--cw) / -2);
+  z-index: 3;
+  background: linear-gradient(180deg, #f6e4ae, #b98f45);
+  clip-path: polygon(0 0, 100% 0, 100% 56%, 50% 100%, 0 56%);
+}
+.pf-c .f-cr::before {
+  content: '';
+  position: absolute;
+  inset: var(--w2) var(--w2) var(--w2) var(--w2);
+  background: linear-gradient(180deg, rgba(var(--s), 0.95), rgba(var(--s), 0.45)), #130d07;
+  clip-path: polygon(0 0, 100% 0, 100% 56%, 50% 100%, 0 56%);
+}
+.pf-c .f-cr::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: calc(var(--cw) * 0.26);
+  height: calc(var(--cw) * 0.26);
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #f6e6b8;
+  box-shadow: 0 0 6px rgba(246, 230, 184, 0.7);
+}
+.pf-c.en .f-cr,
+.pf-c.en .f-cr::before { clip-path: polygon(0 22%, 15% 0, 34% 24%, 66% 24%, 85% 0, 100% 22%, 100% 58%, 50% 100%, 0 58%); }
+.pf-c.en .f-cr::after { top: 46%; }
+.pf-c .f-a, .pf-c .f-b {
+  display: block;
+  top: 50%;
+  width: max(7px, calc(var(--rp) * 4.5));
+  height: max(7px, calc(var(--rp) * 4.5));
+  margin-top: max(-3.5px, calc(var(--rp) * -2.25));
+  transform: rotate(45deg);
+  background: #130d07;
+  border: var(--w1) solid rgba(var(--gold), 0.85);
+}
+.pf-c .f-a { left: max(-5px, calc(var(--rp) * -3)); }
+.pf-c .f-b { right: max(-5px, calc(var(--rp) * -3)); }
+
+/* ================= D · Corners + glow: köşe ayraçları (L şeklinde altın) + köşe ucunda yan renkli taş + içeride yan renkli ince ışıma ================= */
+.pf-d {
+  --bl: max(20px, calc(var(--rp) * 8));
+  border: var(--w1) solid rgba(var(--gold), 0.42);
+  box-shadow: 0 0 0 var(--w2) rgba(8, 6, 4, 0.92), 0 0 16px rgba(var(--s), 0.2);
+}
+.pf-d .f-ln { display: block; inset: 0; box-shadow: inset 0 0 calc(var(--rp) * 22) rgba(var(--s), 0.4), inset 0 0 0 var(--w1) rgba(var(--s), 0.3); }
+.pf-d .f-a, .pf-d .f-b, .pf-d .f-c, .pf-d .f-d { display: block; width: var(--bl); height: var(--bl); z-index: 3; --bo: calc(var(--w1) * -3); }
+.pf-d .f-a { left: var(--bo); top: var(--bo); border-top: var(--w2) solid #e6c27a; border-left: var(--w2) solid #e6c27a; }
+.pf-d .f-b { right: var(--bo); top: var(--bo); border-top: var(--w2) solid #e6c27a; border-right: var(--w2) solid #e6c27a; }
+.pf-d .f-c { left: var(--bo); bottom: var(--bo); border-bottom: var(--w2) solid #e6c27a; border-left: var(--w2) solid #e6c27a; }
+.pf-d .f-d { right: var(--bo); bottom: var(--bo); border-bottom: var(--w2) solid #e6c27a; border-right: var(--w2) solid #e6c27a; }
+.pf-d .f-a::after, .pf-d .f-b::after, .pf-d .f-c::after, .pf-d .f-d::after {
+  content: '';
+  position: absolute;
+  width: max(7px, calc(var(--rp) * 4.5));
+  height: max(7px, calc(var(--rp) * 4.5));
+  background: rgb(var(--s));
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 var(--w1) #f0dca8, 0 0 8px rgba(var(--s), 0.55);
+}
+.pf-d .f-a::after { left: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); top: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); }
+.pf-d .f-b::after { right: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); top: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); }
+.pf-d .f-c::after { left: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); bottom: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); }
+.pf-d .f-d::after { right: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); bottom: calc(var(--w2) * -1 - max(3.5px, calc(var(--rp) * 2.25)) + var(--w1)); }
+
+/* ================= 2. tur (Omer: "Karo olmasin"): E-I, hicbirinde baklava / karo yok ================= */
+/* E · Double line + glow: iki ince altin cizgi (arada koyu bosluk) + icerde yan renkli ince isima */
+.pf-e {
+  border: var(--w1) solid rgba(var(--gold), 0.55);
+  box-shadow: 0 0 0 var(--w2) rgba(8, 6, 4, 0.95), 0 0 0 calc(var(--w1) * 3) rgba(var(--gold), 0.85), 0 0 0 calc(var(--w1) * 5) rgba(8, 6, 4, 0.9), 0 0 18px 2px rgba(var(--s), 0.22);
+}
+.pf-e .f-ln { display: block; inset: 0; box-shadow: inset 0 0 calc(var(--rp) * 16) rgba(var(--s), 0.42), inset 0 0 0 var(--w1) rgba(var(--s), 0.45); }
+
+/* F · Carved: yuvarlatilmis koseli, oyma (icbukey) altin cerceve; icinde yan renkli ince cizgi */
+.pf-f {
+  --rad: max(12px, calc(var(--rp) * 5));
+  border-radius: var(--rad);
+  overflow: hidden;
+  border: var(--w2) solid rgba(var(--gold), 0.85);
+  box-shadow: 0 0 0 var(--w1) #0a0705, 0 0 0 calc(var(--w1) * 2) rgba(var(--gold), 0.35), 0 0 14px rgba(var(--s), 0.2);
+}
+.pf-f .f-ln {
+  display: block;
+  inset: 0;
+  border-radius: calc(var(--rad) - var(--w2));
+  box-shadow: inset 0 0 0 var(--w1) rgba(0, 0, 0, 0.85), inset 0 0 0 calc(var(--w1) * 2) rgba(var(--s), 0.62), inset 0 var(--w2) calc(var(--rp) * 8) rgba(0, 0, 0, 0.55);
+}
+
+/* G · Rails: ince altin cerceve + ustte ve altta soluk uclu filigran serit (ortada kisa yan renk cizgi) */
+.pf-g {
+  border: var(--w1) solid rgba(var(--gold), 0.55);
+  box-shadow: 0 0 0 var(--w2) rgba(8, 6, 4, 0.92), 0 0 14px rgba(var(--s), 0.16);
+  --gap: max(10px, calc(var(--rp) * 4));
+}
+.pf-g .f-a, .pf-g .f-b, .pf-g .f-c, .pf-g .f-d { display: block; left: -4%; right: -4%; height: var(--w1); }
+.pf-g .f-a { top: calc(var(--gap) * -1); background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.95) 16%, rgba(var(--gold), 0.95) 84%, transparent); }
+.pf-g .f-b { bottom: calc(var(--gap) * -1); background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.95) 16%, rgba(var(--gold), 0.95) 84%, transparent); }
+.pf-g .f-c { top: calc(var(--gap) * -1 + var(--w2) + var(--w1)); left: 14%; right: 14%; background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.4) 20%, rgba(var(--gold), 0.4) 80%, transparent); }
+.pf-g .f-d { bottom: calc(var(--gap) * -1 + var(--w2) + var(--w1)); left: 14%; right: 14%; background: linear-gradient(90deg, transparent, rgba(var(--gold), 0.4) 20%, rgba(var(--gold), 0.4) 80%, transparent); }
+.pf-g .f-a::after, .pf-g .f-b::after { content: ''; position: absolute; left: 36%; width: 28%; top: calc(var(--w1) * -1); height: var(--w2); border-radius: 99px; background: rgb(var(--s)); box-shadow: 0 0 8px rgba(var(--s), 0.6); }
+.pf-g .f-ln { display: block; inset: 0; box-shadow: inset 0 0 0 var(--w1) rgba(0, 0, 0, 0.55), inset 0 0 calc(var(--rp) * 10) rgba(var(--s), 0.2); }
+
+/* H · Rivets: kalin olmayan altin cerceve + dort kosede yuvarlak perçin (ortasi yan renk) */
+.pf-h {
+  --rv: max(10px, calc(var(--rp) * 5.5));
+  border: var(--w2) solid rgba(var(--gold), 0.78);
+  box-shadow: 0 0 0 var(--w2) rgba(8, 6, 4, 0.95), 0 0 0 calc(var(--w2) + var(--w1)) rgba(var(--gold), 0.3), 0 0 14px rgba(var(--s), 0.18);
+}
+.pf-h .f-ln { display: block; inset: 0; box-shadow: inset 0 0 0 var(--w1) rgba(0, 0, 0, 0.6), inset 0 0 0 calc(var(--w1) * 2) rgba(var(--s), 0.4); }
+.pf-h .f-a, .pf-h .f-b, .pf-h .f-c, .pf-h .f-d {
+  display: block;
+  width: var(--rv);
+  height: var(--rv);
+  z-index: 3;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgb(var(--s)) 0 26%, transparent 28%), radial-gradient(circle at 35% 30%, #f6e4ae, #b98f45 58%, #6b4f22);
+  box-shadow: 0 0 0 var(--w1) #1a1209, 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+.pf-h .f-a { left: calc(var(--rv) / -2 - var(--w1)); top: calc(var(--rv) / -2 - var(--w1)); }
+.pf-h .f-b { right: calc(var(--rv) / -2 - var(--w1)); top: calc(var(--rv) / -2 - var(--w1)); }
+.pf-h .f-c { left: calc(var(--rv) / -2 - var(--w1)); bottom: calc(var(--rv) / -2 - var(--w1)); }
+.pf-h .f-d { right: calc(var(--rv) / -2 - var(--w1)); bottom: calc(var(--rv) / -2 - var(--w1)); }
+
+/* I · Arch: ustu kavisli (kemerli) altin cerceve, icinde yan renkli kemer cizgisi */
+.pf-i {
+  --ar: calc(54px);
+  border-radius: var(--ar) var(--ar) 4px 4px / calc(var(--ar) * 1.1) calc(var(--ar) * 1.1) 4px 4px;
+  overflow: hidden;
+  border: var(--w2) solid rgba(var(--gold), 0.85);
+  box-shadow: 0 0 0 var(--w1) #0a0705, 0 0 0 calc(var(--w1) * 2) rgba(var(--gold), 0.35), 0 0 16px rgba(var(--s), 0.22);
+}
+.pf-i .f-ln {
+  display: block;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 var(--w1) rgba(0, 0, 0, 0.85), inset 0 0 0 calc(var(--w1) * 2) rgba(var(--s), 0.62), inset 0 0 calc(var(--rp) * 12) rgba(var(--s), 0.25);
+}

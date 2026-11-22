@@ -5,7 +5,6 @@ import {
   CONFIG,
   continueToMap,
   nextMapFor,
-  dayOf,
   ENCOUNTERS,
   EVENTS,
   STORIES,
@@ -46,6 +45,7 @@ import {
   briefingText,
   companyChoices,
   companySuggestionFor,
+  recommendReasons,
   heroTraits,
   farewell,
   formCompany,
@@ -54,6 +54,8 @@ import {
   isAreaClass,
   leaderOf,
   dueCinematic,
+  CINEMATICS,
+  mapEndSummary,
   cinematicSeen,
   markCinematicSeen,
   markTipSeen,
@@ -153,9 +155,8 @@ import {
   nodeEncounter,
   nodeLock,
   passable,
-  playTimeText,
 } from '../../campaign';
-import { RARITY_IDS, instanceRarity, itemDef, rarityDef } from '../../progression/items';
+import { instanceRarity, itemDef, rarityDef } from '../../progression/items';
 import { itemDefIconUrl } from '../../ui/item-icon-dom';
 import { heroFace, mapEndArt, openMapEnd } from '../../ui/map-end';
 import { TUTORIAL, dueScreenLessons, firstPointRec, type FirstPointKind, type LessonScreen } from '../../tutorial/lessons';
@@ -369,8 +370,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private knownTeam: Set<string> | null = null;
   private lvAnim = new Map<string, { from: number; to: number }>();
   private modal: Modal | null = null;
-  /** Bu sahnede Morvane final sinematiğinin kapanış kartı gösterildi: "Valdoria Conquered" penceresi aynı cümleyi (texts.complete) tekrar etmez. */
-  private endCardShown = false;
+  /** Kapanış kartı (hikâye cümlesi) az önce gösterilen sinemanın haritası: harita sonu kartı aynı cümleyi tekrar etmez. Yoksa null. */
+  private endCardShown: string | null = null;
   /** Menu > Load: bu yuvanın kayıt listesi (src/game/campaign-slots-ui.ts "Column"). */
   private slotBrowser: SlotBrowser | null = null;
   /** Kahraman paneli ya da Formation penceresi açık (Menu düğmesi gizlenir; pencerenin kendi Close / Done'ı yeter). */
@@ -3089,7 +3090,8 @@ export class CampaignMapScene extends Phaser.Scene {
     // Hikâye sinematiği (Ömer 2026-10-23; src/campaign/cinematics.ts): sefer başı (kahraman seçiminden önce), King's Bridge / Castle Morvane
     // zaferi (ganimetten sonra, haritaya dönüşte), Forward Camp ilk varışı (tüccar açılmadan önce). Her biri seferde bir kez.
     const cin = dueCinematic(this.s, 'map');
-    if (cin) return this.playStoryCinematic(cin, () => this.advance());
+    // Harita 3 kapanışı (Ömer 2026-11-21 r38-r39): sinema -> jenerik -> harita sonu kartı (jenerik yalnız sinemanın ardından, yeniden yüklemede gelmez)
+    if (cin) return this.playStoryCinematic(cin, () => (CINEMATICS[cin]?.credits ? this.playCredits(() => this.advance()) : this.advance()));
     const s = this.s;
     const step = nextStep(s);
     // İpucu kartı yalnızca pencere açılmayan adımlarda (savaş / yol seçimi); diğerlerinde pencere kapanınca gelir
@@ -3173,16 +3175,18 @@ export class CampaignMapScene extends Phaser.Scene {
           this.directAt = null;
           return this.choiceEvent(step.event, step.node, choices);
         }
-        if (this.directAt === step.node) {
-          this.directAt = null;
-          return this.commit(completeSimple(this.s, 'event'));
-        }
         // A1 Wayshrine: kazanılan nimet çip olarak (side-content.json > wayshrines); A5 görev cebi (Archer): unvan + bonus çipi
         const sh = shrineOf(node(this.map, step.node));
         const qd = node(this.map, step.node).optional ? questDef(node(this.map, step.node).quest) : undefined;
+        // Yalnız metinli hikâye olayı (Sunken Stair, Two Crowns...) artık pencere açar (resim + metin, tek Continue; Ömer 2026-11-21, form r39); nimet / görev çipli olaylar bugünkü gibi doğrudan biter
+        if (this.directAt === step.node && (sh || qd)) {
+          this.directAt = null;
+          return this.commit(completeSimple(this.s, 'event'));
+        }
+        this.directAt = null;
         this.worldWindow(step.node, {
           title: e.title,
-          art: windowArt(`event:${node(this.map, step.node).event ?? ''}`),
+          art: windowArt(`event:${node(this.map, step.node).event ?? ''}`), lowArt: true,
           paras: paragraphs(e.text),
           ...(sh ? { chipsCap: 'Blessing', chips: [{ tone: 'gain' as const, icon: 'check' as const, text: `${sh.name}: ${sh.effect}` }] } : {}),
           ...(qd && !sh ? { chipsCap: 'Quest complete', chips: [{ tone: 'gain' as const, icon: 'check' as const, text: `Title: ${qd.title}` }, { tone: 'gain' as const, icon: 'check' as const, text: questBonusLine(qd) }] } : {}),
@@ -3264,13 +3268,14 @@ export class CampaignMapScene extends Phaser.Scene {
         const nextMap = next ? getMap(next) : null;
         const end = this.map.complete;
         const lead = end?.text ?? CONFIG.texts.complete;
-        // Harita 1 bitiş ekranı (Ömer 2026-11-07, taslak map1-end A "Ledger"): kendi bitiş penceresi olmayan harita; diğerleri eski pencerede kalır
-        if (!end && document.getElementById('ui-root')) return this.mapEndCard(s, nextMap, this.endCardShown ? '' : (lead ?? ''));
+        // Harita sonu istatistik kartı (Ömer 2026-11-07 taslak map1-end A "Ledger"; Harita 2 ve 3 de, Ömer 2026-11-21 form r38): başlık / metin
+        // haritanın `complete` alanından (src/campaign/ending.ts > mapEndSummary). Aşağıdaki eski pencere yalnız DOM katmanı yoksa
+        if (document.getElementById('ui-root')) return this.mapEndCard(s, nextMap);
         this.modal = openModal(this, this.ui, {
           title: end?.title ?? 'Valdoria Conquered',
           subtitle: nextMap ? 'Map Complete' : (end?.subtitle ?? 'Campaign Complete'),
           // Final sinematiğinin kapanış kartı az önce aynı cümleyi gösterdiyse burada tekrar edilmez
-          text: `${this.endCardShown && !end ? '' : `${lead}\n\n`}${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
+          text: `${this.endCardShown === s.mapId && !end ? '' : `${lead}\n\n`}${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
           height: 520,
           buttons: nextMap
             ? // Ömer 2026-10-25 (form K6): sıradaki harita açıksa haritada kalınmaz, doğrudan geçilir
@@ -3296,40 +3301,30 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Harita 1 bitiş ekranı (src/ui/map-end.ts). YALNIZ oyunun tuttuğu sayılar: kazanılan savaş, yenilgi, gün, eldeki altın. Tutulmayan (gösterilmez):
-   * toplam kazanılan altın, oynama süresi, düşen kahraman sayısı. En iyi item: kadronun taktığı + torbadaki item'ler, nadirliğe göre (sonra ilvl).
+   * Harita sonu kartı (src/ui/map-end.ts; Harita 1, 2, 3). Veri src/campaign/ending.ts > mapEndSummary (YALNIZ oyunun tuttuğu sayılar; `s.stats`
+   * haritalar arasında taşınır = sefer toplamı). Sinemanın kapanış kartı bu haritada hikâye cümlesini az önce gösterdiyse tekrar edilmez.
+   * Düğmeler değişmez: sıradaki harita açıksa "Continue to ...", değilse "Stay on the map" + "Main Menu".
    */
-  private mapEndCard(s: CampaignState, nextMap: ReturnType<typeof getMap> | null, story: string): void {
+  private mapEndCard(s: CampaignState, nextMap: ReturnType<typeof getMap> | null): void {
     const root = document.getElementById('ui-root')!;
-    const team = activeHeroes(s);
-    const owned = [
-      ...team.flatMap((h) => Object.values(h.equipment).filter((i): i is NonNullable<typeof i> => !!i).map((i) => ({ i, who: content.classes[h.class]?.name ?? h.class }))),
-      ...s.inventory.map((i) => ({ i, who: '' })),
-    ].filter((x) => itemDef(x.i.id));
-    const rank = (x: (typeof owned)[number]): number => RARITY_IDS.indexOf(instanceRarity(x.i)) * 1000 + (x.i.rolls?.ilvl ?? itemDef(x.i.id)!.ilvl ?? 0);
-    const best = owned.sort((a, b) => rank(b) - rank(a)).slice(0, 3);
+    // Harita 3 sonu: Mend or Quench seçimi (ve kapanış sinemasının "görüldü" işareti) kayda geçsin; olay düğümünde başka otomatik kayıt yok
+    if (s.crownChoice) checkpoint();
+    const sum = mapEndSummary(s, nextMap?.id ?? null, this.endCardShown === s.mapId);
     const teaserOf = (m: NonNullable<typeof nextMap>): string => TEASERS[m.id] ?? (m.intro ?? '').split(/(?<=[.!?])\s/)[0] ?? '';
     const handle = openMapEnd(root, {
-      title: 'Valdoria Conquered',
-      subtitle: nextMap ? 'Map Complete' : 'Campaign Complete',
-      story,
-      stats: [
-        { label: 'Battles won', value: String(s.stats.victories) },
-        { label: 'Defeats', value: String(s.stats.defeats) },
-        { label: 'Days', value: String(dayOf(s)) },
-        { label: 'Gold on hand', value: s.gold.toLocaleString('en-US') },
-        // Sefer defteri (Ömer 2026-11-07 endstats; eski kayıtta 0'dan sayılır)
-        { label: 'Gold earned', value: (s.stats.goldEarned ?? 0).toLocaleString('en-US') },
-        { label: 'Play time', value: playTimeText(s.stats.playMs) },
-        { label: 'Heroes fallen', value: String(s.stats.fallen ?? 0) },
-      ],
-      heroes: team.map((h) => {
-        const face = heroFace(h.class);
-        return { name: content.classes[h.class]?.name ?? h.class, level: h.level, ...(face ? { face } : {}) };
+      title: sum.title,
+      subtitle: sum.subtitle,
+      story: sum.story,
+      bg: `${s.mapId}-bg`,
+      stats: sum.stats,
+      total: sum.total,
+      heroes: sum.heroes.map((h) => {
+        const face = heroFace(h.cls);
+        return { name: h.name, level: h.level, ...(face ? { face } : {}) };
       }),
-      loot: best.map((x) => {
-        const d = itemDef(x.i.id)!;
-        return { name: d.name, tag: x.who ? `Worn by the ${x.who}` : 'In your bag', icon: itemDefIconUrl(d, d.slot), color: rarityDef(instanceRarity(x.i)).color };
+      loot: sum.loot.map((x) => {
+        const d = itemDef(x.item.id)!;
+        return { name: d.name, tag: x.who ? `Worn by the ${x.who}` : 'In your bag', icon: itemDefIconUrl(d, d.slot), color: rarityDef(instanceRarity(x.item)).color };
       }),
       ...(nextMap ? { next: { name: titleCase(nextMap.title), ...(mapEndArt(`${nextMap.id}-bg`) ? { art: mapEndArt(`${nextMap.id}-bg`)! } : {}), teaser: teaserOf(nextMap) } } : {}),
       buttons: nextMap
@@ -3340,6 +3335,34 @@ export class CampaignMapScene extends Phaser.Scene {
           ],
     });
     this.modal = { close: () => handle.close(), root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
+  }
+
+  /** Jenerik (src/ui/credits.ts; Harita 3 kapanış sinemasından sonra). Sahne kapanırsa DOM katmanı da kapanır; bitince / X ile `then`. */
+  private playCredits(then: () => void): void {
+    const root = document.getElementById('ui-root');
+    if (!root) return then();
+    let h: { close(): void } | null = null;
+    const close = (): void => {
+      h?.close();
+      h = null;
+      this.modal = null;
+    };
+    this.events.once('shutdown', close);
+    this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
+    void import('../../ui/credits').then(
+      (m) => {
+        if (this.modal?.close !== close) return; // bu arada pencere / sahne değişti
+        h = m.openCredits(root, () => {
+          h = null;
+          this.modal = null;
+          then();
+        });
+      },
+      () => {
+        this.modal = null;
+        then();
+      },
+    );
   }
 
   /**
@@ -3659,7 +3682,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const heroes = activeHeroes(this.s).filter((x) => !swearBlocked(this.s, x.id, oathId));
     this.worldWindow(nodeId, {
       title: od.name,
-      art: windowArt(`event:${node(this.map, nodeId).event ?? ''}`),
+      art: windowArt(`event:${node(this.map, nodeId).event ?? ''}`), lowArt: true,
       paras: [od.vow, 'Who swears it?'],
       chips: [
         { tone: 'gain', text: oathPlusText(od) },
@@ -3706,7 +3729,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.recruitWindow({
       mandatory: true,
       paras: paragraphs(CONFIG.texts['companyJoinSub'] ?? ''),
-      body: { k: 'cards', cards, recommended: sug?.heroes ?? [] },
+      body: { k: 'cards', cards, recommended: sug?.heroes ?? [], recommendWhy: recommendReasons(sug) },
       name: CONFIG.companyName,
       acts: [
         {
@@ -3879,50 +3902,58 @@ export class CampaignMapScene extends Phaser.Scene {
     const e = EVENTS[eventId]!;
     this.lessons('event');
     worldSound('quill'); // olay / diyalog: tüy kalem parşömende
+    // Boş "çık" seçenekleri (Leave / Not yet / Just rest / Walk away) kart değil: pencerenin X'i (ve Esc) onu seçer (Ömer 2026-11-21, form r39)
+    const closer = choices.find((c) => c.closer || c.walkAway);
+    const shown = closer && choices.length > 1 ? choices.filter((c) => c !== closer) : choices;
+    const plateOf = (c: EventChoice) => {
+      const blocked = choiceBlocked(this.s, c);
+      const st = choiceStyle(eventId, c);
+      return { id: c.id, label: c.label, desc: st.desc, tag: st.tag, acc: st.acc, chips: questChips(c), ...(blocked ? { dim: true, need: `Needs ${c.cost} gold (you have ${this.s.gold})` } : {}) };
+    };
+    const pick = (id: string): void => {
+      const c = choices.find((x) => x.id === id);
+      if (!c) return;
+      const blocked = choiceBlocked(this.s, c);
+      if (blocked) return this.toast(blocked);
+      // A4 Hero Oath: yemin penceresi; yemin edilince olay biter, geri dönülürse seçenekler yeniden
+      if (c.oath)
+        return this.oathWindow(nodeId, {
+          onSworn: (t) => this.commit(chooseEvent(t, c.id)),
+          onBack: () => this.choiceEvent(eventId, nodeId, choices),
+        });
+      worldSound('seal'); // seçim mühürlenir
+      const next = chooseEvent(this.s, c.id);
+      if (next.eventChoice?.battle) return this.commit(next); // olay savaşı: harita savaş adımına geçer
+      // Sonuç AYNI pencerede (giriş animasyonu yok): sonuç metni + "ne değişti" çipleri, tek Continue (Ömer 2026-11-21, form r39)
+      const p = plateOf(c);
+      this.worldWindow(nodeId, {
+        title: e.title,
+        art: windowArt(`event:${eventId}`), lowArt: true,
+        noAnim: true,
+        paras: paragraphs(c.result ?? ''),
+        chipsCap: 'What changed',
+        chips: [...resultChips(c), ...(c.quest && questDef(c.quest) ? [{ tone: 'gain' as const, icon: 'check' as const, text: `Title: ${questDef(c.quest)!.title}` }] : [])],
+        body: { k: 'chosen', plate: { ...p, chips: [] } },
+        acts: [{ label: 'Continue', primary: true, run: () => this.commit(next) }],
+        // Sonuç sayfasında X = Continue (olay bitmiş sayılır; ödül yalnız commit ile, tek kez)
+        noScrimDismiss: true,
+        onDismiss: () => this.commit(next),
+      });
+    };
+    // Tek seçenekli olay (Lantern Rock): seçim ekranı yerine tek düğme
+    const single = shown.length === 1 && !closer && !shown[0]!.battle && !shown[0]!.oath ? shown[0]! : undefined;
     this.worldWindow(nodeId, {
       title: e.title,
-      art: windowArt(`event:${eventId}`),
+      art: windowArt(`event:${eventId}`), lowArt: true,
       paras: paragraphs(e.text),
-      body: {
-        k: 'plates',
-        plates: choices.map((c) => {
-          const blocked = choiceBlocked(this.s, c);
-          const st = choiceStyle(eventId, c);
-          return { id: c.id, label: c.label, desc: st.desc, tag: st.tag, acc: st.acc, chips: questChips(c), ...(blocked ? { dim: true, need: `Needs ${c.cost} gold (you have ${this.s.gold})` } : {}) };
-        }),
-        pick: (id) => {
-          const c = choices.find((x) => x.id === id);
-          if (!c) return;
-          // A5 "Walk away": olay açık kalır, pencere kapanır; kafile temizlenmiş komşulardan yola çıkabilir, düğüme dokununca olay yeniden açılır
-          if (c.walkAway) {
-            this.closeModal();
-            this.renderMap(false);
-            return void this.renderHud();
-          }
-          const blocked = choiceBlocked(this.s, c);
-          if (blocked) return this.toast(blocked);
-          // A4 Hero Oath: yemin penceresi; yemin edilince olay biter, geri dönülürse seçenekler yeniden
-          if (c.oath)
-            return this.oathWindow(nodeId, {
-              onSworn: (t) => this.commit(chooseEvent(t, c.id)),
-              onBack: () => this.choiceEvent(eventId, nodeId, choices),
-            });
-          worldSound('seal'); // seçim mühürlenir
-          const next = chooseEvent(this.s, c.id);
-          if (next.eventChoice?.battle) return this.commit(next); // olay savaşı: harita savaş adımına geçer
-          const st = choiceStyle(eventId, c);
-          this.worldWindow(nodeId, {
-            title: e.title,
-            art: windowArt(`event:${eventId}`),
-            paras: paragraphs(c.result ?? ''),
-            chipsCap: 'What changed',
-            chips: [...resultChips(c), ...(c.quest && questDef(c.quest) ? [{ tone: 'gain' as const, icon: 'check' as const, text: `Title: ${questDef(c.quest)!.title}` }] : [])],
-            body: { k: 'chosen', plate: { id: c.id, label: c.label, desc: st.desc, tag: st.tag, acc: st.acc, chips: [] } },
-            acts: [{ label: 'Continue', primary: true, run: () => this.commit(next) }],
-          });
-        },
+      ...(single ? { chips: questChips(single), acts: [{ label: single.label, primary: true, run: () => pick(single.id) }] } : { body: { k: 'plates' as const, plates: shown.map(plateOf), pick }, acts: [] }),
+      // Seçenek sayfasında X yalnız pencereyi kapatır; olay AÇIK kalır, düğüme yeniden dokununca aynı olay açılır (Ömer 2026-11-21, form Tur 40)
+      noScrimDismiss: true,
+      onDismiss: () => {
+        this.closeModal();
+        this.renderMap(false);
+        void this.renderHud();
       },
-      acts: [],
     });
   }
 
@@ -4093,7 +4124,7 @@ export class CampaignMapScene extends Phaser.Scene {
       onDone: (r) => {
         h = null;
         this.modal = null;
-        if (r.endCard) this.endCardShown = true;
+        if (r.endCard) this.endCardShown = this.s.mapId;
         then();
       },
     });
@@ -4166,6 +4197,8 @@ export class CampaignMapScene extends Phaser.Scene {
     // (savaş düğümünde Fight'a basılmadıysa da: kafile temizlenmiş komşular üzerinden ayrılabilir; src/campaign/state.ts > canWithdraw)
     if (id !== this.s.at && this.travelTargets().has(id)) return this.chooseRoad(id);
     if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => this.launchBattle());
+    // Bekleyen seçenekli olay (X ile kapatılmış): düğüme yeniden dokunmak aynı olayı kart olmadan açar
+    if (id === this.s.at && step.kind === 'event' && !this.s.eventChoice && eventChoicesFor(this.s, step.event).length > 0) return this.openHere(id);
     if (id === this.s.at && this.actionHere()) return CONFIRM_STEPS.includes(step.kind) ? this.confirmPlace(id, () => this.openHere(id)) : this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
     if (id === this.s.at && step.kind === 'move') {
@@ -4237,6 +4270,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const shrine = !fresh && !patrol && !revisit && oathShrineHere(moved);
     if (this.fightsAt(id, moved)) this.confirmBattle(id, go, moved);
     else if (patrol) this.confirmPatrol(id, go);
+    else if (fresh && this.textOnlyEvent(id, moved)) this.march(id, true); // kart yok: varışta resim + metin / seçenek penceresi doğrudan açılır (kartın Continue adımı atlanır; Ömer 2026-11-21, form r39 + Tur 40)
     else if (fresh || revisit) this.confirmPlace(id, go);
     else if (shrine) this.shrineCard(id, go);
     else this.march(id);
@@ -4261,6 +4295,14 @@ export class CampaignMapScene extends Phaser.Scene {
   private openHere(id: string): void {
     if (['treasure', 'event'].includes(nextStep(this.s).kind)) this.directAt = id;
     this.advance();
+  }
+
+  /** Seçeneksiz, nimet / görev çipi olmayan yalnız metinli olay düğümü (Sunken Stair, Two Crowns, Hearth shrine...): varışta pencere kendisi açılır. */
+  private textOnlyEvent(id: string, at: CampaignState): boolean {
+    const n = node(this.map, id);
+    if (n.type !== 'event' || !n.event || !EVENTS[n.event]) return false;
+    if (eventChoicesFor(at, n.event).length > 0) return true; // seçenekli olay da kartsız (Tur 40)
+    return !shrineOf(n) && !(n.optional && questDef(n.quest));
   }
 
   /**
@@ -4470,7 +4512,7 @@ export class CampaignMapScene extends Phaser.Scene {
       const open = (): void =>
         this.worldWindow(nodeId, {
           title: e.title,
-          art: windowArt(`event:${eventId}`),
+          art: windowArt(`event:${eventId}`), lowArt: true,
           paras: paragraphs(e.text),
           onDismiss: close,
           body: {
@@ -4485,7 +4527,7 @@ export class CampaignMapScene extends Phaser.Scene {
               const st = choiceStyle(eventId, c);
               this.worldWindow(nodeId, {
                 title: e.title,
-                art: windowArt(`event:${eventId}`),
+                art: windowArt(`event:${eventId}`), lowArt: true,
                 paras: paragraphs(c.result ?? ''),
                 chipsCap: 'What changed',
                 chips: resultChips(c),

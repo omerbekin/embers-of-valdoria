@@ -1,5 +1,5 @@
 {
-  "_not": "Anti-Mage - SÜRÜM 2 SESLERİ. Felsefe: zırhlı büyü avcısı: çelik kılıç savuruşu ('vuş' + metal), kesilen büyünün cızırtısı (tremolo'lu tiz gürültü), mananın emilmesi (aşağı süzülen dar bant 'şlurp'), boşluk = hava basıncı (alçak geçiren gürültü + kısa alçak gövde darbesi), rün tabletleri = taş/çelik tıkırtısı. Çan/sinüs çınlaması YOK. Yeni adlar (swordWhoosh, tabletClack, wardLock) yalnızca v2 efektlerinde. Kılavuz: docs/design/art-v2.md",
+  "_not": "Anti-Mage - SÜRÜM 2 SESLERİ. Felsefe: zırhlı büyü avcısı: çelik kılıç savuruşu ('vuş' + metal), kesilen büyünün cızırtısı (tremolo'lu tiz gürültü), mananın emilmesi (aşağı süzülen dar bant 'şlurp'), boşluk = hava basıncı (alçak geçiren gürültü + kısa alçak gövde darbesi), rün tabletleri = taş/çelik tıkırtısı. Çan/sinüs çınlaması YOK. Yeni adlar (swordWhoosh, tabletClack, wardLock) yalnızca v2 efektlerinde. Kılavuz: docs/design/art-v2.md daggerStabA / daggerStabB (Redtithe Exsanguinate, 2026-11-22): hançer ete saplanır: kısa 'fft' giriş (bandpass gürültü), alçak 'thock' gövde (lowpass üçgen), ıslak et vuruşu (lowpass gürültü), tremolo'lu dar bant 'şlap' (ıslaklık); B biraz alçak, ıslaklığı geç (iki hançer aynı sesi çalmasın).",
   "sfx": {
     "swordWhoosh": {
       "gain": 2.223,
@@ -78,6 +78,24 @@
         { "type": "tone", "wave": "sine", "f0": 120, "f1": 60, "attack": 0.002, "decay": 0.14, "gain": 0.6 },
         { "type": "noise", "filter": "bandpass", "f0": 700, "f1": 400, "q": 2, "attack": 0.005, "decay": 0.25, "gain": 0.45, "tremHz": 9, "tremDepth": 0.5 },
         { "type": "noise", "filter": "highpass", "f0": 3000, "f1": 3000, "q": 0.7, "attack": 0.001, "decay": 0.15, "gain": 0.2 }
+      ]
+    },
+    "daggerStabA": {
+      "gain": 1.0,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 2200, "f1": 700, "q": 1.4, "attack": 0.002, "decay": 0.05, "gain": 0.45 },
+        { "type": "tone", "wave": "triangle", "f0": 150, "f1": 58, "attack": 0.002, "decay": 0.09, "gain": 0.7, "at": 0.004, "filter": { "type": "lowpass", "f": 320, "q": 0.7 } },
+        { "type": "noise", "filter": "lowpass", "f0": 1100, "f1": 260, "q": 0.7, "attack": 0.003, "decay": 0.11, "gain": 0.75, "at": 0.008 },
+        { "type": "noise", "filter": "bandpass", "f0": 820, "f1": 380, "q": 4, "attack": 0.006, "decay": 0.16, "gain": 0.4, "at": 0.02, "tremHz": 38, "tremDepth": 0.75 }
+      ]
+    },
+    "daggerStabB": {
+      "gain": 1.0,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1892, "f1": 602, "q": 1.4, "attack": 0.002, "decay": 0.05, "gain": 0.45 },
+        { "type": "tone", "wave": "triangle", "f0": 129, "f1": 50, "attack": 0.002, "decay": 0.09, "gain": 0.7, "at": 0.004, "filter": { "type": "lowpass", "f": 320, "q": 0.7 } },
+        { "type": "noise", "filter": "lowpass", "f0": 946, "f1": 224, "q": 0.7, "attack": 0.003, "decay": 0.11, "gain": 0.75, "at": 0.008 },
+        { "type": "noise", "filter": "bandpass", "f0": 705, "f1": 327, "q": 4, "attack": 0.006, "decay": 0.16, "gain": 0.4, "at": 0.032, "tremHz": 31, "tremDepth": 0.75 }
       ]
     }
   }

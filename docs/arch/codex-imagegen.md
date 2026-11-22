@@ -2,6 +2,14 @@
 > **Ne için / Güncel mi (2026-11-08):** Codex CLI ile görsel üretimi ve art-loop (Terra/Sol) akışı. evet; tools/codex/{imagegen,art-loop,run}.mjs var.
 
 
+## Hangi görsel hangi araçla (Ömer 2026-11-21, ZORUNLU; ilk hâli 2026-11-09)
+- **Örüntü / seri işler = Codex** (`tools/codex/imagegen.mjs`, `/vfx` döngüsü): karakter sprite'ı ve pozları, skill VFX kareleri; aynı kimliğin / aynı kare düzeninin tekrar tekrar üretildiği her iş.
+- **Tek seferde çıkan işler = Brave'de ChatGPT** (Claude in Chrome araçlarıyla, Ömer'in oturumu; yerleşik tarayıcı DEĞİL): concept art, savaş / kasaba / sinema arka planı, ikon sayfası (icon spreadsheet), logo, amblem.
+- Ömer'in sözü: "Eğer karakter spriteı, skill vfx gibi örüntü olabilecek şeyler çizeceksek bunu codexten yapacağız. Eğer concept art, background, icon spreadsheeti gibi tek seferde çıkacak şeyler olacaksa bunu da Brave'den Chatgpt üzerinden yapacağız."
+- Agentların tarayıcı aracı yok: tek seferlik görseli **Lead** Brave'de üretir; agent istemi, üslup referansı dosyalarını ve teknik ölçüleri hazırlar, inen görseli oyuna kurar. Agent brief'ine bu ayrım yazılır.
+- Brave / ChatGPT çalışmıyorsa (oturum yok, kota) Codex'e GEÇME: Ömer'e söyle. Ücretli API betiği hiçbir durumda yok.
+- 2026-11-21 sapması: Redtithe / Skald / Vesper ikon sayfaları, sınıf logosu ve 5 sinema resmi kural hatırlanmadan Codex ile üretildi (Ömer onayladı, yeniden üretilmedi); bundan sonrakiler ChatGPT.
+
 ChatGPT aboneliğindeki görsel üretimi (imagegen) Codex CLI üzerinden, tarayıcı açmadan çalıştırılır. Ek API ücreti yok; ChatGPT kotasından düşer. Görsel başına 1-15 dk (test 2026-10-22: ~2 dk).
 
 ## Gerekenler

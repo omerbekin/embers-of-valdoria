@@ -1,5 +1,5 @@
 import { woundCount } from '../progression/wounds';
-import { normalizeLedger } from './ledger';
+import { normalizeLedger, normalizeMapStart } from './ledger';
 import { normalizeSurge, taintOf } from './surge';
 import { CONFIG, MAPS, mapFor } from './data';
 import { findNode } from './graph';
@@ -18,6 +18,7 @@ import { normalizeTree } from '../progression/skill-tree-hero';
 import { dropLegacySpdRoll } from '../progression/loadout';
 import { clampValor } from '../engine/valor';
 import { normalizeSupplies, supplyDef } from './supplies';
+import { upgradeCrownChoice } from './ending';
 import type { CampaignMode, CampaignShop, CampaignState, Difficulty, Hero, MerchantStall, ShopSupply, ShopWare } from './types';
 
 /**
@@ -75,7 +76,12 @@ export const SAVE_KEY = 'eov.campaign.v1';
  * 14: Ring ve Trinket ayrı yuva (Ömer 2026-11-01, item-design-plan.md T3, T5). Ring item'i `ring` yuvasına geçer; Trinket yuvası henüz açılmadıysa (Reedgate'ten önce) takılı Trinket
  * torbaya döner, torba sınırı aşılabilir, item kaybolmaz. Eski sürüm `ring` alanını okuyamazdı: sürüm artışı eski bulut paketi / eski sekme yüzünden item kaybını önler. Her okumada, idempotent.
  */
-export const SAVE_VERSION = 14;
+/**
+ * 15: Harita 3 bitiş seçimi kayıtta (Ömer 2026-11-21 form r39): `crownChoice` ('mend' | 'quench'), kapanış sineması bu seçime göre dallanır.
+ * Sürüm 14 ve öncesi okunurken Mend or Quench olayı bitmiş kayıtta seçim `eventChoice`tan kurtarılır (son düğüm olduğu için orada kalır), kurtarılamazsa
+ * olayın veri sırasındaki ilk seçeneği ('mend'). Olayı bitmemiş kayıtta alan yok (oyuncu seçer). Her okumada, idempotent (ending.ts > upgradeCrownChoice).
+ */
+export const SAVE_VERSION = 15;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -345,6 +351,7 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   upgradeHollowCrown(s);
   // Geçilen haritalar (harita geçişi M-Q; isteğe bağlı alan, sürüm değişmez): bozuksa / bilinmeyen haritaysa atılır
   if (s.mapsDone !== undefined && !(Array.isArray(s.mapsDone) && s.mapsDone.every((m) => typeof m === 'string' && !!MAPS[m]))) delete (s as { mapsDone?: unknown }).mapsDone;
+  normalizeMapStart(s);
   upgradePitOath(s);
   // A5 Personal Quests (isteğe bağlı Hero.quests; kayıt sürümü değişmez): bilinmeyen / başka sınıfın / tekrar eden görev id'si atılır
   for (const h of [...s.roster, ...(s.reserve ?? []), ...(s.inn ?? []).map((x) => x.hero)]) if (h && typeof h === 'object') sanitizeHeroQuests(h);
@@ -410,6 +417,7 @@ function upgradeRemovedNodes(s: CampaignState): void {
 function upgradeHollowCrown(s: CampaignState): void {
   // Harita 3 (open-questions 454): Stone Oath ve bekleyen savaş başı durumu (isteğe bağlı; bozuksa atılır)
   if (s.stoneOath !== undefined && s.stoneOath !== 'sworn' && s.stoneOath !== 'refused') delete (s as { stoneOath?: unknown }).stoneOath;
+  upgradeCrownChoice(s); // sürüm 15: Mend or Quench seçimi (bozuksa atılır; olayı bitmiş eski kayıtta kurtarılır / varsayılan)
   const p = s.pendingStatus as unknown as { status?: unknown; turns?: unknown } | undefined;
   if (p !== undefined) {
     const ok = !!p && typeof p.status === 'string' && !!statuses[p.status] && typeof p.turns === 'number' && Number.isInteger(p.turns) && p.turns > 0;
@@ -642,7 +650,7 @@ function parseSaves(raw: string): Omit<ReadResult, 'newer'> {
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11 && parsed.version !== 12 && parsed.version !== 13) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11 && parsed.version !== 12 && parsed.version !== 13 && parsed.version !== 14) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
     const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
@@ -669,7 +677,7 @@ function parseSaves(raw: string): Omit<ReadResult, 'newer'> {
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || parsed.version === 12 || parsed.version === 13 || starters > 0 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || parsed.version === 12 || parsed.version === 13 || parsed.version === 14 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }

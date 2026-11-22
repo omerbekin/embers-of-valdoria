@@ -417,7 +417,9 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
   });
 
   it('Boxcars: Loaded Dice çift 6 atınca başka bir düşmana bir vuruş (yalnız o kullanımlarda, kullanım başına bir)', () => {
-    const b = make({ 0: 'gambler' }, { 0: 'warrior', 1: 'warrior' }, withTree(0, only('gambler', { '1.ma': 1 })), 5);
+    // 300 kullanım tek savaşta: 100 hamleden sonra The First Fire's Verdict birimleri öldürür; bu olasılık ölçümünde kapalı
+    const teams: Teams = { party: cells({ 0: 'gambler' }), enemies: cells({ 0: 'warrior', 1: 'warrior' }), units: { party: withTree(0, only('gambler', { '1.ma': 1 })), enemies: {} } };
+    const b = new Battle({ ...content.battleSetup('random-battle', 5, 'test', teams, false), firstFire: undefined });
     tank(b);
     Object.assign(b.debug, { miss: 'never', dodge: 'never' });
     const me = P(b);

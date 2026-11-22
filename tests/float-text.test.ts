@@ -140,4 +140,10 @@ describe('hasar rakamı rengi (Yalnız renk, 2026-11-01)', () => {
     expect(damageNumberHex({ origin: 'status', statusId: 'burn' }, el)).toBe('#ff7a1a');
     expect(damageNumberHex({ origin: 'status', statusId: 'wound' }, el)).toBe('#e8e2d0');
   });
+  it('pure hasar (First Fire): kendi beyaz-altın token rengi, fiziksel / element renklerinden ayrı', () => {
+    const pure = layout.colors.damagePure;
+    expect(damageNumberHex({ origin: 'status', damageType: 'pure' }, el, pure)).toBe(pure);
+    expect(Object.values(layout.colors.element).map((h) => h.toLowerCase())).not.toContain(pure.toLowerCase());
+    expect(damageNumberHex({ damageType: 'physical' }, el, pure)).toBe('#e8e2d0');
+  });
 });

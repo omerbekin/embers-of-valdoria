@@ -781,7 +781,7 @@
     ]
   },
   "mana_burn": {
-    "_not": "Tithe Cut (Redtithe, Ömer 2026-11-17; eski Mana Steal, id AYNI: kayıt / ağaç / sprite uyumu). Fiziksel DEX bıçak vuruşu; isabet edince hedefin MP'sini söker (amount), söktüğü her MP için bloodPerMp kan + isabet başına formulas.bloodBar.hitGain kan (MP'siz hedef: yalnız hitGain). Görünüm: motor/YZ motion melee görür, viewMotion ranged yalnız savaş görünümünde (hançer fırlatır). Sayılar PROVİZYON.",
+    "_not": "Tithe Cut (Redtithe, Ömer 2026-11-17; eski Mana Steal, id AYNI: kayıt / ağaç / sprite uyumu). Fiziksel DEX bıçak vuruşu; isabet edince hedefin MP'sini söker (amount), söktüğü her MP için bloodPerMp kan + isabet başına formulas.bloodBar.hitGain kan (MP'siz hedef: yalnız hitGain). Görünüm: motor/YZ motion melee görür, viewMotion ranged yalnız savaş görünümünde: hedefe koşmaz; yerinde yarım adım hamle + atış pozu, ön eldeki hançer kan ipliğine bağlı hedefe uçar, keser, iplikle ele döner (Lead 2026-11-21 v3 'iplikli hançer', Ömer form; v2 kan kamçısı reddedildi). Sayılar PROVİZYON.",
     "id": "mana_burn",
     "name": "Tithe Cut",
     "icon": "manaburn",
@@ -799,7 +799,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.665
+        "power": 0.587
       },
       {
         "type": "manaBurn",
@@ -814,15 +814,21 @@
     ]
   },
   "drain_field": {
-    "_not": "Blood Brand (Redtithe, Ömer 2026-11-17; eski Ley Brand, id AYNI). Tek hedefe Bleeding (dot, 3 tur) + blood_brand işareti: işaretli herhangi bir class skill'i kullanınca Bleeding'den hemen ticks ek tik (süre azalmaz); MP bedelleri costMult katı (Ömer %50 / %100 sonra seçecek: tek sayı); markSkills (Tithe Cut, Exsanguinate) işaretliye markDamagePct fazla (eski Ley Brand kuralı). Bleeding gücü (dex 0,2) Lead varsayımı. Sayılar PROVİZYON.",
+    "_not": "Blood Brand (Redtithe, Ömer 2026-11-17; eski Ley Brand, id AYNI). Ömer 2026-11-21 form r40: alan 2x2 (rect, peat_smoke gibi; anchor menzildeki hücre, alan arkaya uzanır), önceden tek hedef. Alandaki her düşmana Bleeding (dot, 3 tur) + blood_brand işareti: işaretli herhangi bir class skill'i kullanınca Bleeding'den hemen ticks ek tik (süre azalmaz); MP bedelleri costMult katı (Ömer %50 / %100 sonra seçecek: tek sayı); markSkills (Tithe Cut, Exsanguinate) işaretliye markDamagePct fazla (eski Ley Brand kuralı). Bleeding gücü (dex 0,2) Lead varsayımı. Sayılar PROVİZYON.",
     "id": "drain_field",
     "name": "Blood Brand",
     "icon": "drainfield",
-    "target": "single_enemy",
+    "target": "area_enemies",
     "range": 4,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
     "cost": {
       "resource": "blood",
-      "amount": 25
+      "amount": 30
     },
     "cooldown": 3,
     "motion": "sky",
@@ -833,15 +839,15 @@
         "type": "dot",
         "status": "bleeding",
         "scale": "dex",
-        "power": 0.214,
-        "turns": 3
+        "power": 0.221,
+        "turns": 2
       },
       {
         "type": "bloodBrand",
         "turns": 3,
         "costMult": 1.5,
         "ticks": 1,
-        "markDamagePct": 0.4,
+        "markDamagePct": 0.3,
         "markSkills": [
           "mana_burn",
           "void_strike"
@@ -875,7 +881,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 1.05,
+        "power": 1.132,
         "bonusPerMissingMana": 1,
         "bloodSpentBonus": 0.01
       }
@@ -3346,7 +3352,7 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_mana_burn": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Tithe Cut kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Tithe Cut kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında step + throw (yerinde hamle, iplikli hançer). Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_mana_burn",
     "name": "Tithe Cut",
     "icon": "manaburn",
@@ -3377,17 +3383,26 @@
       "manaSizzle",
       "energySlurp"
     ],
-    "pose": "throw",
+    "pose": [
+      "step",
+      "throw"
+    ],
     "artOf": "mana_burn",
-    "note": "Pose test: plays the Throw pose."
+    "note": "Pose test: plays the Step, then Throw pose."
   },
   "pt_drain_field": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Blood Brand kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_drain_field",
     "name": "Blood Brand",
     "icon": "drainfield",
-    "target": "single_enemy",
+    "target": "area_enemies",
     "range": 4,
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -3461,7 +3476,7 @@
     "note": "Pose test: plays the Channel pose."
   },
   "pt_void_strike": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Exsanguinate kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Exsanguinate kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'twin_stab' (ulti v3 2026-11-22: efekt overhead > step > twin_stab pozlarını kendisi gösterir; twin_stab = Redtithe'e özel ek poz, iki hançer hedefe saplı, hasat bu karede). Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_void_strike",
     "name": "Exsanguinate",
     "icon": "voidstrike",
@@ -3487,9 +3502,9 @@
       "voidPulse",
       "implode"
     ],
-    "pose": "point",
+    "pose": "twin_stab",
     "artOf": "void_strike",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Twin Stab (Redtithe only) pose."
   },
   "pt_loaded_dice": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Loaded Dice kopyası; gerçek efekt/ses/hedef (artOf loaded_dice), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",

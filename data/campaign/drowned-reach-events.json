@@ -103,6 +103,7 @@
         },
         {
           "id": "leave",
+          "closer": true,
           "label": "Move on",
           "hint": "Keep to the road.",
           "result": "You leave the farmers to their buckets. The river keeps rising behind you."
@@ -130,6 +131,7 @@
         },
         {
           "id": "leave",
+          "closer": true,
           "label": "Move on",
           "hint": "Walk on through the hamlet.",
           "result": "You nod to the eel-wives and walk on along the creaking boards."
@@ -178,6 +180,7 @@
         },
         {
           "id": "leave",
+          "closer": true,
           "label": "Move on",
           "hint": "Leave the market.",
           "result": "You push your way out of the crowd and back to the street."
@@ -206,6 +209,7 @@
         },
         {
           "id": "later",
+          "closer": true,
           "label": "Not yet",
           "hint": "Answer another day. You can come back to the square.",
           "result": "You leave both doors behind you. Neither side looks pleased, but Saltmere can wait."
@@ -237,6 +241,7 @@
         },
         {
           "id": "later",
+          "closer": true,
           "label": "Not now",
           "hint": "Leave the office. You can come back to charter a ship later.",
           "result": "The clerk does not look up as you leave. Ships come and go; so do travellers."
@@ -347,6 +352,7 @@
         },
         {
           "id": "leave",
+          "closer": true,
           "label": "Move on",
           "hint": "Thank the monks and sail on.",
           "result": "You thank the monks and push off from their little jetty. The bell rings behind you."

@@ -423,7 +423,7 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
     expect(Object.keys(loadoutSetup({ class: 'defender', level: 20 }, { mode: 'campaign' }).tree!.skills!).sort()).toEqual(['close_ranks', 'fist_crush', 'taunt']); // Faz 2b: bar 15 Formed Up Close Ranks'e bedel koşulu ekler
     const a = loadoutSetup({ class: 'defender', level: 35 }, { mode: 'campaign' }).tree!;
     expect(Object.keys(a.skills!).sort()).toEqual(['close_ranks', 'fist_crush', 'taunt']); // L35: Close Ranks satırı Hold Their Weight'e (3.ea) ulaştı
-    expect((a.skills!.close_ranks!.effects[0] as unknown as { share: number }).share).toBe(0.65);
+    expect((a.skills!.close_ranks!.effects[0] as unknown as { share: number }).share).toBe((D.nodes['3.ea']!.fx![0] as unknown as { v: number }).v); // pay veriden
     expect(debugFocusAlloc('defender', 20, 'a')).toEqual(focusBuild(D, [2, 3], 20, { dir: 'a', ult: 'r' }));
     expect(loadoutSetup({ class: 'defender', level: 20 }, { mode: 'quick' }).tree).toBeUndefined();
     expect(loadoutSetup({ class: 'defender', level: 20 }).tree).toBeUndefined();

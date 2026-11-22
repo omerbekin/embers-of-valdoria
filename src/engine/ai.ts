@@ -1104,7 +1104,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
         // Banked Coals: vuruşun yalnızca anında kalan payı canı indirir, öldürmek için ham hasar o oranda büyük olmalı
         // Shocked hedefe şimşek (Topraklama, Ömer 2026-11-15): kalkan şimşeği x(1 + bonus) yer, öldürmek için gereken azalır (motorla aynı çarpan, shieldCover)
         const el = skill.effects.find((e) => e.type === 'damage')?.element;
-        const need = (manaShieldNeed(target, target.hp, target.mp) + battle.shieldCover(target, magic, el)) / (1 - (target.itemEffects?.bankedCoals?.share ?? 0));
+        const need = (manaShieldNeed(target, target.hp, target.mp) + battle.shieldCover(target, magic, el, p.damage.keep)) / (1 - (target.itemEffects?.bankedCoals?.share ?? 0)); // kalkan ham hasar kuralı: önizlemenin savunma oranı
         const d = p.damage;
         const cm = d.critMult ?? actor.stats.critMult; // skill ağacı critDmgMul (kancasızda tanımsız)
         const c = Math.max(0, Math.min(1, d.critChance));
@@ -1211,7 +1211,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
       const t = battle.get(uid);
       if (t && t.side !== actor.side) g += b * previewHitChance(o, t) * steal.gainRatio;
     }
-    if (g > 0) o.mpGain = Math.round(g);
+    if (g > 0) o.mpGain = g; // kesirli kalır (manaGain sürekli; eski Math.round 1 MP altını 0 yapıyordu)
   }
   unitReactionValue(battle, actor, skill, o, targets); // birim üstü tepkime (Poisoned + Burning = Explosion...)
   bloodValue(battle, actor, skill, previews, o); // ağır fiziksel kritiğin bırakacağı kan zemini (Ömer onaylı 2026-11-09)
@@ -1258,7 +1258,9 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
   if (perTurn > 0) {
     for (const e of skill.effects) {
       if (e.type !== 'dispel' || e.status !== 'debuff') continue;
-      for (const t of targets) {
+      // Purging Ward: alıcı hedef listesinden bağımsız (motorla aynı seçim: Battle.purgeTargetOf, r36)
+      const only = e.lowestHp ? battle.purgeTargetOf(actor, skill, e) : undefined;
+      for (const t of e.lowestHp ? (only ? [only] : []) : targets) {
         if (t.hp <= 0 || t.side !== actor.side) continue;
         for (const s of battle.dispelCandidates(t, 'debuff').slice(0, e.count ?? Infinity)) o.cleanse += s.turns * perTurn * (battle.statusDef(s.kind)?.skipTurn ? (profile.cleanseSkipTurnMult ?? 1) : 1);
       }
@@ -1316,7 +1318,8 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
       o.crashWith = pushPv.with ?? '';
       const wd = pushPv.withDamage ?? 0;
       if (other && other.hp > 0 && wd > 0) {
-        const need = manaShieldNeed(other, other.hp, other.mp) + other.shield + other.magicShield;
+        // Kalkan ham hasar kuralı: çarpma tiki zırhlı; kalkan ham karşılığına çarpar (motorla aynı tickKeep)
+        const need = manaShieldNeed(other, other.hp, other.mp) + battle.shieldCover(other, true, pe && pe.type === 'push' ? pe.element : undefined, pe && pe.type === 'push' ? battle.tickKeep(pe.element, 'magic', other) : 1);
         const ce = pushLive * Math.min(wd, need);
         if (other.side !== actor.side) {
           o.damage += ce;
@@ -1794,6 +1797,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     if (o.bloodGain) add('blood', o.bloodGain * bloodWorth(ctx, actor) * bloodWeights(ctx).gainShare);
     if (o.bloodPay?.blood) add('bloodCost', -o.bloodPay.blood * bloodWorth(ctx, actor));
     add('vein', mirrorVeinValue(ctx, o));
+    add('veinTree', veinTreeValue(ctx, o));
     const tr = treeTriggerValue(ctx, o);
     add('tree', tr.own);
     add('retaliation', tr.retaliation);
@@ -2394,18 +2398,31 @@ function signatureValue(ctx: ValueContext, o: Option): number {
  * su canlı kalır, Shocked geri itme / Stun, Thunderflash'ın bedeli (kısıtlı taraf bir tur serbest). Etiketsiz skill'de 0.
  */
 /**
- * Electrocuted (Ömer onaylı 2026-11-09; motor Battle.flushElectro) birimin tarafına bedeli (artı = vurana iyi): temel saldırısıyla kendi dostlarından
- * birine (ortalama) vuruş. Sıra çubuğu 0 terimi Ömer 2026-11-15'te motordan kalktığı için burada da yok. Bağışık (boss, cc) birimde 0.
+ * Electrocuted (Ömer onaylı 2026-11-09, form r39; motor Battle.flushElectro) birimin tarafına bedeli (artı = vurana iyi): ilk skill'iyle kendi takımına
+ * vuruş, motorla AYNI plan (Battle.electroPlan: seçilebilecek dostlar + her seçimin vurduğu dostlar). Tek hedef: dost başına en iyi saldırı tahmini
+ * (bestAttackAvg, eski hesap) ortalaması; alan / tümü: ilk skill'in önizlemesi seçimin vurduğu dostlara, seçimler üstünden ortalama; rastgele:
+ * havuz toplamı x count / havuz. Sıra çubuğu 0 terimi Ömer 2026-11-15'te motordan kalktığı için burada da yok. Bağışık (boss, cc) birimde 0.
  */
 function electroWorth(ctx: ValueContext, u: Combatant): number {
   const battle = ctx.battle;
   const kind = battle.formulas.thunder.wetInto;
   if (!kind || battle.statusBlocked(u, kind as never)) return 0;
-  let v = 0;
-  const allies = battle.combatants.filter((o) => o.hp > 0 && !o.inert && o.side === u.side && o.uid !== u.uid);
-  const sk = u.skills[0] ? battle.skill(u.skills[0], u) : undefined;
-  if (allies.length && sk && sk.target === 'single_enemy' && sk.effects.some((e) => e.type === 'damage')) v += sum(allies.map((a) => Math.min(a.hp, bestAttackAvg(battle, u, a)))) / allies.length;
-  return v;
+  const plan = battle.electroPlan(u);
+  if (!plan) return 0;
+  const { skill: sk, picks } = plan;
+  if (sk.target === 'single_enemy') return sum(picks.map((a) => Math.min(a.hp, bestAttackAvg(battle, u, a)))) / picks.length;
+  const loss = (hits: Combatant[], center?: Combatant): number => {
+    const pv = previewForTargets(battle, u, sk.id, hits, center?.uid);
+    return sum(hits.map((a) => {
+      const d = pv.find((p) => p.uid === a.uid)?.damage;
+      return d ? Math.min(a.hp, d.avg * d.hitChance) : 0;
+    }));
+  };
+  if (sk.target === 'area_enemies') return sum(picks.map((p) => loss(plan.hits(p), p))) / picks.length;
+  const pool = plan.hits(picks[0]!);
+  if (!pool.length) return 0;
+  const all = loss(pool);
+  return sk.target === 'random_enemies' ? (all * Math.min(sk.count ?? 3, pool.length)) / pool.length : all;
 }
 
 /**
@@ -2617,7 +2634,8 @@ function cleanseValue(ctx: ValueContext, profile: AiProfile, o: Option): number 
   let v = 0;
   for (const e of o.skill.effects) {
     if (e.type !== 'dispel' || e.status !== 'debuff') continue;
-    for (const t of o.targets) {
+    const only = e.lowestHp ? battle.purgeTargetOf(ctx.actor, o.skill, e) : undefined; // Purging Ward: motorla aynı seçim (Battle.purgeTargetOf, r36)
+    for (const t of e.lowestHp ? (only ? [only] : []) : o.targets) {
       if (t.hp <= 0 || t.side !== ctx.actor.side) continue;
       for (const st of battle.dispelCandidates(t, 'debuff').slice(0, e.count ?? Infinity)) {
         const def = battle.statusDef(st.kind);
@@ -2769,6 +2787,8 @@ function bloodWorth(ctx: ValueContext, c: Combatant): number {
  * - ek Bleeding tikleri: işaret süresince (ufukla sınırlı) her skill kullanımında ticks x tik hasarı x brandTickShare;
  * - MP bedel artışı: MP'li düşmanın ortalama MP bedeli x (costMult - 1) x süre kadar MP'nin engellenen hamle değeri (manaDenial) x brandCostShare (MP'li düşmanı seçtirir);
  * - işaret (markDamagePct): kullanıcının işaretli skill'lerinden birinin beklenen hasarı x markPct x vuruş sayısı (barı harcayan skill 1, öteki en çok 2) x markShare.
+ *   Alan (Ömer 2026-11-21 form r40: 2x2): ek tik ve bedel terimleri düşman başına toplanır; işaret terimi TOPLANMAZ, alandaki düşmanlar arasında EN
+ *   YÜKSEĞİ (Redtithe turda tek düşmana vurur; eski Ley Brand kuralı gibi).
  */
 function bloodBrandValue(ctx: ValueContext, o: Option, w: BrandWeights): number {
   const battle = ctx.battle;
@@ -2777,6 +2797,7 @@ function bloodBrandValue(ctx: ValueContext, o: Option, w: BrandWeights): number 
   const bw = bloodWeights(ctx);
   const markIds = eff.markDamagePct && eff.markSkills?.length ? eff.markSkills.filter((id) => ctx.actor.skills.includes(id)) : [];
   let v = 0;
+  let mark = 0; // işaret terimi: alandaki düşmanlar arasında en yükseği (toplanmaz)
   for (const f of o.targets) {
     if (f.hp <= 0 || f.side === ctx.actor.side) continue;
     const cur = f.statuses.find((s) => s.kind === 'blood_brand')?.turns ?? 0;
@@ -2790,6 +2811,18 @@ function bloodBrandValue(ctx: ValueContext, o: Option, w: BrandWeights): number 
     const tick = own?.status === 'bleeding' ? own.perTick : held ? battle.statusTickDamage(f, held) : 0;
     const bleedTurns = Math.min(span, own?.status === 'bleeding' ? own.turns : (held?.turns ?? 0));
     v += eff.ticks * tick * bleedTurns * bw.brandTickShare * fresh * alive;
+    // Redtithe ağacı (r36): Bleeding tiklerinin 'dot' kancası (Widening Cut: önceki tik sayısıyla büyür) tur başı tiklerine eklenir (i. tik çarpanı - 1;
+    // tur başı tikleri genel DoT yolunda zaten sayılır), 'dotTick' tetikleri (Open Veins kanı) tur başı + ek tik başına; Blood Brand'in bitişi
+    // ('statusEnd' mine: Final Tithe / Reaping Brand) işaret tutarsa bir kez. Kancasız birimde hiçbiri hesaplanmaz.
+    if (ctx.actor.treeHooks && own?.status === 'bleeding') {
+      const skill = battle.skill(o.skill.id, ctx.actor);
+      let more = 0;
+      for (let i = 0; i < bleedTurns; i++) more += (battle.treeMods(ctx.actor, f, skill, undefined, { at: 'dot', tick: { index: i } })?.power ?? 1) - 1;
+      if (more) v += tick * more * fresh * alive;
+      const nTicks = bleedTurns * (1 + eff.ticks * bw.brandTickShare);
+      v += trigEventValue(ctx, ctx.actor, { on: 'dotTick', target: f, subject: f, status: 'bleeding', amount: tick }, nTicks * fresh * alive, o);
+    }
+    if (ctx.actor.treeHooks) v += trigEventValue(ctx, ctx.actor, { on: 'statusEnd', target: f, subject: f, status: 'blood_brand', statusSource: ctx.actor.uid, end: 'expired' }, fresh * alive, o);
     // MP bedel artışı (MP havuzu olan düşman)
     if (f.maxMp > 0 && f.taint === undefined && eff.costMult > 1) {
       const costs = f.skills.map((id) => battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk && sk.cost.resource === 'mp' && sk.cost.amount > 0).map((sk) => sk.cost.amount);
@@ -2804,10 +2837,11 @@ function bloodBrandValue(ctx: ValueContext, o: Option, w: BrandWeights): number 
         const uses = sk?.cost.spendAll ? 1 : Math.min(span, 2);
         for (const p of previewForTargets(battle, ctx.actor, id, [f])) if (p.uid === f.uid && p.damage) best = Math.max(best, p.damage.expected * uses);
       }
-      v += best * eff.markDamagePct! * fresh * alive * w.markShare;
+      mark = Math.max(mark, best * eff.markDamagePct! * fresh * alive * w.markShare);
     }
   }
-  if (v > 0 && o.notes.length < 6) o.notes.push(`Blood Brand: +${r1(v)}`);
+  v += mark;
+  if (v > 0 && o.notes.length < 6) o.notes.push(`Blood Brand on ${o.targets.filter((f) => f.hp > 0 && f.side !== ctx.actor.side).length} foe(s): +${r1(v)}`);
   return v;
 }
 
@@ -2853,6 +2887,59 @@ function mirrorVeinValue(ctx: ValueContext, o: Option): number {
   const blood = Math.min(room, hits * perHit);
   const v = blood * bloodWorth(ctx, me) * bloodWeights(ctx).gainShare;
   if (v > 0 && o.notes.length < 6) o.notes.push(`Mirror Vein blood: +${r1(blood)} expected`);
+  return v;
+}
+
+/**
+ * Mirror Vein ağaç düğümleri (Redtithe r36; yalnız kancası olan Redtithe'te): kalkanlı her dost için (önizlemenin kalkan miktarı, kalkan süresi
+ * min(turns, ufuk) kendi turumuz) (1) büyü emişi tetikleri ('shieldAbsorb' büyüyle: Blood for Blood, Mirror Ward): dosta en olası büyüyü atan düşman,
+ * ihtimal mirrorVeinValue ile aynı (dost başına en çok bir emiş); (2) kırılma tetiği ('shieldBreak': Shelter Echo): ihtimal = min(1, dosta beklenen
+ * hasar x shieldRounds / kalkan); (3) kalkanlıya alınan hasar kancaları ('damageTaken' shield bu skill: Spell-Proof Vein, Warded Steps): beklenen
+ * hasar x pencere x |mul| x türün payı (value.blood.wardTypeShare; tür belirtilmemişse 1). Bu iki kanca kalkan ham hasar kuralından muaf (Ömer
+ * 2026-11-21, form r40): kalkana çarpan vuruşu da azaltır, bu yüzden kalkanı aşan kısımla sınırlanmaz. Saf.
+ */
+function veinTreeValue(ctx: ValueContext, o: Option): number {
+  const me = ctx.actor;
+  const eff = o.skill.effects.find((e): e is Extract<SkillEffect, { type: 'shield' }> => e.type === 'shield' && !!e.onAbsorb?.giveBlood);
+  if (!eff || !me.treeHooks || me.maxBlood === undefined) return 0;
+  const sid = o.skill.id;
+  const wards = me.treeHooks.filter((h) => h.h === 'heal' && h.on === 'damageTaken' && h.shield === sid) as Array<{ mul?: number; when?: { incomingType?: string } }>;
+  const trig = me.treeHooks.some((h) => h.h === 'trigger' && (h.on === 'shieldAbsorb' || h.on === 'shieldBreak'));
+  if (!wards.length && !trig) return 0;
+  const battle = ctx.battle;
+  const H = Math.max(1, ctx.vc.horizon);
+  const span = Math.min(eff.turns ?? H, H);
+  const windowShare = span / H;
+  const typeShare = bloodWeights(ctx).wardTypeShare ?? 0.5;
+  const pv = previewForTargets(battle, me, sid, o.targets);
+  let v = 0;
+  for (const a of o.targets) {
+    if (a.hp <= 0 || a.side !== me.side || a.inert) continue;
+    const amt = pv.find((p) => p.uid === a.uid)?.shield?.amount ?? 0;
+    if (amt <= 0) continue;
+    const inc = incomingOf(ctx, a);
+    // Kalkan muafiyeti (Ömer 2026-11-21, form r40): bu kancalar kalkana çarpan vuruşu da azaltır; pencerede beklenen hasarın tamamı
+    for (const h of wards) v += inc * span * Math.abs(h.mul ?? 0) * (h.when?.incomingType ? typeShare : 1);
+    if (!trig) continue;
+    let best: { foe: Combatant; sk: SkillDef; p: number } | null = null;
+    let miss = 1;
+    for (const foe of battle.living(a.side === 'party' ? 'enemy' : 'party')) {
+      if (foe.inert) continue;
+      for (const id of foe.skills) {
+        const sk = battle.skill(id, foe);
+        if (!sk || !sk.effects.some((e) => e.type === 'damage' && e.damageType === 'magic')) continue;
+        if (sk.cost.resource === 'mp' && !battle.freeMp && foe.mp < skillCostAmount(sk.cost, foe)) continue;
+        const p = veinCastShare(battle, foe, id, a);
+        if (p <= 0) continue;
+        miss *= Math.pow(1 - p, Math.max(1, ctx.turnsWithin(foe) * windowShare));
+        if (!best || p > best.p) best = { foe, sk, p };
+      }
+    }
+    if (best && miss < 1) v += trigEventValue(ctx, me, { on: 'shieldAbsorb', target: best.foe, subject: a, source: best.foe, incomingSkill: best.sk, skill: sid, amount: amt }, 1 - miss, o);
+    const pBreak = Math.min(1, (inc * ctx.vc.shieldRounds) / amt);
+    if (pBreak > 0) v += trigEventValue(ctx, me, { on: 'shieldBreak', subject: a, skill: sid, amount: amt }, pBreak, o);
+  }
+  if (v > 0 && o.notes.length < 6) o.notes.push(`Mirror Vein tree: +${r1(v)}`);
   return v;
 }
 
@@ -2911,7 +2998,7 @@ function brandFoeValue(ctx: ValueContext, eff: Extract<SkillDef['effects'][numbe
     t += burnHurt;
     // Ömer 2026-11-07 (Ley Brand -> Grave Chanter zinciri): bedel yakımının hasarı düşmanı öldürecekse öldürme değeri (kalan katkı + onunla ölecek
     // çağrıları); ihtimal = MP skill'i kullanma payı (castShare, en çok 1)
-    if (burnHurt > 0 && burnHurt >= f.hp + f.shield + f.magicShield) t += Math.min(1, w.castShare) * ctx.vc.killWeight * (ctx.contribution(f) + ctx.summonsWorth(f)) * (1 - battle.luckyEscapeChance(f.uid));
+    if (burnHurt > 0 && burnHurt >= f.hp + battle.shieldCover(f, true, el, battle.tickKeep(el, 'magic', f))) t += Math.min(1, w.castShare) * ctx.vc.killWeight * (ctx.contribution(f) + ctx.summonsWorth(f)) * (1 - battle.luckyEscapeChance(f.uid));
     if (f.mp > 0 && eff.burnDamagePct > 0) t += battle.tickDamage(el, 'magic', Math.round(f.mp * eff.burnDamagePct), f) * w.costShare;
   }
   return t;
@@ -3207,10 +3294,15 @@ function anchorValue(ctx: ValueContext, o: Option): number {
 /** Dostun damgasını (Ash Brand) silen dispel: damga patlamasının tarafımıza beklenen hasarı önlenir (Mana Barrier karşı oyunu). */
 function brandCleanse(ctx: ValueContext, o: Option): number {
   const battle = ctx.battle;
-  if (!o.skill.effects.some((e) => e.type === 'dispel' && e.status === 'debuff')) return 0;
+  const cl = o.skill.effects.filter((e) => e.type === 'dispel' && e.status === 'debuff');
+  if (!cl.length) return 0;
+  // Purging Ward (lowestHp): yalnız motorun seçtiği dostun damgası silinir (Battle.purgeTargetOf, r36)
+  const e0 = cl[0];
+  const only = e0?.type === 'dispel' && cl.every((e) => e.type === 'dispel' && e.lowestHp) ? battle.purgeTargetOf(ctx.actor, o.skill, e0) : undefined;
+  const cleansed = only ? [only] : o.targets;
   let v = 0;
   for (const t of battle.telegraphs) {
-    if (t.kind !== 'brand' || !t.bound || !o.targets.some((x) => x.uid === t.bound && x.side === ctx.actor.side)) continue;
+    if (t.kind !== 'brand' || !t.bound || !cleansed.some((x) => x.uid === t.bound && x.side === ctx.actor.side)) continue;
     const cells = battle.telegraphCells(t);
     for (const u of battle.living(ctx.actor.side)) if (u.board === t.board && cells.includes(u.slot)) v += Math.min(u.hp, battle.telegraphDamage(t, u).avg);
   }
@@ -4606,8 +4698,11 @@ function trigActionWorth(ctx: ValueContext, owner: Combatant, a: TriggerAction, 
     }
   } else if (a.rage !== undefined) {
     v += ctx.rageWorth(rec) * Math.max(0, Math.min((rec.maxRage ?? 0) - (rec.rage ?? 0), a.rage * s));
+  } else if (a.blood !== undefined) {
+    // Redtithe r36 (Open Veins): kan kazancı, bar boşluğuyla sınırlı; Tithe Cut kanıyla aynı ölçü (bloodWorth x gainShare)
+    if (rec.maxBlood !== undefined) v += Math.max(0, Math.min(rec.maxBlood - (rec.blood ?? 0), a.blood * s)) * bloodWorth(ctx, rec) * bloodWeights(ctx).gainShare;
   } else if (a.mp !== undefined) {
-    v += ctx.manaGain(rec, Math.round((a.of ? base(a.of) : 1) * a.mp * s));
+    v += ctx.manaGain(rec, (a.of ? base(a.of) : 1) * a.mp * s); // kesirli (manaGain sürekli)
   } else if (a.hpLoss !== undefined) {
     v -= Math.max(0, Math.min(rec.hp - 1, base(a.of ?? 'maxHp') * a.hpLoss * s));
   } else if (a.bell !== undefined) {
@@ -4754,6 +4849,14 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
         if (s.stun && battle.statusBlocked(t, status)) continue;
         own += trigEventValue(ctx, actor, { on: 'statusApplied', target: t, status, skill: sid, castTargets: cast }, previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0)), o);
       }
+    }
+    // MP yakımı (Redtithe r36): 'manaBurned' her yakımda, 'mpEmptied' yakım hedefin MP'sini bitirecekse (Hush of the Brand; Drink Deep, Tempo Thief)
+    for (const [uid, burn] of Object.entries(o.burnBy)) {
+      const t = battle.get(uid);
+      if (!t || t.side === actor.side || burn <= 0 || t.mp <= 0) continue;
+      const h = previewHitChance(o, t);
+      own += trigEventValue(ctx, actor, { on: 'manaBurned', target: t, skill: sid, amount: Math.min(burn, t.mp), castTargets: cast }, h, o);
+      if (burn >= t.mp) own += trigEventValue(ctx, actor, { on: 'mpEmptied', target: t, skill: sid, amount: t.mp, castTargets: cast }, h * (1 - (o.killP[t.uid] ?? 0)), o);
     }
     // Ley Brand bir Ley Thread'i tüketirse (önizlemenin threaded işareti) sahibin 'threadConsumed' tetikleri (AM 0.mb Snapping Thread)
     for (const [uid, br] of Object.entries(o.brandBy ?? {})) {
@@ -5136,4 +5239,4 @@ function dispelBuffValue(ctx: ValueContext, profile: AiProfile, o: Option): numb
 }
 
 /** Testler için (tests/ai-coverage.test.ts): kapsam yardımcıları; oyun kodu kullanmaz. */
-export const aiCoverageInternals = { cellWorth, cellDelta, statusEffectWorth, ownElementLoss, cleansedDotLoss, groundUnitWorth, stayTicks, groundMove };
+export const aiCoverageInternals = { cellWorth, cellDelta, statusEffectWorth, electroWorth, ownElementLoss, cleansedDotLoss, groundUnitWorth, stayTicks, groundMove };

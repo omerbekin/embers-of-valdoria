@@ -21,10 +21,12 @@
 .sd-name:empty { display: none; }
 
 .sd-who { display: flex; flex-direction: column; gap: max(5px, calc(12 * var(--u))); align-items: center; text-align: center; }
-.sd-pic { position: relative; width: 100%; aspect-ratio: 1; border: 1px solid var(--g-edge); box-shadow: 0 0 0 2px rgba(8, 6, 4, .8); background: #1a130c; }
+/* hikâye portresi = savaş avatarı portre çerçevesi (battle-hud.css .bh-pframe; Ömer 2026-11-21): çift ince altın çizgi (arada koyu boşluk, --frame-* belirteçleri) + içte ince ışıma.
+   Konuşanın tarafı bilinmediği için ışıma nötr altın (savaştaki dost mavi / düşman kırmızı yok). Köşe karosu / üç nokta YOK. */
+.sd-pic { --pf-side: var(--g-gold); position: relative; width: 100%; aspect-ratio: 1; flex: none; background: linear-gradient(180deg, #22180f, #0a0705); border: var(--frame-line) solid rgba(217, 178, 106, .55);
+  box-shadow: 0 0 0 var(--frame-gap) rgba(8, 6, 4, .95), 0 0 0 calc(var(--frame-gap) + var(--frame-line)) rgba(217, 178, 106, .85), 0 0 0 calc(var(--frame-gap) + 3 * var(--frame-line)) rgba(8, 6, 4, .9), 0 0 15.3px 1.7px color-mix(in srgb, var(--pf-side) 18.7%, transparent); }
+.sd-pic::before { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-shadow: inset 0 0 13.6px color-mix(in srgb, var(--pf-side) 35.7%, transparent), inset 0 0 0 var(--frame-line) color-mix(in srgb, var(--pf-side) 38.3%, transparent); }
 .sd-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.sd-corner { position: absolute; width: max(3px, calc(6 * var(--u))); height: max(3px, calc(6 * var(--u))); background: #130d07; border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 2; }
-.sd-corner.tl { left: -4px; top: -4px; } .sd-corner.tr { right: -4px; top: -4px; } .sd-corner.bl { left: -4px; bottom: -4px; } .sd-corner.br { right: -4px; bottom: -4px; }
 .sd-name { font: 600 max(11px, calc(22 * var(--u))) / 1.2 var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); }
 .sd-place { font: 400 max(11px, calc(21 * var(--u))) var(--g-body); color: var(--g-dim); }
 
@@ -67,7 +69,6 @@ html.compact .sd-panel { padding-top: 12px; padding-bottom: 14px; }
 html.short .sd-grid { grid-template-columns: 64px minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 html.short .sd-grid.nopic { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
 html.short .sd-panel { max-height: 92%; padding: 8px 12px 10px; }
-html.short .sd-corner { display: none; }
 html.short .sd-name { font-size: 11px; } html.short .sd-place { display: none; }
 html.short .sd-ttl { font-size: 15px; }
 html.short .sd-said { font-size: 14px; } html.short .sd-narr { font-size: 12.5px; }

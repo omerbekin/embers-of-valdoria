@@ -19,6 +19,8 @@ import type { DebugAction, DebugPanel } from '../src/ui/debug-menu';
 
 // BattleScene Phaser ister (node'da yok): yalnızca statik alanları kullanılır
 vi.mock('../src/game/scenes/BattleScene', () => ({ BattleScene: { KEY: 'BattleScene', freeMp: false } }));
+// first-fire-fx de Phaser'ı değer olarak yükler (debug-tools yalnız firstFireArt bayrağını kullanır)
+vi.mock('../src/game/first-fire-fx', () => ({ firstFireArt: { mode: 'code' } }));
 
 const actions: DebugAction[] = [];
 const panels: DebugPanel[] = [];

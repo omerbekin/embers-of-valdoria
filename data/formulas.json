@@ -99,7 +99,7 @@
   "thunder": {
     "_not": "Harita 3 şimşek kuralları (maps-2-3.md A1, A2, A5, A6; skill alanı thunder; PROVİZYON, sim yok). Ömer 2026-11-15 şimşek kimliği: Shocked = Topraklama (sıra çubuğu geri itmesi KALKTI). badge = Shocked durumu; badgeTurns = süresi; magicArmorMult = Shocked'lı birimin büyü zırhı çarpanı (%50 less, tek hedef; Quenched zırh kırmasıyla aynı; Ömer kesin 2026-11-16); shieldBonus = Shocked'lı birime şimşek hasarının kalkana giden kısmı x(1 + bonus) (+%100); ikisi de boss / elitte ccImmunity.debuffStrength ile ölçeklenir; stunTurns = suda verilen durumun süresi; wetInto = o durum (Electrocuted: rastgele dosta temel saldırı; 2026-11-15'ten beri sıra çubuğunu 0'a çekmez); wetStatus = ıslaklık durumu (ya da su hücresi); arcRatio = Islak devre / Live Water iletim hasarı, tahtanın ortalama maks canının oranı (şimşek suya düşünce iki tahtada da su / kandaki herkese); flashHeroTurns = Thunderflash kaç kahraman turu aydınlatır; flashBlindTurns = en yakın kahramanın Blinded süresi.",
     "badge": "shocked",
-    "badgeTurns": 1,
+    "badgeTurns": 2,
     "magicArmorMult": 0.5,
     "shieldBonus": 1,
     "stunTurns": 1,

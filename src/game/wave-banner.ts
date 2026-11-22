@@ -11,7 +11,7 @@ const W = 1920;
 const CY = 300; // birimlerin ad plakalarının üstünde (gökyüzü)
 
 /** Bandı gösterir; bitince (sönünce) çözülür. `title` = "ROUND 2", `sub` = karşılaşma adı ya da düşmanlar. */
-export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string, holdMs?: number, opts: { boss?: boolean } = {}): Promise<void> {
+export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string, holdMs?: number, opts: { boss?: boolean; titleSize?: number } = {}): Promise<void> {
   const m = motion('wave');
   const hold = holdMs ?? MOTION.wave.holdMs; // savaş içi dalga geçişi daha kısa bekler (wave.battleHoldMs)
   const root = scene.add.container(0, 0).setDepth(4900);
@@ -26,7 +26,7 @@ export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string,
   fadeLine(lines, W / 2 - 520, W / 2 + 520, CY - 74, EL.GOLD, EL.LINE.a3, 'both');
   fadeLine(lines, W / 2 - 420, W / 2 + 420, CY + 82, EL.GOLD, EL.LINE.a2, 'both');
   const dia = elDiamond(scene, 7).setPosition(W / 2, CY - 74);
-  const t = elText(scene, W / 2, CY + 2, title, 104, opts.boss ? EL.BAD : EL.ON, { em: 0.18 }).setOrigin(0.5);
+  const t = elText(scene, W / 2, CY + 2, title, opts.titleSize ?? 104, opts.boss ? EL.BAD : EL.ON, { em: 0.18 }).setOrigin(0.5);
   const parts: Phaser.GameObjects.GameObject[] = [band, lines, dia, t];
   if (sub) parts.push(elBody(scene, W / 2, CY + 114, sub, 30, EL.NOTE).setOrigin(0.5));
   root.add(parts);

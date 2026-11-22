@@ -231,8 +231,9 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     const vw = wrap.clientWidth;
     const vh = wrap.clientHeight;
     const a = o.anchor();
-    const cw = card.offsetWidth;
-    const ch = card.offsetHeight;
+    card.style.width = ''; // önceki yerleşimin daralttığı genişliği sıfırla (yeniden ölç)
+    let cw = card.offsetWidth;
+    let ch = card.offsetHeight;
     const gu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu')) || 1;
     if (!a) {
       card.style.left = `${Math.max(8, (vw - cw) / 2)}px`;
@@ -246,7 +247,18 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     const gap = r + Math.max(14, 20 * gu); // düğüm etiketi kartın altında kalmasın: yatayda yeterli boşluk
     let left = a.x + gap;
     let side: 'l' | 'r' = 'l';
-    if (left + cw > vw - 10) {
+    // telefon (Ömer 2026-11-20): kart iki yana da sığmıyorsa düğümü örtmesin; geniş olan yana sığacak kadar daralır (ok düğümü gösterir)
+    if (document.documentElement.classList.contains('short') && left + cw > vw - 10 && a.x - gap - cw < 8) {
+      const spaceR = vw - 10 - (a.x + gap);
+      const spaceL = a.x - gap - 8;
+      const useR = spaceR >= spaceL - 24; // eşitse sağ: sol panel (Your Party) açık kalır
+      const w = Math.floor(Math.max(260, useR ? spaceR : spaceL));
+      card.style.width = `${w}px`;
+      cw = card.offsetWidth;
+      ch = card.offsetHeight;
+      if (!useR) left = a.x - gap - cw;
+      side = useR ? 'l' : 'r';
+    } else if (left + cw > vw - 10) {
       left = a.x - gap - cw;
       side = 'r';
     }

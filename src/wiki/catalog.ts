@@ -460,17 +460,18 @@ export function buildGettingStarted(): WikiArticle[] {
   const pool = content.battles[content.DEFAULT_BATTLE]?.random?.pool.length ?? Object.keys(content.classes).length;
   return [
     article('goal', 'Basics', 'The goal', cx('gs_goal', 'sword'), [
-      p(`Pick a team of ${teamSize()} different classes (${pool} classes to choose from) and fight an enemy team that is picked the same way. Teams do not have to be this size: a side can field anywhere from 1 to ${f.formation.rows * f.formation.lanes} units. Defeat every enemy unit to win; if your whole team falls, you lose.`),
+      p(`Pick a team of ${teamSize()} different classes (${pool} classes to choose from) and fight an enemy team that is picked the same way. Teams do not have to be this size: a side can field anywhere from 1 to ${f.formation.rows * f.formation.lanes} units. Defeat every enemy unit to win; if your whole team falls, you lose. If both teams fall at the same moment (for example to the same blast), you lose too; in an online match it is a draw.`),
       p('You control your own team; the enemy team is played by the computer. Pick a skill, then pick its target (hover a target to preview the expected result).'),
     ]),
     article('turns', 'Basics', 'Turn order and the SPD counter', cx('gs_turns', 'hourglass'), [
       p(`Every unit has a SPD (speed) stat: ${num(a.spdBase)} + ${num(a.spdPerDex)} per point of Dexterity. On top of that, speed varies a little every turn, just like damage: each turn a unit's speed is up to ${num(Math.round((a.spdVariance ?? 0) * 100))}% faster or slower (rolled again for its next turn; the turn bar already shows the result). Each tick, every unit's action counter fills by its SPD; the first one to reach ${f.turn.threshold} acts, then its counter restarts.`),
       p(`Speed keeps its decimals: 15 SPD with 10% less Speed is 13.5, not a rounded number, so every speed bonus and penalty counts in full. Speed never drops below ${num(a.spdMin ?? 1)}.`),
-      p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Chilled).`),
+      p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Chilled). The bar already knows when Haste or Chilled will run out: the turns after that are shown at normal speed.`),
       p('A stunned unit skips its next turn. Status durations count down on the turns of the unit that carries them.'),
       p(debuffStackingText()),
       p(turnTimingText()),
     ]),
+    firstFireArticle(),
     article('formation', 'Basics', 'Formation and rows', 'ui:formation', [
       p(`Each side stands on a ${rows} x ${lanes} grid: ${rows} rows deep and ${lanes} lanes wide (${rows * lanes} cells). A normal team of ${teamSize()} leaves cells empty; a side of ${rows * lanes} fills the whole grid. Empty cells matter: a unit can step onto one with the Move action (see Actions in the Mechanics section).`),
       ...(f.range?.enabled
@@ -668,7 +669,7 @@ function multiplayerArticle(): WikiArticle {
     p('Main Menu > Multiplayer plays a Quick Battle against a friend online. One player presses Host lobby and gets a 6-letter lobby code; the friend opens the game, presses Join lobby and types the code, or simply opens the invite link (Copy invite link).'),
     p('When both players press Ready, each picks a team of 4 for their own side: the host plays the left side, the guest the right side. The other team stays hidden until both are ready, then the battle starts the same way on both screens.'),
     p("In battle you only control your own units, on their turns; during the other player's turns the panel says Opponent's turn. Both games check every move, so a move that breaks the rules is refused."),
-    p('If the connection drops, the battle pauses and a countdown runs. A player who comes back within 60 seconds (even after reloading the page) continues where the battle stopped; otherwise the player who stayed wins. Leaving the battle on purpose gives the win to the other player.'),
+    p('If the connection drops, the battle pauses and a countdown runs. A player who comes back within 60 seconds (even after reloading the page) continues where the battle stopped; otherwise the player who stayed wins. Leaving the battle on purpose gives the win to the other player. If both teams fall at the same moment, the match is a draw.'),
     p('After the battle: Rematch (both must agree; you pick teams again) or Back to lobby.'),
     p('You can set a short name in the lobby (Change name); only your opponent sees it. The random seed of each battle is made from a secret number of each player, so neither player can pick it. If a direct link between the two browsers is not possible, the game connects through the server instead.'),
   ]);
@@ -1003,6 +1004,9 @@ export function buildMechanics(): WikiArticle[] {
     ]),
     article('shields', 'Special rules', 'Shields', 'fx:barrier', [
       p('A shield soaks damage before HP. A normal shield absorbs any damage; a magic shield only absorbs magic damage. Shield amounts are fixed (no variance, no crit).'),
+      p('A shield takes the raw hit: armor, magic armor and damage reductions (Fortified, Blessed, resistances...) only cut the part that gets past the shield and reaches HP. Crits, weaknesses and effects that make the target take more damage hit the shield too. The damage preview shows the same split.'),
+      // Kalkan muafiyeti (Ömer 2026-11-21, form r40): yalnız iki Redtithe düğümü (tests/shield-exempt-vein.test.ts denetler)
+      p(`One exception: two Redtithe tree nodes, Spell-Proof Vein and Warded Steps, cut the hit before it reaches ${content.skills.spell_ward?.name ?? 'Mirror Vein'}, so the shield itself takes less. Armor still only cuts the part that reaches HP.`),
       p(`Skills that shield: ${skillsWith((e) => e.type === 'shield').join(', ') || 'none yet'}.`),
       p('Some shields do something extra whenever they absorb a hit (only direct hits from an enemy skill; damage from ground effects never triggers them). Their extra part soaks damage before any plain shield on the same unit. Every absorbed hit triggers them again: an attack that hits several times triggers them on every hit.'),
       list(
@@ -1058,7 +1062,7 @@ export function buildMechanics(): WikiArticle[] {
       p('Daze is not a control effect: it cannot be resisted and does not stop the target from acting, it only makes its next turn come later. The battle shows "Dazed" over the target. In test mode there is no turn order, so Daze does nothing there.'),
     ], '#c9a227'),
     article('control', 'Special rules', 'Taunt, guard and mana burn', 'taunt2', [
-      p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); only damage passes on: the hit's statuses and reactions (Stun, Shocked, thawing) stay on the guarded ally; a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). ${(() => { const g = content.skills.close_ranks?.effects.find((e) => e.type === 'guard'); return g && g.type === 'guard' && g.auraShare ? `While Close Ranks guards an ally that is not next to the Defender, that ally gains ${Math.round(g.auraShare * 100)}% of the Bulwark Aura armor bonus (it scales with the aura; an ally already in the aura keeps the full bonus, never both; it stops while the Defender is down). ` : ''; })()}A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
+      p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit gets a status that makes it lose its turn: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); only damage passes on: the hit's statuses and reactions (Stun, Shocked, thawing) stay on the guarded ally; a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). ${(() => { const g = content.skills.close_ranks?.effects.find((e) => e.type === 'guard'); return g && g.type === 'guard' && g.auraShare ? `While Close Ranks guards an ally that is not next to the Defender, that ally gains ${Math.round(g.auraShare * 100)}% of the Bulwark Aura armor bonus (it scales with the aura; an ally already in the aura keeps the full bonus, never both; it stops while the Defender is down). ` : ''; })()}A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
       p('Every mana burn follows one rule, whatever causes it (a skill, a Hall of Silence ground): the unit loses that much MP at once, never below 0, and "-N MP" shows over it. A unit with no mana loses nothing.'),
       p('Some mana burns take a share of the target\'s maximum MP instead of a fixed amount: a big mana pool loses more. See Silence for what happens when a target runs dry.'),
@@ -1252,6 +1256,17 @@ export function seaAndFactionsArticle(): WikiArticle {
     p("In Saltmere, the Guild and the Order of St. Brann both ask whom you serve. The choice is final. Stand with the Order: the Guild's enforcer holds Harbor Fort, the monks of Monk's Isle give you rest and a relic, merchants stock more armour and relics, and a ship costs gold. Stand with the Guild: the Inquisitor-Captain holds Harbor Fort, the wardens of Monk's Isle fight you for their storehouse, merchants stock more weapons and trinkets, and the Ferry Office charters you a ship as a favour. You may also put the choice off and come back to the square later."),
     ...(sight ? [p(`Light the lamp at Lantern Rock and you see ${sight} stop${sight === 1 ? '' : 's'} further along every road for the rest of the map.`)] : []),
 
+  ]);
+}
+
+/** The First Fire's Verdict (Ömer 2026-11-21, form r40/r41): her savaşta geçerli uzun savaş kuralı; sayılar data/battle-rules.json > firstFire. */
+export function firstFireArticle(): WikiArticle {
+  const r = content.firstFireRule();
+  return article('first-fire', 'Basics', r.name, cx('gs_turns', 'flame'), [
+    p(`Every battle has a limit. After ${r.afterMoves} moves (every action by any unit counts as one move), ${r.name} begins. You are warned ${r.warnFirst} moves before and again ${r.warnFinal} moves before.`),
+    p(`From then on, at the end of every Round the First Fire strikes twice: first a random living unit of one team, then a random living unit of the other. Which team is struck first is decided once per battle and stays the same. The first pair deals ${r.damage} damage per strike, and every pair after that deals ${r.damageStep} more.`),
+    p('A Round lasts as long as one turn of the slowest living unit at its normal speed: slowing, stunning or chilling a unit does not make the Rounds longer. Summons can be struck too.'),
+    p('Each strike is pure damage: it has no element and is neither physical nor magic. Armor, Magic Armor, shields, damage reduction, evasion, weaknesses and resistances do not change it, and it sets off no element or ground reaction. If both teams fall in the same pair, it counts as falling at the same moment: you lose, and an online match is a draw.'),
   ]);
 }
 

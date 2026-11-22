@@ -145,6 +145,9 @@ describe('Healing Rain: motor', () => {
 describe('Healing Rain: ağaç', () => {
   const dryFirst = (tree?: UnitSetup['tree']): { first: number; ground: number } => {
     const b = make({ 0: 'druid', 1: 'warrior' }, { 0: 'warrior' }, tree ? withTree(0, tree) : {});
+    P(b).stats.int *= 10; // küçük yüzdeler (ağaç ayarı 2026-11-21) tam sayı şifada kaybolmasın
+    P(b, 1).hp = 1;
+    P(b, 1).maxHp = 99999;
     const evs = rain(b, P(b), P(b, 1));
     return { first: firstHeal(evs, P(b, 1).uid), ground: b.ground.find((g) => g.ground === 'healing_rain')?.amount ?? 0 };
   };
@@ -157,7 +160,7 @@ describe('Healing Rain: ağaç', () => {
     const f2 = treeOf('druid')!.nodes['3.f2']!;
     expect(f2.fx![0]).toMatchObject({ sel: 'ground:healing_rain' });
     const t2 = only({ '3.f2': 5 })!.skills!.rejuvenate!.effects;
-    expect((t2.find((e) => e.type === 'ground') as { power: number }).power).toBeCloseTo(0.225 * 1.2, 6);
+    expect((t2.find((e) => e.type === 'ground') as { power: number }).power).toBeCloseTo(0.225 * (1 + 5 * (f2.fx![0] as unknown as { v: number }).v), 6); // oran veriden
     expect((t2.find((e) => e.type === 'heal') as { power: number }).power).toBeCloseTo(0.675, 6);
   });
 

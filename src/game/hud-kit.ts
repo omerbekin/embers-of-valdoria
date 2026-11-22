@@ -2,6 +2,7 @@ import { NUM_FONT } from '../ui/menu-style';
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { EL, diamondPts, elText, fadeLine, hGradient, vGradient } from './elegant-ui';
+import { drawCornerDots } from './corner-dots-gfx';
 
 /**
  * Savaş HUD'ı (alt çubuk: stat bloğu, skill düğmeleri, global düğmeler, bilgi kutusu; üst sıra çubuğu) için tasarım kiti parçaları
@@ -34,17 +35,9 @@ export function kitPlate(g: Phaser.GameObjects.Graphics, x: number, y: number, w
   if (o.strong || st === 'chosen') kitCorners(g, x, y, w, h, 4, a);
 }
 
-/** Dört köşede küçük içi koyu, altın çizgili elmas. */
-export function kitCorners(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, r = 4, alpha = 1): void {
-  for (const [cx, cy] of [
-    [x, y],
-    [x + w, y],
-    [x, y + h],
-    [x + w, y + h],
-  ] as const) {
-    g.fillStyle(0x140e09, alpha).fillPoints(diamondPts(cx, cy, r), true);
-    g.lineStyle(1, EL.GOLD, 0.75 * alpha).strokePoints(diamondPts(cx, cy, r), true);
-  }
+/** Köşe süsü: yuvarlak üç nokta (eski dört karo yerine sol üst + sağ alt; kural src/ui/corner-dots-rule.ts). */
+export function kitCorners(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, _r = 4, alpha = 1): void {
+  drawCornerDots(g, x, y, w, h, { alpha });
 }
 
 /**

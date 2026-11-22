@@ -1,6 +1,6 @@
 {
   "class": "archer",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "a",
@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Still Hands",
-        "text": "If you did not move last turn, your first skill +3% critical chance.",
+        "text": "If you did not move last turn, your first skill +0.75% critical chance.",
         "src": "A:V1:bar2",
         "fx": [
           {
@@ -56,7 +56,7 @@
               "notMovedLastTurn": true
             },
             "mod": {
-              "critBonus": 0.03
+              "critBonus": 0.0075
             }
           }
         ]
@@ -80,7 +80,7 @@
       {
         "at": 15,
         "name": "Wide Nock",
-        "text": "Piercing Arrow falloff 5% smaller.",
+        "text": "Piercing Arrow falloff 1% smaller.",
         "src": "A:V4:bar1",
         "fx": [
           {
@@ -89,7 +89,7 @@
             "sel": "damage",
             "f": "falloff",
             "op": "add",
-            "v": 0.05
+            "v": 0.01
           }
         ]
       },
@@ -112,7 +112,7 @@
       {
         "at": 25,
         "name": "Plate Reader",
-        "text": "Aimed Shot ignores 5% more Armor.",
+        "text": "Aimed Shot ignores 1% more Armor.",
         "src": "A:V1:bar1",
         "fx": [
           {
@@ -121,7 +121,7 @@
             "sel": "damage",
             "f": "ignoreDefense",
             "op": "add",
-            "v": 0.05
+            "v": 0.01
           }
         ]
       }
@@ -130,21 +130,21 @@
   "nodes": {
     "0.f1": {
       "name": "Long Sight",
-      "text": "Sharpshooter +1% damage per row of distance per rank.",
+      "text": "Sharpshooter +0.25% damage per row of distance per rank.",
       "src": "A:V1:0.f1",
       "fx": [
         {
           "k": "passive",
           "f": "perRow",
           "op": "add",
-          "v": 0.01,
+          "v": 0.0025,
           "rank": true
         }
       ]
     },
     "0.f2": {
       "name": "Steady Feet",
-      "text": "If you did not move last turn, your skills +4% critical chance per rank.",
+      "text": "If you did not move last turn, your skills +1% critical chance per rank.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -154,7 +154,7 @@
             "notMovedLastTurn": true
           },
           "mod": {
-            "critBonus": 0.04
+            "critBonus": 0.01
           },
           "rank": true
         }
@@ -162,7 +162,7 @@
     },
     "0.f3": {
       "name": "Gap in the Plate",
-      "text": "Against targets 4+ rows away, your skills ignore 6% of Armor per rank.",
+      "text": "Against targets 4+ rows away, your skills ignore 1.25% of Armor per rank.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -172,7 +172,7 @@
             "targetDistance": 4
           },
           "mod": {
-            "ignoreDefense": 0.06
+            "ignoreDefense": 0.0125
           },
           "rank": true
         }
@@ -197,7 +197,7 @@
     },
     "0.r": {
       "name": "Killing Distance",
-      "text": "Critical hits against targets 5+ rows away deal 5% increased damage per rank.",
+      "text": "Critical hits against targets 5+ rows away deal 1% increased damage per rank.",
       "src": "A:V1:0.r",
       "fx": [
         {
@@ -208,7 +208,7 @@
             "hitIsCrit": true
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.01
           },
           "rank": true
         }
@@ -216,7 +216,7 @@
     },
     "0.ea": {
       "name": "Patient Aim",
-      "text": "If no enemy hit you since your last turn, your skill +12% critical chance.",
+      "text": "If no enemy hit you since your last turn, your skill +2.75% critical chance.",
       "src": "A:V1:0.ea",
       "fx": [
         {
@@ -226,14 +226,14 @@
             "notHitSinceMyTurn": true
           },
           "mod": {
-            "critBonus": 0.12
+            "critBonus": 0.0275
           }
         }
       ]
     },
     "0.eb": {
       "name": "Long Pin",
-      "text": "Your skills against targets 5+ rows away have a 10% chance to Hobble for 1 turn.",
+      "text": "Your skills against targets 5+ rows away have a 2.25% chance to Hobble for 1 turn.",
       "src": "A:V3:0.ea",
       "fx": [
         {
@@ -246,7 +246,7 @@
             "addStatus": {
               "status": "slow",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.0225
             }
           }
         }
@@ -254,7 +254,7 @@
     },
     "0.ma": {
       "name": "Held Breath",
-      "text": "Skip Turn steadies your aim: your next skill is a sure critical and ignores 20% of Armor.",
+      "text": "Skip Turn steadies your aim: your next skill is a sure critical and ignores 4.5% of Armor.",
       "src": "A:V1:0.ma",
       "fx": [
         {
@@ -265,7 +265,7 @@
             {
               "buff": {
                 "guaranteedCrit": true,
-                "ignoreDefense": 0.2
+                "ignoreDefense": 0.045
               }
             }
           ]
@@ -274,14 +274,14 @@
     },
     "0.fa": {
       "name": "Tunnel Vision",
-      "text": "Sharpshooter +4% per row of distance, but targets 2 or fewer rows away take 25% less damage from you.",
+      "text": "Sharpshooter +1% per row of distance, but targets 2 or fewer rows away take 25% less damage from you.",
       "src": "A:V1:0.fa",
       "fx": [
         {
           "k": "passive",
           "f": "perRow",
           "op": "add",
-          "v": 0.04
+          "v": 0.01
         },
         {
           "k": "hook",
@@ -362,7 +362,7 @@
     },
     "1.f1": {
       "name": "Hock Shot",
-      "text": "Quick Shot has a 5% chance per rank to Hobble for 1 turn.",
+      "text": "Quick Shot has a 1% chance per rank to Hobble for 1 turn.",
       "src": "A:V3:1.f1",
       "fx": [
         {
@@ -373,19 +373,19 @@
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.05
+              "chance": 0.01
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.02
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.15
+              "chance": 0.03
             }
           ]
         }
@@ -393,7 +393,7 @@
     },
     "1.f2": {
       "name": "Practiced Release",
-      "text": "Quick Shot +4% critical chance per rank against targets 4+ rows away.",
+      "text": "Quick Shot +1% critical chance per rank against targets 4+ rows away.",
       "src": "A:V1:1.f3",
       "fx": [
         {
@@ -403,7 +403,7 @@
             "targetDistance": 4
           },
           "mod": {
-            "critBonus": 0.04
+            "critBonus": 0.01
           },
           "rank": true
         }
@@ -411,7 +411,7 @@
     },
     "1.f3": {
       "name": "Sting in the Eye",
-      "text": "Quick Shot has a 5% chance per rank to Blind for 1 turn.",
+      "text": "Quick Shot has a 1% chance per rank to Blind for 1 turn.",
       "src": "A:V3:1.f3",
       "fx": [
         {
@@ -422,31 +422,31 @@
               "type": "status",
               "status": "blinded",
               "turns": 1,
+              "chance": 0.01
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.02
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.03
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.04
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
               "chance": 0.05
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.1
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.15
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.2
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.25
             }
           ]
         }
@@ -474,7 +474,7 @@
     },
     "1.r": {
       "name": "Spiteful Nock",
-      "text": "Quick Shot +2% critical chance per rank against Hobbled or Blinded enemies.",
+      "text": "Quick Shot +0.5% critical chance per rank against Hobbled or Blinded enemies.",
       "src": "A:V3:1.r",
       "fx": [
         {
@@ -487,7 +487,7 @@
             ]
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.005
           },
           "rank": true
         }
@@ -559,12 +559,15 @@
     },
     "1.fa": {
       "name": "Leg Shot Only",
-      "text": "Quick Shot always Hobbles for 2 turns, but no longer gives you Haste.",
+      "text": "Quick Shot always Hobbles for 2 turns, but gives you Haste for 1 turn instead of 2.",
       "src": "A:V3:1.fa",
       "fx": [
         {
-          "k": "removeEffect",
-          "sel": "status:haste"
+          "k": "skill",
+          "sel": "status:haste",
+          "f": "turns",
+          "op": "set",
+          "v": 1
         },
         {
           "k": "addEffect",
@@ -665,7 +668,7 @@
     },
     "2.f1": {
       "name": "Tempered Point",
-      "text": "Piercing Arrow ignores 4% of Armor per rank.",
+      "text": "Piercing Arrow ignores 1% of Armor per rank.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -673,14 +676,14 @@
           "sel": "damage",
           "f": "ignoreDefense",
           "op": "add",
-          "v": 0.04,
+          "v": 0.01,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Weighted Head",
-      "text": "Piercing Arrow deals 6% increased damage per rank against enemies with more Armor than you.",
+      "text": "Piercing Arrow deals 1.25% increased damage per rank against enemies with more Armor than you.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -690,7 +693,7 @@
             "targetArmorAboveMine": true
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.0125
           },
           "rank": true
         }
@@ -698,7 +701,7 @@
     },
     "2.f3": {
       "name": "Narrow Bodkin",
-      "text": "Piercing Arrow falloff 3% smaller per rank against enemies with 20+ Armor.",
+      "text": "Piercing Arrow falloff 0.75% smaller per rank against enemies with 20+ Armor.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -708,7 +711,7 @@
             "targetArmorAtLeast": 20
           },
           "mod": {
-            "falloffAdd": 0.03
+            "falloffAdd": 0.0075
           },
           "rank": true
         }
@@ -740,7 +743,7 @@
     },
     "2.r": {
       "name": "Rivet Breaker",
-      "text": "Piercing Arrow deals 3% increased damage per rank against Fortified or Blessed enemies.",
+      "text": "Piercing Arrow deals 0.75% increased damage per rank against Fortified or Blessed enemies.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -753,7 +756,7 @@
             ]
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.0075
           },
           "rank": true
         }
@@ -813,7 +816,7 @@
     },
     "2.fa": {
       "name": "Brittle Point",
-      "text": "Sunder lowers Armor by 40% instead of 20%, but Piercing Arrow stops after the second enemy.",
+      "text": "Sunder lowers Armor by 24.5% instead of 20%, but Piercing Arrow stops after the second enemy.",
       "src": "D:new row proposal",
       "fx": [
         {
@@ -829,7 +832,7 @@
           "sel": "status:sunder",
           "mod": {
             "statusPotency": {
-              "armorMult": -0.2
+              "armorMult": -0.045
             }
           }
         }
@@ -897,7 +900,7 @@
     },
     "3.f1": {
       "name": "Thick Volley",
-      "text": "Arrow Rain deals 4% increased damage per rank.",
+      "text": "Arrow Rain deals 1% increased damage per rank.",
       "src": "A:V4:3.f1",
       "fx": [
         {
@@ -905,14 +908,14 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.01,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Scatter Shot",
-      "text": "Arrow Rain has a 5% chance per rank to Hobble each enemy hit for 1 turn.",
+      "text": "Arrow Rain has a 1% chance per rank to Hobble each enemy hit for 1 turn.",
       "src": "A:V2:3.f2",
       "fx": [
         {
@@ -922,31 +925,31 @@
               "type": "status",
               "status": "slow",
               "turns": 1,
+              "chance": 0.01
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.02
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.03
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.04
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
               "chance": 0.05
-            },
-            {
-              "type": "status",
-              "status": "slow",
-              "turns": 1,
-              "chance": 0.1
-            },
-            {
-              "type": "status",
-              "status": "slow",
-              "turns": 1,
-              "chance": 0.15
-            },
-            {
-              "type": "status",
-              "status": "slow",
-              "turns": 1,
-              "chance": 0.2
-            },
-            {
-              "type": "status",
-              "status": "slow",
-              "turns": 1,
-              "chance": 0.25
             }
           ]
         }
@@ -954,7 +957,7 @@
     },
     "3.f3": {
       "name": "Rear Volley",
-      "text": "Arrow Rain deals 6% increased damage per rank to enemies in their back row.",
+      "text": "Arrow Rain deals 1.25% increased damage per rank to enemies in their back row.",
       "src": "A:V1:3.f3",
       "fx": [
         {
@@ -964,7 +967,7 @@
             "targetRow": "back"
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.0125
           },
           "rank": true
         }
@@ -992,7 +995,7 @@
     },
     "3.r": {
       "name": "Stinging Shower",
-      "text": "Arrow Rain deals 2% increased damage per rank for each Hobbled enemy in its area.",
+      "text": "Arrow Rain deals 0.5% increased damage per rank for each Hobbled enemy in its area.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -1002,7 +1005,7 @@
             "hitWithStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.005
           },
           "rank": true
         }
@@ -1027,7 +1030,7 @@
     },
     "3.eb": {
       "name": "Lingering Hail",
-      "text": "Arrow Rain keeps raining for 1 turn: enemies in its area are Bleeding while inside (15% damage at the start of their turns).",
+      "text": "Arrow Rain keeps raining for 1 turn: enemies in its area are Bleeding while inside (3.25% damage at the start of their turns).",
       "src": "A:V4:3.ea",
       "fx": [
         {
@@ -1037,14 +1040,14 @@
             "ground": "lingering_rain",
             "turns": 1,
             "scale": "dex",
-            "power": 0.15
+            "power": 0.0325
           }
         }
       ]
     },
     "3.ma": {
       "name": "Killing Field",
-      "text": "Enemies in your field of shafts are Blinded while inside and take 20% DEX at the start of their turns.",
+      "text": "Enemies in your field of shafts are Blinded while inside and take 4.5% DEX at the start of their turns.",
       "src": "A:V3:3.ma",
       "fx": [
         {
@@ -1052,7 +1055,7 @@
           "sel": "ground:field_of_shafts",
           "f": "power",
           "op": "add",
-          "v": 0.2,
+          "v": 0.045,
           "needs": "3.ea"
         },
         {
@@ -1137,7 +1140,7 @@
     },
     "3.v": {
       "name": "Arrow Storm",
-      "text": "Arrow Rain evolves: it covers 4 rows instead of 3 and leaves a 2-turn rain on the area: enemies there are Bleeding while inside (20% per turn).",
+      "text": "Arrow Rain evolves: it covers 4 rows instead of 3 and leaves a 2-turn rain on the area: enemies there are Bleeding while inside (4.5% per turn).",
       "src": "A:V4:3.v",
       "fx": [
         {
@@ -1154,14 +1157,14 @@
             "ground": "lingering_rain",
             "turns": 2,
             "scale": "dex",
-            "power": 0.2
+            "power": 0.045
           }
         }
       ]
     },
     "4.u1": {
       "name": "Killing Shot",
-      "text": "Aimed Shot deals 25% increased damage against enemies below 50% HP.",
+      "text": "Aimed Shot deals 5.5% increased damage against enemies below 50% HP.",
       "src": "B:V5:4.u1",
       "fx": [
         {
@@ -1171,7 +1174,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.25
+            "powerMul": 0.055
           }
         }
       ]
@@ -1195,7 +1198,7 @@
     },
     "4.u3": {
       "name": "Deathblow",
-      "text": "Aimed Shot deals +1% for every 1% HP the target is missing.",
+      "text": "Aimed Shot deals +0.25% for every 1% HP the target is missing.",
       "src": "B:V5:4.u3",
       "fx": [
         {
@@ -1203,7 +1206,7 @@
           "sel": "damage",
           "f": "executeBonus",
           "op": "set",
-          "v": 1
+          "v": 0.25
         }
       ]
     },
@@ -1244,7 +1247,7 @@
     },
     "4.r3": {
       "name": "Next in Line",
-      "text": "If Aimed Shot kills, your next skill deals 35% increased damage and cannot miss.",
+      "text": "If Aimed Shot kills, your next skill deals 7.75% increased damage and cannot miss.",
       "src": "B:V5:4.r3",
       "fx": [
         {
@@ -1254,7 +1257,7 @@
           "do": [
             {
               "buff": {
-                "powerMul": 0.35,
+                "powerMul": 0.0775,
                 "sureHit": true
               }
             }
@@ -1295,7 +1298,7 @@
     },
     "4.d3": {
       "name": "Lightning Draw",
-      "text": "If you are faster than the target, Aimed Shot fires twice (the second at 35%).",
+      "text": "If you are faster than the target, Aimed Shot fires twice (the second at 7.75%).",
       "src": "B:V2:4.u3",
       "fx": [
         {
@@ -1307,7 +1310,7 @@
           },
           "do": [
             {
-              "strike": 0.35,
+              "strike": 0.0775,
               "to": "target"
             }
           ]

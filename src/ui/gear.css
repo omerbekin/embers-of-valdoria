@@ -2000,7 +2000,7 @@ html.rotated .gr-loot-tile.rb-tile {
 
 /* kısa ekran (844x390): sol sütun başlık, sağ sütun stat + şart / değer + kahramanlar */
 html.short .item-tip {
-  width: min(594px, 96%);
+  width: min(430px, 96%);
   font-size: calc(12px * var(--tx, 1));
 }
 
@@ -4835,8 +4835,14 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
   --bag-cols: 5;
 }
 
+/* telefon sol / sağ oranı TEK değişkenden (Ömer 2026-11-20): Hero sekmesinin oranı Sheet'te de geçerli (--gr-lcol / --gr-rcol) */
+html.short .gr-ledger {
+  --gr-lcol: minmax(0, 1fr);
+  --gr-rcol: minmax(0, 1fr);
+}
+
 html.short .gr-ledger .gr-lbody {
-  grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr);
+  grid-template-columns: 54px var(--gr-lcol) 1px var(--gr-rcol);
 }
 
 /* telefon: torba hücresi >= 44 px olsun diye 4 sütun (30 yuva = 8 satır, kendi içinde kayar); yer imleri sıkı (4 kahraman kaydırmasız sığar) */
@@ -4942,9 +4948,16 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
   grid-area: 1 / 1;
 }
 
-/* torba tüm genişlikte olduğu için eski 6 sütun kalır */
+/* torba tüm genişlikte: 7 sütun (Ömer 2026-11-21: 21:9'da 6 sütun dev hücre yapıyor, 2 satır görünüyordu; 7 sütunla 3 satır sığar) */
 .gr-overlay .gr-ledger.gr-bagonly .gr-inv .gr-bag {
-  --bag-cols: 6;
+  --bag-cols: 7;
+}
+
+/* 21:9 (2580x1080): 7 sütunda hücre 255 px, torba yalnız 2 satır görünüyordu, altta boşluk kalıyordu; 10 sütunda 3 satır (30 yuva) sığar (doğrulama turu 2026-11-21) */
+@media (min-aspect-ratio: 2/1) {
+  html:not(.short) .gr-overlay .gr-ledger.gr-bagonly .gr-inv .gr-bag {
+    --bag-cols: 10;
+  }
 }
 
 /* Düşmüş kahraman (Ömer 2026-10-18): soluk portre, "Fallen" şeridi, kilitli yuvalar (ipucu açık kalır) */
@@ -5114,29 +5127,6 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
 }
 
 /* köşe elmasları ikonun boyuyla ölçeklenir (Ömer 2026-11-07: Tree sekmesi / telefon plakalarında elmaslar ikona göre fazla büyüktü); %: .pl-ico'ya göre */
-.gr-pl .pl-ico::before,
-.gr-pl .pl-ico::after {
-  content: '';
-  position: absolute;
-  width: max(4px, 12.5%);
-  aspect-ratio: 1;
-  box-sizing: border-box;
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid var(--acl);
-  z-index: 2;
-}
-
-.gr-pl .pl-ico::before {
-  left: -6.5%;
-  top: -6.5%;
-}
-
-.gr-pl .pl-ico::after {
-  right: -6.5%;
-  bottom: -6.5%;
-}
-
 .gr-pl .pl-ico img {
   width: 100%;
   height: 100%;
@@ -6109,8 +6099,10 @@ html.short .sh-foot.idle {
   transition: opacity 0.3s;
 }
 
-.sh-tile.done::after {
+.sh-tile.done::after,
+.sh-tile.hold-out::after {
   opacity: 0;
+  transition: opacity var(--m-hold-fade, 250ms) ease-out;
 }
 
 .sh-tile.done {
@@ -6436,9 +6428,9 @@ html.short .sh-n {
   min-width: 1.2em;
 }
 
-/* telefon Sheet: sağdaki skill ağacı kabı henüz boş ("Coming soon"); sol sayfa genişler ki stat adları tam yazılsın */
+/* telefon Sheet: sütun oranı Hero ile aynı (yukarıdaki ortak değişkenler; Ömer 2026-11-20) */
 html.short .gr-ledger.tab-sheet .gr-lbody {
-  grid-template-columns: 54px minmax(0, 2.1fr) 1px minmax(0, 0.8fr);
+  grid-template-columns: 54px var(--gr-lcol) 1px var(--gr-rcol);
 }
 
 /* Hero / Sheet sekme ikonu (Ömer 2026-10-19): yazının önünde küçük, sekme olduğu anlaşılsın */
@@ -6475,6 +6467,33 @@ html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-lskills {
 
 html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-slots {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* tüccar / demirci yanındaki telefon Gear'ı (Ömer 2026-11-20): 8 yuva kaydırmasız sığar (satır ~32px; Power / özellik satırı ipucunda), torba satırı 5 item */
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot):not(.gr-bagonly):not(.tab-tree):not(.tab-sheet) .gr-leaf-hero > .gr-slots {
+  grid-auto-rows: minmax(30px, 1fr);
+  gap: 2px;
+}
+
+html.short .gr-pair > .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gp-l2 {
+  display: none;
+}
+
+html.short .gr-pair > .gr-ledger .gr-leaf-hero .gr-slot.gr-plate {
+  min-height: 0;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+html.short .gr-pair > .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gp-ico {
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  align-self: center;
+}
+
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot):not(.gr-bagonly):not(.tab-tree):not(.tab-sheet) .gr-inv .gr-bag {
+  --bag-cols: 5;
 }
 
 /* Torba başlığı: filtre düğmesi (All items) Best düğmeleriyle (gr-btn sm) aynı yükseklik ve dikey hizada */
@@ -6564,6 +6583,13 @@ html.short .sh-tile .sh-n {
   .sh-main,
   html.short .sh-main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* telefon Sheet, Hero ile aynı sütun oranı (Ömer 2026-11-20): sol sayfa ~340 px, Main yine tek şerit (4 kutu); ad kutuya göre küçülür */
+@container (min-width: 300px) and (max-width: 480px) {
+  html.short .sh-main {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -7250,4 +7276,72 @@ html.short .sh-sl {
 
 html.short .sh-main {
   margin-bottom: 4px;
+}
+
+/* Sheet: ANA (primary) stat bir bakışta (Ömer 2026-11-21): oyundaki primary altını (PRIMARY_GOLD #ffd700, savaş ipucu başlığıyla aynı) kullanır:
+   dolu altın kenar + altın zemin + adın yanında dolu altın elmas. Boyuttan bağımsız (em); can-add / hover kuralları aynen sürer. */
+.sh-row.sh-tile.p {
+  border-color: rgba(255, 215, 0, 0.85);
+  background: linear-gradient(180deg, rgba(120, 88, 14, 0.62), rgba(30, 20, 6, 0.45));
+  box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.22), 0 0 10px rgba(255, 215, 0, 0.22);
+}
+
+.sh-row.sh-tile.p .sh-k {
+  color: #ffd700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.sh-row.sh-tile.p .sh-k::after {
+  content: '';
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  transform: rotate(45deg);
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+}
+
+.sh-row.sh-tile.p.off {
+  filter: saturate(0.5);
+}
+
+/* Gear başlığı: GEAR yazısı pencere ortasında (Ömer 2026-11-21). Sekmeli başlıkta yazı sekme ile Blessings arasındaki sütunun ortasındaydı (sağa kayıyordu);
+   şimdi başlık şeridinin tam ortasına oturur (şerit pencere genişliğinde; sağ dolgu X / tam ekran için, mutlak konum dolguyu yok sayar). Sütun yine yedek genişliği ayırır. */
+.gr-ledger > .gr-lhead:has(.gr-headtabs) {
+  position: relative;
+}
+.gr-ledger > .gr-lhead:has(.gr-headtabs) > .gr-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: fit-content;
+  top: 50%;
+  transform: translateY(-50%);
+  grid-column: auto;
+  z-index: 0;
+}
+.gr-ledger > .gr-lhead:has(.gr-headtabs) > :is(.gr-headtabs, .gr-boons) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Blessings: önünde ortak Wayshrine / blessing ikonu (BAG etiketiyle aynı boy: .gr-sec.gr-has-ico .gr-ui-ico) */
+.gr-boons {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+}
+.gr-boons .gr-ui-ico {
+  width: max(18px, calc(26 * var(--u)));
+  height: max(18px, calc(26 * var(--u)));
+  margin: 0;
+}
+
+/* Telefon, tüccar / Blacksmith yanında dar Gear (çift pencere): sekmeler + başlık sığmıyor, "GEAR" sekmelere yapışıp "TREE GEAR" gibi okunuyordu
+   (Ömer 2026-11-21). En dar çözüm: bu durumda başlık gizlenir (sekmeler zaten Gear'ı anlatır); masaüstü / 21:9 ve tek pencerede başlık durur. */
+html.short .gr-pair .gr-ledger > .gr-lhead:has(.gr-headtabs) > .gr-title {
+  display: none;
 }

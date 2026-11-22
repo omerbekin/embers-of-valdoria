@@ -37,7 +37,7 @@ const seenAllBut = (s: CampaignState, keep: string): CampaignState => CINEMATIC_
 
 describe('veri', () => {
   it('beş sahne var, her satırın metni ve konuşanı dolu; metinler veride', () => {
-    expect(CINEMATIC_IDS).toEqual(['prologue', 'bridge_fallen', 'forward_camp', 'morvane_meets', 'morvane_falls']);
+    expect(CINEMATIC_IDS).toEqual(['prologue', 'bridge_fallen', 'forward_camp', 'morvane_meets', 'morvane_falls', 'first_fire_mend', 'first_fire_quench']); // son ikisi Harita 3 kapanışı (Ömer 2026-11-21 r38-r39; tests/game-ending.test.ts)
     for (const id of CINEMATIC_IDS) {
       const def = CINEMATICS[id]!;
       expect(def.scenes.length, id).toBeGreaterThan(0);

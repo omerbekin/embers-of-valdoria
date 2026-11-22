@@ -18,11 +18,12 @@ import { ensureIcon } from './icons';
 import { SHARED_KEY } from './asset-versions';
 import { tierStyle, unitName } from './unit-label';
 import { DISPLAY_FONT } from '../ui/menu-style';
+import { BLOOD_COLOR } from '../ui/stat-icons';
 import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
 import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
-import { bakePoseTexture, ensurePoseSources, poseDisplayScale } from './pose-rig';
+import { bakePoseTexture, ensurePoseSources, poseDisplayScale, throwItemKey } from './pose-rig';
 import { HIT_REACTION, hitReaction, type HitReaction } from './hit-reaction';
 import { POSE_TIMING, viewMotion, endDelay, holdEndDelay, idleRequestDelay, isHoldSkill, throwHoldDelay, type PoseHold } from './pose-timing';
 
@@ -139,8 +140,15 @@ export class CombatantView {
   private readonly mpBack: Phaser.GameObjects.Rectangle;
   /** Ley Brand: MP çubuğunun gösterdiği maks (taint olayıyla değişir; motorun canlı durumu oynatmadan önde olabilir). */
   private mpMax: number;
+  /** Şerit mana yerine kanı gösterir (manasız kan birimi). */
+  private readonly bloodPool: boolean;
   /** SPEED (sıra sayacı) çubuğu: mana çubuğunun altında, yalnızca turns modunda görünür. */
   private readonly speedBox: Phaser.GameObjects.Container;
+  /** Gambler: Lucky Streak fişleri (can çubuğu altında; yalnız luckyStreak pasifli birimde). */
+  private streakBox?: Phaser.GameObjects.Container;
+  private streakChips: Phaser.GameObjects.Graphics[] = [];
+  private streakHalo?: Phaser.GameObjects.Arc;
+  private streakValue = 0;
   private readonly speedFill: Phaser.GameObjects.Rectangle;
   private readonly speedGlow: Phaser.GameObjects.Rectangle;
   private speedFull = false;
@@ -278,21 +286,24 @@ export class CombatantView {
       .rectangle(-hpBar.width / 2, this.hpY, hpBar.width, hpBar.height, color(combatant.side === 'party' ? colors.hpFill : colors.hpFillEnemy))
       .setOrigin(0, 0.5);
     this.hpBox = scene.add.container(0, 0, [hpOuter, hpBack, this.hpGhost, this.hpFill]);
-    this.mpMax = combatant.maxMp;
+    // Kan çubuğu (Ömer 2026-11-21): manasız kan birimi (Redtithe) aynı şeritte kanını gösterir; mana birimleri aynen
+    this.bloodPool = combatant.maxMp <= 0 && combatant.maxBlood !== undefined && combatant.maxBlood > 0;
+    this.mpMax = this.bloodPool ? combatant.maxBlood! : combatant.maxMp;
+    const resBar = this.mpMax > 0;
     const mpBack = (this.mpBack = scene.add
       .rectangle(0, mpY, hpBar.width, hpBar.mpHeight, KIT.back, 0.92)
       .setStrokeStyle(1, KIT.gold, 0.4)
-      .setVisible(combatant.maxMp > 0));
+      .setVisible(resBar));
     // Hayalet çubuk: can çubuğundakiyle aynı, mana düşünce bir süre eski seviyede kalıp yavaşça iner
     this.mpGhost = scene.add
       .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpGhost))
       .setOrigin(0, 0.5)
       .setAlpha(0)
-      .setVisible(combatant.maxMp > 0);
+      .setVisible(resBar);
     this.mpFill = scene.add
-      .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(colors.mpFill))
+      .rectangle(-hpBar.width / 2, mpY, hpBar.width, hpBar.mpHeight, color(this.bloodPool ? BLOOD_COLOR : colors.mpFill))
       .setOrigin(0, 0.5)
-      .setVisible(combatant.maxMp > 0);
+      .setVisible(resBar);
     // SPEED çubuğu: mana çubuğunun altında ince bir şerit; sayaç dolunca (sıra bu karakterde) parlar
     const spdY = mpY + hpBar.mpHeight / 2 + hpBar.speedHeight / 2 + 3;
     const speedBack = scene.add.rectangle(0, spdY, hpBar.width, hpBar.speedHeight, KIT.back, 0.9).setStrokeStyle(1, KIT.gold, 0.32);
@@ -327,7 +338,9 @@ export class CombatantView {
       nameStyle.strokeThickness = 7;
       nameStyle.shadow = { offsetX: 0, offsetY: 0, color: '#f0a43a', blur: 10, stroke: true, fill: true };
     }
-    const name = scene.add.text(0, this.hpY - hpBar.height - 4, unitName(combatant), nameStyle).setOrigin(0.5, 1);
+    // Lucky Streak fişleri ad ile can çubuğunun ARASINDA durur (Ömer 2026-11-22): ad 22 px yukarı kayar
+    const streakLift = combatant.passive?.effect?.type === 'luckyStreak' ? 22 : 0;
+    const name = scene.add.text(0, this.hpY - hpBar.height - 4 - streakLift, unitName(combatant), nameStyle).setOrigin(0.5, 1);
     this.nameText = name;
     if (isBoss) {
       // Çok uzunsa iki satıra böl (orta boşluktan), hâlâ taşıyorsa ORANI KORUYARAK küçült
@@ -366,7 +379,7 @@ export class CombatantView {
       tierBadge.push(label);
     }
     // Sırası gelen birim: adın üstünde kor elmas (eski sarı ok) + ayaklarının altında kor / altın halka
-    const my = this.hpY - hpBar.height - 62 + 14;
+    const my = this.hpY - hpBar.height - 62 + 14 - streakLift; // ad yukarı kaydıysa (Lucky Streak fişleri) işaret de ismin üstünde kalır
     this.marker = scene.add.graphics().setVisible(false);
     const dpts = (r: number) => [new Phaser.Math.Vector2(0, my - r), new Phaser.Math.Vector2(r, my), new Phaser.Math.Vector2(0, my + r), new Phaser.Math.Vector2(-r, my)];
     this.marker.fillStyle(KIT.ember, 0.25).fillPoints(dpts(17), true);
@@ -421,8 +434,11 @@ export class CombatantView {
     ]);
     this.container.setDepth(y); // öndeki sıra arkadakinin üstünde çizilir
     this.overlayParts = [this.hpBox, mpBack, this.mpGhost, this.mpFill, this.speedBox, this.shieldFill, this.blockBack, this.blockFill, this.touchBack, this.touchFill, this.magicShieldFill, this.statusBox, this.sealBox, this.sealFx, this.badgeFx, name, ...tierBadge, this.marker, this.footRing, this.selFrame] as Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha>;
+    const lp = combatant.passive?.effect;
+    if (lp?.type === 'luckyStreak') this.buildStreak(lp.max, this.hpY - hpBar.height / 2 - 14);
     this.setHp(combatant.hp, false);
-    this.setMp(combatant.mp, false);
+    if (this.bloodPool) this.setBlood(combatant.blood ?? 0, false);
+    else this.setMp(combatant.mp, false);
     this.setShield(combatant.shield, combatant.magicShield, false);
     this.setBlock(combatant.encased?.hp ?? 0, combatant.encased?.maxHp ?? 0, false);
     if (combatant.touch?.type === 'overheat') this.setTouchBar(combatant.heat ?? 0, combatant.touch.max, 0xff8a3a, false);
@@ -430,6 +446,70 @@ export class CombatantView {
     this.syncTone();
     this.play('idle');
     if (combatant.empowered) this.setEmpowered(true); // beslenmiş çağrı (Raise Dead): kalıcı hafif mor aura
+  }
+
+  /** Lucky Streak fişleri: boş çerçeve, dolu fiş (kırmızı gövde, beyaz çentik, altın halka). */
+  private buildStreak(max: number, y: number): void {
+    const gap = 24;
+    this.streakBox = this.scene.add.container(0, y);
+    this.streakHalo = this.scene.add.circle(0, 0, (max * gap) / 2 + 6, 0xffd23f, 0).setVisible(false);
+    this.streakBox.add(this.streakHalo);
+    for (let i = 0; i < max; i++) {
+      const g = this.scene.add.graphics({ x: (i - (max - 1) / 2) * gap, y: 0 });
+      this.streakChips.push(g);
+      this.streakBox.add(g);
+    }
+    this.container.add(this.streakBox);
+    this.overlayParts.push(this.streakBox as unknown as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha);
+    this.paintStreak(0, max);
+  }
+
+  private paintStreak(n: number, max: number): void {
+    this.streakChips.forEach((g, i) => {
+      g.clear();
+      const on = i < n;
+      if (!on) {
+        g.fillStyle(0x120a05, 0.9).fillCircle(0, 0, 9);
+        g.lineStyle(2, 0xe0b44a, 0.95).strokeCircle(0, 0, 9);
+        return;
+      }
+      g.fillStyle(0x120a05, 1).fillCircle(0, 0, 10.5);
+      g.fillStyle(0xc0182a, 1).fillCircle(0, 0, 9);
+      for (let k = 0; k < 8; k++) {
+        const a = (k * Math.PI) / 4;
+        g.fillStyle(0xfdfaf2, 1).fillRect(Math.cos(a) * 7.4 - 1.6, Math.sin(a) * 7.4 - 1.6, 3.2, 3.2);
+      }
+      g.lineStyle(2, 0xffd23f, 1).strokeCircle(0, 0, 5.2);
+      g.fillStyle(0xffd23f, 1).fillCircle(0, 0, 2.2);
+    });
+    void max;
+  }
+
+  /** Seri değişti (motorun `streak` olayı): yeni fiş zıplayarak dolar, boşalan fiş söner, dolunca altın ışıma sürer. */
+  setStreak(after: number, max: number, animate = true): void {
+    if (!this.streakBox) return;
+    const before = this.streakValue;
+    this.streakValue = after;
+    this.paintStreak(after, max);
+    const gained = after > before;
+    if (animate) {
+      this.streakChips.forEach((g, i) => {
+        if (gained && i >= before && i < after) {
+          g.setScale(1.9);
+          this.scene.tweens.add({ targets: g, scale: 1, duration: 260, ease: 'Back.easeOut' });
+        } else if (!gained && i >= after && i < before) {
+          g.setAlpha(0.2);
+          this.scene.tweens.add({ targets: g, alpha: 1, duration: 320 });
+        }
+      });
+    }
+    const full = after >= max && max > 0;
+    const halo = this.streakHalo;
+    if (halo) {
+      this.scene.tweens.killTweensOf(halo);
+      halo.setVisible(full).setAlpha(0);
+      if (full) this.scene.tweens.add({ targets: halo, alpha: { from: 0.28, to: 0.6 }, duration: 640, yoyo: true, repeat: -1 });
+    }
   }
 
   get alive(): boolean {
@@ -556,7 +636,17 @@ export class CombatantView {
     this.scene.time.delayedCall(60 + 120 * level, () => this.hpFill.setFillStyle(color(original)));
   }
 
+  /** Kan çubuğu (yalnız manasız kan birimi; öbürlerinde etkisiz). */
+  setBlood(blood: number, animate = true): void {
+    if (this.bloodPool) this.setResBar(blood, animate);
+  }
+
   setMp(mp: number, animate = true): void {
+    if (this.bloodPool) return; // şerit kanı gösteriyor
+    this.setResBar(mp, animate);
+  }
+
+  private setResBar(mp: number, animate: boolean): void {
     if (this.mpMax <= 0) return;
     const target = hpBar.width * Math.max(0, mp / this.mpMax);
     if (!animate) {
@@ -1383,6 +1473,24 @@ export class CombatantView {
   }
 
   /**
+   * İkinci el hançerinin uçuş görüntüsü (Tithe Cut: ön el hançeri fırlatılır): pişirmede saklanan doku (pose-rig > keepThrowItem), `pose` karesindeki
+   * (verilmezse boşta) yerleşimle aynı ekran boyu ve tutuş noktası (orijin oranı). Görüntüde hançer 0 açıda ucu yukarı; `flip` eldeki çizimin aynası.
+   * Pozsuz / ikinci el hançeri yok / doku yok: null (çağıran yedek sprite kullanır).
+   */
+  offItemSprite(pose?: string): { key: string; w: number; h: number; ox: number; oy: number; flip: boolean } | null {
+    const rig = this.rig;
+    const o = rig?.weapon?.offhand;
+    if (!rig || !o) return null;
+    const key = throwItemKey(o);
+    if (!this.scene.textures.exists(key)) return null;
+    const name = pose ?? statePose(rig.def, 'idle', this.grip);
+    const pl = name ? itemPlacement(rig.def, name, o, 'off') : null;
+    if (!pl) return null;
+    const d = rig.display * (this.sprite.scaleY / rig.scale); // dünya pikseli / gövde tuvali pikseli (tween ölçeği dahil)
+    return { key, w: pl.w * pl.k * d, h: pl.h * pl.k * d, ox: pl.grip.x / pl.w, oy: pl.grip.y / pl.h, flip: pl.flip !== this.sprite.flipX };
+  }
+
+  /**
    * Silahın dünyadaki çizgisi (efektler için: öfke izi, savuruş): kabza noktası, açı (vfx kuralı: 0 = ileri yüzdüğü yöne, negatif = yukarı)
    * ve kabzadan uca boy. Pozsuz ya da silahsız pozda null.
    */
@@ -1808,7 +1916,7 @@ export class CombatantView {
   damageText(amount: number, ratio: number, crit = false, tags: DamageTags = {}): void {
     const level = damageNumberLevel(ratio);
     const px = Math.round(timing.damageNumberMinPx + timing.damageNumberSpanPx * level) + (crit ? timing.damageNumberCritBonusPx : 0); // boyutlar data/battle-layout.json > animation
-    this.floatText(String(amount), damageNumberHex(tags, colors.element), px, true, {
+    this.floatText(String(amount), damageNumberHex(tags, colors.element, colors.damagePure), px, true, {
       kind: crit ? 'crit' : 'damage',
       ...(crit ? { leftIcon: paintedOr('fx', 'crit', 'burst') } : {}),
     });
@@ -1825,7 +1933,7 @@ export class CombatantView {
     const ts = this.scene.tweens.timeScale;
     const offset = placeFloatClear(this.floats.map((f) => ({ offset: f.offset, px: f.px, age: (now - f.born) * ts })), px, { life: timing.damageNumberMs, rise: timing.damageNumberRise });
     const lane = this.floats.length;
-    const slot = { offset, px, born: now };
+    const slot = { offset, px: px, born: now };
     this.floats.push(slot);
     const startY = this.container.y - this.h - 60 - offset;
     const style = floatStyle(opts.kind ?? 'info', px, hex);

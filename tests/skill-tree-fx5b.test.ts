@@ -202,7 +202,8 @@ describe('Faz 5b: savaşta tetiklenme (class başına en az bir düğüm)', () =
     expect(hit.size).toBe(2);
     expect(hit.has(E(b, 6).uid)).toBe(false);
     expect(has(E(b, 0), 'sunder')).toBe(true);
-    expect(b.effectiveStats(E(b, 0)).armor).toBeCloseTo(base * 0.6, 0);
+    const extra = (treeOf('archer')!.nodes['2.fa']!.fx![1] as unknown as { mod: { statusPotency: { armorMult: number } } }).mod.statusPotency.armorMult; // ek düşüş veriden
+    expect(b.effectiveStats(E(b, 0)).armor).toBeCloseTo(base * (0.8 + extra), 0);
   });
 
   it('Mage Hard Frost: Blizzard alanın ön sırasını her zaman 1 tur Slow', () => {

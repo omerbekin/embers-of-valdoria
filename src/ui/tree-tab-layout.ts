@@ -85,6 +85,8 @@ export interface ColsLayout {
   upts: Pt;
   /** Kol başına sütun başı x'i (4 sütunla aynı hizada). */
   colX: number[];
+  /** Telefon tek sütun düzeni (buildOne): ult ayrı kutuda, kol etiketinin yeri. */
+  one?: { uW: number; uH: number; armX: number; armY: number };
 }
 
 /** Bir tier'ın kapladığı sıralar (rowShape sırasına göre): { tier, n0, n }. */
@@ -159,6 +161,70 @@ export function buildCols(o: ColsIn, rules: TreeRules): ColsLayout {
   for (const key of Object.keys(pos)) if (key.startsWith(`${rows}.`)) hit[key] = { w: hit[key]!.w, h: Math.min(hit[key]!.h, ultHitH) };
   const tiers: TierBox[] = spans.map((t) => ({ tier: t.tier, y: px(hh + pitch * t.n0), h: px(pitch * t.n) }));
   return { W, H, short, labW, hh, ultH, cw, pitch: px(pitch), k: px(k), sz, pos, hit, tiers, ultY0, ultNy, core, upts, colX };
+}
+
+/**
+ * Telefon (html.short) TEK SÜTUN düzeni (Ömer 2026-11-21, mockup agac-mockup/A): seçili skill'in sütunu tek başına tam yükseklikte (4 sütunun hepsi AYNI koordinatta, görünürlük
+ * CSS'te), ult kolu ayrı kutuda (uW x uH). Düğüm görseli mockup A'nın 34/30/40/42/48 ölçüsünün ONE_K katı (Ömer: "scale'i biraz daha küçültsen de aşağı
+ * doğru sıkışmasa"), sıra aralığına göre kısılır; dokunma kutusu görselden bağımsız (en çok 44 px). Dönen şekil buildCols ile aynı alanlara sahiptir.
+ */
+export const ONE_K = 0.86;
+export interface OneIn {
+  W: number;
+  H: number;
+  uW: number;
+  uH: number;
+}
+export function buildOne(o: OneIn, rules: TreeRules): ColsLayout {
+  const { W, H, uW, uH } = o;
+  const labW = 30;
+  const hh = 2;
+  const cw = W - labW;
+  const spans = tierSpans(rules);
+  const rowsN = spans.reduce((m, t) => Math.max(m, t.n0 + t.n), 0);
+  const pitch = (H - hh) / rowsN;
+  const mk: Record<KindLetter, number> = { F: 34, E: 30, B: 40, N: 42, V: 48 };
+  const cap: Record<KindLetter, number> = { F: 0.9, E: 0.9, B: 1, N: 0.95, V: 0.92 };
+  const fit = (kind: KindLetter): number => px(Math.min(mk[kind] * ONE_K, pitch * cap[kind]));
+  const sz = { F: fit('F'), E: fit('E'), B: fit('B'), N: fit('N'), V: fit('V') };
+  const yk = (n: number): number => hh + pitch * (n + 0.5);
+  const colX = [0, 1, 2, 3].map(() => labW);
+  const pos: Record<string, Pt> = {};
+  const hit: Record<string, Hit> = {};
+  const rows = rules.rows;
+  const wGoal = clamp(Math.floor(cw * 0.25) - 1, 20, HIT_GOAL);
+  for (let i = 0; i < rows; i++) {
+    const part: Record<string, Pt> = {};
+    for (const d of rules.rowShape) {
+      const at = COL_AT[d.id];
+      if (at) part[`${i}.${d.id}`] = { x: px(labW + cw * at[0]), y: px(yk(at[1])) };
+    }
+    Object.assign(pos, part);
+    Object.assign(hit, hitBoxes(part, wGoal, HIT_GOAL));
+  }
+  // ult kutusu: üstte madalyon + kol etiketi, altında 3 adım ve level etiketleri
+  const ultNy = px(uH * 0.56);
+  const steps = rules.ult.levels.length;
+  const uPart: Record<string, Pt> = {};
+  rules.ult.arms.forEach((arm) => {
+    for (let s = 1; s <= steps; s++) uPart[`${rows}.${arm}${s}`] = { x: px(uW * (ULT_X[s - 1] ?? 0.5)), y: ultNy };
+  });
+  Object.assign(pos, uPart);
+  // kollar aynı yerde durur (CSS birini gösterir): dokunma kutusu kol başına hesaplanır
+  const uW0 = clamp(Math.floor(uW * 0.3) - 1, 20, HIT_GOAL);
+  for (const arm of rules.ult.arms) {
+    const one: Record<string, Pt> = {};
+    for (let s = 1; s <= steps; s++) one[`${rows}.${arm}${s}`] = uPart[`${rows}.${arm}${s}`]!;
+    const uHit = hitBoxes(one, uW0, HIT_GOAL);
+    for (const key of Object.keys(uHit)) hit[key] = { w: uHit[key]!.w, h: Math.min(uHit[key]!.h, clamp(uH - 16, 20, HIT_GOAL)) };
+  }
+  const coreD = 26;
+  const core = { x: px(coreD / 2 + 4), y: px(coreD / 2 + 2), d: coreD };
+  const tiers: TierBox[] = spans.map((t) => ({ tier: t.tier, y: px(hh + pitch * t.n0), h: px(pitch * t.n) }));
+  return {
+    W, H, short: true, labW, hh, ultH: uH, cw, pitch: px(pitch), k: px(pitch / 52), sz, pos, hit, tiers, ultY0: 0, ultNy, core, upts: { x: core.x, y: core.y }, colX,
+    one: { uW, uH, armX: px(uW / 2 + coreD / 2), armY: core.y },
+  };
 }
 
 /** İki düğüm arası yol: aynı hizada düz çizgi; dikey ağırlıklıysa dikey, yatay ağırlıklıysa yatay yumuşak eğri. */

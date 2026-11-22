@@ -69,6 +69,20 @@ describe('tree-sim: build ve ölçüm', () => {
     expect(text).toContain('SINIF FARKI');
     expect(text).toContain('DÜĞÜM TETİKLENME');
   });
+
+  // Küçük boy (2 koşu): eskiden 12 koşu x 2 ~19 sn, yük altında 30 sn sınırını aşıyordu. Sınıf sabit yazılmaz: bayraksız koşudan
+  // seçilir, böylece diziliş / veri değişince test kırılmaz; kanıt aynı (--only yalnız o sınıfı ağaçlar, bayraksız birden çok sınıfı).
+  it('tek sınıf ağaçlı kip (--only): ağaç yalnız o sınıfın oyuncu tarafı birimlerinde, diğerleri ve rakip ağaçsız', () => {
+    const run = (extra: string[]) => runTreeSim({ ...planFromArgs(['2', '3', '--tree', 'a', '--level', '20', '--rows=2,2', '--ult=none', ...extra]), out: '' }).levels[0]!.variants.a!;
+    const all = run([]); // bayraksız: tüm oyuncu tarafı ağaçlı (davranış aynı)
+    expect(Object.keys(all.builds).length).toBeGreaterThan(1);
+    expect(Object.keys(all.treedUnits).length).toBeGreaterThan(1);
+    const cls = Object.keys(all.builds)[0]!;
+    const one = run([`--only=${cls}`]);
+    expect(Object.keys(one.builds)).toEqual([cls]);
+    expect(Object.keys(one.treedUnits).every((k) => k === cls)).toBe(true);
+    expect(Object.keys(one.procs).every((k) => k.startsWith(`${cls}:`))).toBe(true);
+  });
 });
 
 describe('tree-sim: bayraklar ve sefer / Endless vekili', () => {

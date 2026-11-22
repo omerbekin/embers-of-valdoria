@@ -128,7 +128,8 @@
         0.2604
       ],
       "level": 20,
-      "encounter": "hc_3"
+      "encounter": "hc_3",
+      "battleBackground": "glacier"
     },
     {
       "id": "hc4",
@@ -252,6 +253,7 @@
     },
     {
       "id": "hc10",
+      "battleBackground": "ice-cave",
       "type": "treasure",
       "name": "Ice Cave",
       "subtitle": "Treasure · Guarded",
@@ -370,6 +372,7 @@
     },
     {
       "id": "hc19",
+      "battleBackground": "ice-cave",
       "type": "treasure",
       "name": "Ice Chapel",
       "subtitle": "Treasure · Guarded",
@@ -437,6 +440,7 @@
     },
     {
       "id": "hc24",
+      "battleBackground": "ice-cave",
       "type": "boss",
       "name": "The Snowfather's Hollow",
       "subtitle": "Boss · The Snowfather",
@@ -485,7 +489,8 @@
         0.5413,
         0.3294
       ],
-      "encounter": "hc_27"
+      "encounter": "hc_27",
+      "battleBackground": "kharduin"
     },
     {
       "id": "hc28",
@@ -595,7 +600,8 @@
         0.2901
       ],
       "spoke": true,
-      "encounter": "hc_32"
+      "encounter": "hc_32",
+      "battleBackground": "deep-halls"
     },
     {
       "id": "hc33",
@@ -613,6 +619,7 @@
     },
     {
       "id": "hc34",
+      "battleBackground": "dwarf-mine",
       "type": "treasure",
       "name": "Old Mine",
       "subtitle": "Treasure · Guarded",
@@ -652,7 +659,8 @@
         0.2497
       ],
       "spoke": true,
-      "encounter": "hc_36"
+      "encounter": "hc_36",
+      "battleBackground": "deep-halls"
     },
     {
       "id": "hc37",
@@ -666,7 +674,8 @@
         0.2657
       ],
       "spoke": true,
-      "encounter": "hc_37"
+      "encounter": "hc_37",
+      "battleBackground": "deep-halls"
     },
     {
       "id": "hc38",
@@ -694,10 +703,12 @@
         0.3262
       ],
       "spoke": true,
-      "encounter": "hc_39"
+      "encounter": "hc_39",
+      "battleBackground": "deep-halls"
     },
     {
       "id": "hc40",
+      "battleBackground": "dwarf-mine",
       "type": "event",
       "name": "The Broken Lift",
       "subtitle": "Event",
@@ -712,6 +723,7 @@
     },
     {
       "id": "hc41",
+      "battleBackground": "dwarf-mine",
       "type": "battle",
       "name": "Shaft Head",
       "subtitle": "Battle · Ashborn",
@@ -725,6 +737,7 @@
     },
     {
       "id": "hc42",
+      "battleBackground": "dwarf-mine",
       "type": "treasure",
       "name": "Rune Vault",
       "subtitle": "Treasure · Guarded",
@@ -834,7 +847,8 @@
         0.7057,
         0.3879
       ],
-      "encounter": "hc_49"
+      "encounter": "hc_49",
+      "battleBackground": "warrens"
     },
     {
       "id": "hc50",
@@ -848,7 +862,8 @@
         0.3507
       ],
       "optional": true,
-      "encounter": "hc_50"
+      "encounter": "hc_50",
+      "battleBackground": "warrens"
     },
     {
       "id": "hc51",
@@ -930,7 +945,8 @@
         0.8612,
         0.5951
       ],
-      "encounter": "hc_55"
+      "encounter": "hc_55",
+      "battleBackground": "warrens"
     },
     {
       "id": "hc56",
@@ -943,7 +959,8 @@
         0.8254,
         0.6376
       ],
-      "encounter": "hc_56"
+      "encounter": "hc_56",
+      "battleBackground": "warrens"
     },
     {
       "id": "hc57",

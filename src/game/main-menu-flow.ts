@@ -2,20 +2,22 @@
  * Ana menü akışının saf kararları (Phaser'sız; `tests/main-menu-flow.test.ts`). Sahne: `src/game/scenes/MainMenuScene.ts`.
  *
  * Görünümler (Ömer 2026-10-08, taslak menu-flow.html (onaydan sonra silindi), animasyon 1 "March to the map"):
- *  - menu: sol sütunda logo + kutusuz yazı listesi (Play · Settings · Codex; Multiplayer Play kartlarında, Ömer 2026-10-08), arkada sefer haritası
+ *  - menu: sol sütunda logo + kutusuz yazı listesi (Play · Settings · Codex · Credits; Multiplayer Play kartlarında, Ömer 2026-10-08), arkada sefer haritası
  *  - play: harita yaklaşır (x1,18, hafif kararma), menü sola kayar, üç kart (Campaign · Quick Battle · Multiplayer) aşağıdan yükselir
  *  - settings / mp: menü sola çekilir, harita kararıp hafif bulanıklaşır, aynı sol sütunda aynı yazı stiliyle içerik belirir
  * Back / Esc bir önceki görünüme döner (kartlardan açılan Multiplayer sütunu kartlara, ana menüden açılanlar menüye).
  */
 
 export type MenuView = 'menu' | 'play' | 'settings' | 'mp';
-export type MenuItemKey = 'play' | 'mp' | 'settings' | 'codex';
+export type MenuItemKey = 'play' | 'mp' | 'settings' | 'codex' | 'credits';
 
 /** Ana menü yazı listesi (sırası ekrandaki sıradır). Codex = wiki (ad Ömer onayı bekliyor). */
 export const MAIN_ITEMS: ReadonlyArray<{ key: MenuItemKey; label: string }> = [
   { key: 'play', label: 'Play' },
   { key: 'settings', label: 'Settings' },
   { key: 'codex', label: 'Codex' },
+  // Jenerik (Ömer 2026-11-21 form r38-r39: ana menüden de açılsın; en dar çözüm = dördüncü satır, src/ui/credits.ts)
+  { key: 'credits', label: 'Credits' },
 ];
 
 /** Arka plan haritasının her görünümdeki hali: yakınlaşma, kararma (0-1 siyah örtü), bulanıklık (0-1). */

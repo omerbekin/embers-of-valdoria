@@ -1,0 +1,42 @@
+/* TEK jeton dosyası (Ömer 2026-11-09, UI birleştirme): yazı tipleri, sayı fontu, kaydırma çubuğu. Ekran CSS'leri bunları yeniden TANIMLAMAZ.
+   JS ikizi: src/ui/menu-style.ts (DISPLAY_FONT / BODY_FONT / NUM_FONT). Düğme boyları: elegant.css (--btn-scr-h / --btn-dlg-h / --btn-cmp-h / --btn-tab-h). */
+:root {
+  --font-display: Cinzel, Georgia, 'Palatino Linotype', serif;
+  --font-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  --font-num: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --g-disp: var(--font-display);
+  --g-body: var(--font-body);
+  --el-display: var(--font-display);
+  --el-body: var(--font-body);
+  --el-num: var(--font-num);
+  --bt-disp: var(--font-display);
+  --bt-body: var(--font-body);
+  --gar: var(--font-body);
+  /* ince altın kaydırma çubuğu: scrollbar-color: var(--scroll-thumb) transparent */
+  --scroll-thumb: rgba(217, 178, 106, 0.4);
+  --scroll-thumb-soft: rgba(217, 178, 106, 0.3);
+}
+
+/* ÇİFT İNCE ÇİZGİ çerçeve = YALNIZ savaş avatarı portresi (Ömer 2026-11-21, form r41; öbür çerçevelerde köşe süsü Ömer'in seçeceği yeni süs, karo geçici).
+   Portre çerçevesi (battle-hud.css > --pf-ring) bu değişkenleri kullanır: çizgi en az 1 gerçek piksel; boşluk masaüstünde 2 px, telefonda (html.short) 1 gerçek piksel.
+   Savaş HUD'ı ölçekli (transform) olduğu için aynı üç değişken orada var(--rp) (1 gerçek piksel) ile yeniden tanımlanır (aşağıdaki .bh-root kuralı). */
+:root {
+  --frame-dark: rgba(8, 6, 4, 0.92);
+  --frame-gold: rgba(217, 178, 106, 0.8);
+  --frame-line: max(1px, var(--gu, 1px));
+  --frame-gap: max(1px, calc(2 * var(--gu, 1px)));
+  --frame-ring: 0 0 0 var(--frame-gap) var(--frame-dark), 0 0 0 calc(var(--frame-gap) + var(--frame-line)) var(--frame-gold);
+}
+
+.bh-root,
+.bh-kit {
+  --frame-line: var(--rp, 1px);
+  --frame-gap: calc(2 * var(--rp, 1px));
+  --frame-ring: 0 0 0 var(--frame-gap) var(--frame-dark), 0 0 0 calc(var(--frame-gap) + var(--frame-line)) var(--frame-gold);
+}
+
+html.short .bh-root,
+html.short .bh-kit {
+  --frame-gap: var(--rp, 1px);
+  --frame-ring: 0 0 0 var(--frame-gap) var(--frame-dark), 0 0 0 calc(var(--frame-gap) + var(--frame-line)) var(--frame-gold);
+}

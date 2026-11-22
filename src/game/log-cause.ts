@@ -7,6 +7,7 @@ const MECHANICS: Record<string, string> = {
   thorns: 'Thorns',
   overflow: 'Overflow',
   cave_in: 'Cave-in',
+  first_fire: "The First Fire's Verdict", // form r40 + r41 (data/battle-rules.json > firstFire)
   live_water: 'Live Water',
   lifesteal: 'Lifesteal',
   regen: 'Regen',

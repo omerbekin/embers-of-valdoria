@@ -6,7 +6,7 @@
 import { content } from '../engine';
 import { classBoardHero } from '../game/scene-board';
 import { statImage } from '../game/icon-image-files';
-import { avatarUrl } from './character-panel';
+import { avatarUrl, hideHeroSkillTip, showHeroSkillTip } from './character-panel';
 import { attachBandTip } from './band-tip-attach';
 import { statBandSpec, statTip } from './stat-tips';
 import { heroStats } from '../progression';
@@ -49,6 +49,7 @@ export function heroCardHtml(d: CardData): string {
 export function bindHeroCardTips(root: HTMLElement, classId: string): void {
   const st = heroStats({ class: classId });
   if (!st) return;
+  bindSkillTips(root, classId, st);
   root.querySelectorAll<HTMLElement>('.hc .stats [data-stat]').forEach((n) => {
     const k = n.dataset['stat'] ?? '';
     attachBandTip(n, () => {
@@ -56,4 +57,41 @@ export function bindHeroCardTips(root: HTMLElement, classId: string): void {
       return info ? statBandSpec(k, info) : null;
     });
   });
+}
+
+/**
+ * Skill / pasif plakalarına ortak skill ipucu (Gear Sheet / formation ile AYNI parça ve metin: character-panel.ts > showHeroSkillTip). Masaüstünde hover,
+ * dokunmatikte dokunuş açar / kapatır. Kart her çizildiğinde (kök yeniden kurulur) yeniden bağlanır.
+ */
+function bindSkillTips(root: HTMLElement, classId: string, st: NonNullable<ReturnType<typeof heroStats>>): void {
+  const bar = root.querySelector<HTMLElement>('.hp-sks');
+  if (!bar) return;
+  let open: HTMLElement | null = null;
+  const show = (cell: HTMLElement): void => {
+    open = cell;
+    showHeroSkillTip(cell, classId, st, cell.dataset['skill'] ?? '');
+  };
+  const hide = (): void => {
+    open = null;
+    hideHeroSkillTip();
+  };
+  bar.addEventListener('pointerover', (e) => {
+    if (e.pointerType === 'touch') return;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.hsk');
+    if (cell && open !== cell) show(cell);
+  });
+  bar.addEventListener('pointerout', (e) => {
+    if (e.pointerType === 'touch') return;
+    const into = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.hsk');
+    if (cell && !(into && cell.contains(into))) hide();
+  });
+  bar.addEventListener('click', (e) => {
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.hsk');
+    const was = open === cell;
+    hide();
+    if (cell && !was) show(cell);
+  });
+  // yeniden çizimde / pencere kapanınca asılı kalmasın
+  hide();
 }

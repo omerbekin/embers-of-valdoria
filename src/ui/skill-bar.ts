@@ -53,9 +53,10 @@ export interface SkillPlateView {
 /** "RAGE 30" -> sözcük + sayı (telefonda sözcük gizlenir, ikon yeter); salt sayı -> yalnızca sayı. */
 function plateChip(c: SkillPlateChip, lack: SkillPlateView['lack']): string {
   const m = /^(\D*?)\s*(\d+)$/.exec(c.text.trim());
-  const word = m && m[1] ? `<span class="w">${escHtml(m[1])}</span>` : '';
-  const num = m ? `<b>${escHtml(m[2]!)}</b>` : `<b>${escHtml(c.text)}</b>`;
   const kind = c.kind ?? (/^RAGE/i.test(c.text) ? 'rage' : /^BLOOD/i.test(c.text) ? 'blood' : '');
+  // Kan bedeli (Ömer 2026-11-21): "Blood" sözcüğü yazılmaz, damla ikonu yeter (ikon yoksa sözcük kalır)
+  const word = m && m[1] && !(kind === 'blood' && c.iconUrl) ? `<span class="w">${escHtml(m[1])}</span>` : '';
+  const num = m ? `<b>${escHtml(m[2]!)}</b>` : `<b>${escHtml(c.text)}</b>`;
   const cls = [kind === 'rage' ? 'rage' : '', kind === 'blood' ? 'blood' : '', kind === 'cd' ? 'cd' : '', lack && kind === lack ? 'low' : '', c.dir ?? ''].filter(Boolean).join(' ');
   return `<span class="bp-chip ${cls}">${img(c.iconUrl ?? '', 'bh-ico')}${word}${num}</span>`;
 }

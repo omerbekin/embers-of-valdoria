@@ -740,7 +740,9 @@ describe('yapay zeka ve simülasyon', () => {
 
   it('YZ Gambler\'ın tüm skill\'lerini (denemelerde) kullanır', () => {
     const used = new Set<string>();
-    for (let seed = 1; seed <= 80; seed++) {
+    const all = content.classes.gambler!.skills;
+    // Hepsi görülünce dur (kanıt aynı: her skill en az bir kez seçildi); 80 deneme üst sınır.
+    for (let seed = 1; seed <= 80 && !all.every((id) => used.has(id)); seed++) {
       const b = new Battle(content.battleSetup('random-battle', seed, 'turns', { party: ['gambler', 'warrior', 'mage', 'archer', 'druid'], enemies: ['gambler', 'defender', 'paladin', 'undead', 'antimage'] }));
       for (let i = 0; i < 500 && !b.winner; i++) {
         const actor = b.currentUid!;
@@ -751,6 +753,6 @@ describe('yapay zeka ve simülasyon', () => {
         expect(r.ok).toBe(true);
       }
     }
-    for (const id of content.classes.gambler!.skills) expect(used.has(id), id).toBe(true);
+    for (const id of all) expect(used.has(id), id).toBe(true);
   });
 });

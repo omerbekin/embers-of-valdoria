@@ -15,7 +15,7 @@ import { navSvg } from './nav-icons';
 import { bodyIn } from './reward-fx';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../diag/diag';
 import { isDiagNoticeOpen, openDiagNotice } from '../diag/diag-notice';
-import { pageVisible, PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage } from './settings-pages';
+import { pageVisible, PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage, touchSettingsLayout } from './settings-pages';
 import { accountApi, accountShown, isOnline } from '../cloud/ui/api';
 import { ACCOUNT_SOON_LINE, accountLine } from '../cloud/ui/account-text';
 import { mergeRecord } from './cursor-theme';
@@ -397,13 +397,13 @@ export class SettingsScreen {
     } else if (k === 'Tab') {
       e.preventDefault();
       uiSound('tab');
-      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountShown()), true);
+      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountShown(), touchSettingsLayout()), true);
       this.zone = 'cat';
     } else if (this.zone === 'cat') {
       if (up || down) {
         e.preventDefault();
         uiSound('tab');
-        this.showPage(stepPage(this.page, up ? -1 : 1, accountShown()), true);
+        this.showPage(stepPage(this.page, up ? -1 : 1, accountShown(), touchSettingsLayout()), true);
       } else if (this.page === 'ui' && (k === 'ArrowRight' || k === 'Enter')) {
         e.preventDefault();
         const first = this.pages.get('ui')?.querySelector<HTMLElement>('.cur-plate.on, .cur-plate');
@@ -435,7 +435,8 @@ export class SettingsScreen {
   /** Kategori sayfasını gösterir (oturum boyunca hatırlanır: settings-pages.ts). */
   private showPage(key: SettingsPageKey, animate = false): void {
     const login = accountShown() && !this.accGone;
-    if (!pageVisible(key, login)) key = 'sound';
+    const touch = touchSettingsLayout();
+    if (!pageVisible(key, login, touch)) key = 'sound';
     const prevPage = this.pages.get(this.page);
     // a20: sağ sayfada karşılıklı geçiş (eski söner, yenisi 6 px yükselir)
     const ghost = animate && key !== this.page && prevPage && !prevPage.hidden ? ghostPage(prevPage) : null;
@@ -443,7 +444,7 @@ export class SettingsScreen {
     setSettingsPage(key);
     // Kor elmas ve sağ sayfa AYNI kare başlar (a20): önce kategori satırları + elmas, sonra içerik değişimi
     for (const [k, cat] of this.cats) {
-      cat.hidden = !pageVisible(k, login);
+      cat.hidden = !pageVisible(k, login, touch);
       cat.classList.toggle('on', k === key);
       cat.setAttribute('aria-selected', String(k === key));
     }

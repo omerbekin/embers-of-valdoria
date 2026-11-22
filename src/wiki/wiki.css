@@ -1391,6 +1391,16 @@
   display: none;
 }
 
+:root.short .cx-row b {
+  /* telefon (Ömer 2026-11-20): madde adı kesilmez, iki satıra iner */
+  white-space: normal;
+  text-overflow: clip;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.15;
+}
+
 :root.short .cx-navcount {
   font-size: 11px;
 }

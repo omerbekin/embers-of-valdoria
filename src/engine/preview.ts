@@ -4,15 +4,9 @@ import { betMultipliers, betStakeParts } from './gamble';
 import { burnAmountFor, castBurnAmount, emptyProcApplies } from './mana-burn';
 import { skillCostAmount, skillCostPay } from './cost';
 import { damageSpecFor, splitParts, type DamageEffect } from './spec';
-import { shieldAbsorb, slotOfTileUid } from './battle';
-
-/** Önizleme: kalkan havuzundan (önce büyü kalkanı, büyü vuruşunda) `rest` hasarın düşüreceği kalkan (Shocked çarpanı m; havuz değişmez). Saf. */
-function shieldTake(p: { shield: number; magicShield: number }, rest: number, m: number, magic: boolean): number {
-  const a = magic ? shieldAbsorb(p.magicShield, rest, m) : { used: 0, covered: 0 };
-  return a.used + shieldAbsorb(p.shield, rest - a.covered, m).used;
-}
+import { shieldCoverOf, shieldSplit, slotOfTileUid } from './battle';
 import { attributePower, dotOutgoingMult, hitChance } from './stats';
-import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, Side, SkillDef, SkillEffect } from './types';
+import type { Combatant, GroundEffect, OnAbsorbSpec, PushDir, ShieldHook, Side, SkillDef, SkillEffect } from './types';
 import { manaShieldPay } from './tree-hooks';
 import type { HitInfo, TreeQuery } from './tree-hooks';
 
@@ -30,8 +24,13 @@ export interface TargetPreview {
     min: number;
     max: number;
     avg: number;
-    /** Kalkanın emeceği ortalama miktar. */
+    /** Kalkanın emeceği ortalama miktar (kalkandan düşen puan; kalkan ham hasara çarpar). */
     absorbed: number;
+    /**
+     * Kalkan ham hasar kuralı (Ömer 2026-11-21): vuruşun savunma oranı (zırh / büyü zırhı ve hedef tarafı azaltmalar; motorla aynı `Battle.strikeKeep`).
+     * min/max/avg azaltmalıdır; kalkan bunun ham karşılığına (avg / keep) çarpar. 1 ise yazılmaz. YZ öldürme eşiği `Battle.shieldCover(.., keep)`.
+     */
+    keep?: number;
     /** Banked Coals: ertelenen pay (ortalama; hedef taşıyıcıysa). hpLoss ve absorbed anında kalan kısımdan hesaplıdır. */
     banked?: number;
     /** Cana ulaşacak hasar (ortalama / en az / en çok), hedefin mevcut canıyla sınırlı. */
@@ -260,11 +259,36 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
 
   // Her hedef için sıralı etkiler (kalkan ve hasar birbirini etkiler)
   // mp: Mana kalkanı (a_manashield) için hedefin kalan MP'si (motorla aynı manaShieldPay; sıralı vuruşlarda azalır)
-  const pools = new Map<string, { hp: number; shield: number; magicShield: number; mp: number }>();
+  const pools = new Map<string, { hp: number; shield: number; magicShield: number; mp: number; hooks?: Map<ShieldHook, number> }>();
   const pool = (c: Combatant) => {
     let p = pools.get(c.uid);
-    if (!p) pools.set(c.uid, (p = { hp: c.hp, shield: c.shield, magicShield: c.magicShield, mp: c.mp }));
+    if (!p) pools.set(c.uid, (p = { hp: c.hp, shield: c.shield, magicShield: c.magicShield, mp: c.mp, ...(c.shieldHooks?.length ? { hooks: new Map(c.shieldHooks.map((h) => [h, h.amount] as [ShieldHook, number])) } : {}) }));
     return p;
+  };
+  // Kalkan kancalarının önizleme miktarı (motorla aynı sıra: battle.ts > trimShieldHooks, drainHooks): kancalı katmanlar kancasız kalkandan önce
+  // tükenir, katman toplamı kalkanı aşamaz. Kalkan koşullu hasar kancası (Spell-Proof Vein, Warded Steps) çok vuruşlu skill'de kalkan bitince işlemez.
+  const trimHooks = (p: ReturnType<typeof pool>) => {
+    if (!p.hooks) return;
+    for (const magic of [true, false]) {
+      let excess = [...p.hooks].filter(([h]) => h.magic === magic).reduce((t, [, a]) => t + a, 0) - (magic ? p.magicShield : p.shield);
+      for (const [h, a] of p.hooks) {
+        if (excess <= 0) break;
+        if (h.magic !== magic) continue;
+        const cut = Math.min(a, excess);
+        p.hooks.set(h, a - cut);
+        excess -= cut;
+      }
+    }
+  };
+  const drainHookView = (p: ReturnType<typeof pool>, magic: boolean, taken: number) => {
+    let left = taken;
+    for (const [h, a] of p.hooks ?? []) {
+      if (left <= 0) break;
+      if (h.magic !== magic) continue;
+      const part = Math.min(a, left);
+      p.hooks!.set(h, a - part);
+      left -= part;
+    }
   };
 
   const addDamage = (target: Combatant, base: DamageEffect, powerMult: number, splash: boolean, hitInfo?: HitInfo, blockOf?: DamageEffect) => {
@@ -275,7 +299,15 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const effect = battle.unseenReady(actor) && !eff0.guaranteedCrit ? { ...eff0, guaranteedCrit: true } : eff0;
     const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, base, tq) : null;
     const stats = battle.effectiveStats(target);
-    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical') * battle.flockMult(actor, target), battle.dealtDamage(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined, undefined, effect.ironBolt ? stats.armor : undefined);
+    // Saf girdiler bir kez (her specFor çağrısında aynı değer): alınan hasar çarpanı (+ kalkan kuralı için yalnız azaltan pay), verilen hasar, saldıranın stat'ları
+    const takenDown = { v: 1 };
+    const p0 = pool(target);
+    trimHooks(p0);
+    const hookLeft = p0.hooks ? (h: ShieldHook) => p0.hooks!.get(h) ?? 0 : undefined;
+    const taken = battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical', takenDown, hookLeft) * battle.flockMult(actor, target);
+    const dealt = battle.dealtDamage(actor, target, skill, effect, tq);
+    const atkStats = effect.bonusScale ? battle.effectiveStats(actor) : undefined;
+    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, taken, dealt, atkStats, undefined, effect.ironBolt ? stats.armor : undefined);
     // Ağaç: düz hasar (flatDamage) ve vuruş sonrası (hitIsCrit) kancaları gerçek vuruşla aynı sırada (çarpan, sonra düz ek); kancasızda aynı aralık
     const adj = (x: number, late: { mult: number; flat: number } | null) => (late || tm?.flat ? Math.round(x * (late?.mult ?? 1) + (tm?.flat ?? 0) + (late?.flat ?? 0)) : x);
     const lateN = actor.treeHooks ? battle.lateDamage(actor, target, skill, base, specFor(1), false, tq) : null;
@@ -331,11 +363,14 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     // Ağaç sureHit: isabet zarı yok (blok yine olabilir)
     const hit = (tm?.sureHit ? 1 : hitChance(battle.hitStats(actor, skill, target), stats, f)) * (1 - battle.blockChance(actor, target, blockOf ?? effect, skill)); // split: blok tüm vuruşa (ilk parçanın türü), gerçek vuruşla aynı
     const p = pool(target);
+    const magicHit = effect.damageType === 'magic';
+    // Kalkan ham hasar kuralı (Ömer 2026-11-21, form r38): kalkan ham hasara çarpar, zırh / azaltma yalnız kalkanı aşan kısma (motorla aynı savunma oranı;
+    // vuruş sonrası zırh delme kancası oranı değiştirir)
+    const keep = p.shield > 0 || p.magicShield > 0 ? battle.strikeKeep(actor, target, specFor(1), skill, effect.element ?? 'physical', { stats, down: takenDown.v }) * ((sureC ? lateC : lateN)?.keepMul ?? 1) : 1; // kalkansızda oran sonucu değiştirmez
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
-    const soakShield = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
-    // Shocked / Topraklama (Ömer 2026-11-15): şimşek kalkanı x(1 + bonus) yer; kalkanın emdiği HASAR kalkan / çarpan (motorla aynı: shieldAbsorb)
+    // Shocked / Topraklama (Ömer 2026-11-15): şimşek kalkanı x(1 + bonus) yer; kalkanın durdurduğu azaltmalı HASAR (motorla aynı: shieldAbsorb, katman başına yuvarlama)
     const sm = battle.shieldHitMult(target, effect.element);
-    const soak = sm === 1 ? soakShield : (effect.damageType === 'magic' ? Math.ceil(p.magicShield / sm) : 0) + Math.ceil(p.shield / sm); // motorla aynı iki adım
+    const soak = shieldCoverOf(p, magicHit, sm, keep);
     // Mana kalkanı: kalkanlardan sonra kalanın oranı MP'den (MP yettiğince), gerçek vuruşla aynı yardımcı
     // Banked Coals: düşman vuruşunda payı ertelenir (motorla aynı yuvarlama)
     const coalShare = target.side !== actor.side ? (target.itemEffects?.bankedCoals?.share ?? 0) : 0;
@@ -354,7 +389,8 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     };
     const bb = betBr ? { winChance: betBr.p, win: branch(betBr.win), lose: branch(betBr.lose) } : null;
     const hpLoss = bb ? bb.winChance * loss(bb.win.avg) + (1 - bb.winChance) * loss(bb.lose.avg) : loss(r.avg);
-    const absorbed = sm === 1 ? Math.min(soak, coalNow(r.avg)) : shieldTake(p, coalNow(r.avg), sm, effect.damageType === 'magic'); // kalkandan düşen (motorla aynı iki adım)
+    const took = shieldSplit(p, coalNow(r.avg), magicHit, sm, keep); // kalkandan düşen (motorla aynı iki adım)
+    const absorbed = took.magicUsed + took.shieldUsed;
     const e = entry(target.uid);
     const prev = e.damage;
     e.damage = {
@@ -362,6 +398,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       max: (prev?.max ?? 0) + r.max,
       avg: (prev?.avg ?? 0) + r.avg,
       absorbed: (prev?.absorbed ?? 0) + absorbed,
+      ...(keep !== 1 ? { keep } : prev?.keep !== undefined ? { keep: prev.keep } : {}),
       ...(coalShare ? { banked: (prev?.banked ?? 0) + (r.avg - coalNow(r.avg)) } : {}),
       hpLoss: (prev?.hpLoss ?? 0) + hpLoss,
       hpLossMin: (prev?.hpLossMin ?? 0) + loss(r.min),
@@ -379,15 +416,14 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       ...(again > 0 && !prev ? { repeat: { chance: again, min: Math.round((sureC ? critR(lo) : range(lo)).min), max: Math.round((sureC ? critR(hi) : range(hi)).max), critMax: sureC || noCrit ? Math.round((sureC ? critR(hi) : range(hi)).max) : actor.treeHooks ? Math.round(critR(hi).max) : Math.round(range(hi).max * actor.stats.critMult) } } : {}),
     };
     // Sonraki etkiler için havuzları güncelle (magic: önce büyü kalkanı)
-    let rest = coalNow(r.avg);
-    if (effect.damageType === 'magic') {
-      const a = shieldAbsorb(p.magicShield, rest, sm);
-      p.magicShield -= a.used;
-      rest -= a.covered;
+    p.magicShield -= took.magicUsed;
+    p.shield -= took.shieldUsed;
+    if (p.hooks) {
+      drainHookView(p, true, took.magicUsed);
+      drainHookView(p, false, took.shieldUsed);
+      trimHooks(p);
     }
-    const b = shieldAbsorb(p.shield, rest, sm);
-    p.shield -= b.used;
-    rest -= b.covered;
+    let rest = took.rest;
     const paid = manaShieldPay(target, rest, p.mp);
     p.mp -= paid;
     rest -= paid;
@@ -395,8 +431,30 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
   };
 
   const selfShieldDone = new Set<unknown>();
+  const lowestDone = new Set<unknown>(); // Purging Ward: seçilen dosta silme önizlemesi bir kez
   // Skill ağacı ölçeği hitWithStatus (Faz 2a): gerçek vuruştaki gibi bu skill'in hedefleri (yalnızca kancalı aktör; bitince temizlenir)
   const prevTargets = actor.treeHooks ? battle.setCondTargets(targets) : null;
+  // Wail of the Dead (Bloody Breath / Blood Banshee): ödenen cana bağlı ölçek önizlemede ödenecek canı görür (bitince geri alınır)
+  const prevHpPaid = actor.treeHooks ? battle.setPreviewHpPaid(actor, skill) : null;
+  // Skill ağacı preHit (Gore Wheel 2.n0): gerçek vuruşta durum hedefin ilk isabetinde hasardan ÖNCE konur; Red Arc / Reaper's Spin / Exsanguinate /
+  // Crimson Wheel o vuruşta görür. Önizleme aynı sırayla (hedef sırası, ilk hasar etkisinde) durumu GEÇİCİ ekler, döngü bitince geri alır (önizleme saf kalır).
+  // Yalnızca kesin tutan (şans >= 1, bağışık değil, hedefte yok) durum eklenir; şanslı durum önizlemede varsayılmaz
+  const preHitEffects = actor.treeHooks ? skill.effects.filter((e) => e.type === 'status' && e.preHit && !e.self) : [];
+  const preHitAdded: { target: Combatant; status: Combatant['statuses'][number] }[] = [];
+  const preHitDone = new Set<unknown>();
+  const applyPreHit = (target: Combatant): void => {
+    if (!preHitEffects.length || preHitDone.has(target.uid) || target.hp <= 0) return;
+    preHitDone.add(target.uid);
+    for (const pe of preHitEffects) {
+      if (pe.type !== 'status' || battle.statusBlocked(target, pe.status) || target.statuses.some((s) => s.kind === pe.status)) continue;
+      const tm = battle.treeMods(actor, target, skill, pe);
+      if (Math.max(0, Math.min(1, (pe.chance ?? 1) + (tm?.chance ?? 0))) < 1) continue;
+      const status = { kind: pe.status, turns: Math.max(1, Math.round(pe.turns + (tm?.turns ?? 0))), source: actor.uid };
+      target.statuses.push(status);
+      preHitAdded.push({ target, status });
+    }
+  };
+  try {
   for (const target of targets) {
     for (const effect of skill.effects) {
       if (!battle.effectAppliesTo(skill, effect, target, actor)) continue;
@@ -428,6 +486,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
           e.statuses = [...e.statuses, `${wd.name ?? k} ${turns} turns${chance}${wk < 1 ? ` (${Math.round(wk * 100)}% strength)` : ''}`];
         }
       } else if (effect.type === 'damage') {
+        applyPreHit(target);
         // Çok hedefli (alan) vuruşta her yeni hedef bir öncekinin falloff katı hasar alır (hedef sırası = vuruş sırası)
         const idx = effect.falloff || skill.splash ? targets.indexOf(target) : 0;
         const side = !!skill.splash && idx > 0; // yan vuruş: ana hedefin yanındaki hücre
@@ -490,8 +549,17 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const amount = shm !== 1 ? Math.max(0, Math.round(amount0 * shm)) : amount0;
         entry(recipient.uid).shield = { amount, magic: effect.shieldType === 'magic', ...(effect.onAbsorb ? { onAbsorb: { ...effect.onAbsorb } } : {}) };
       } else if (effect.type === 'dispel') {
-        const e = entry(target.uid);
-        const names = battle.dispelCandidates(target, effect.status).slice(0, effect.count ?? Infinity).map((s) => battle.statusDef(s.kind)?.name ?? s.kind);
+        // Purging Ward (lowestHp, r36): hedef listesinden bağımsız, debuff'ı olan dostlar arasında canı en düşük (3.fb: yalnız kendisi); motorla
+        // aynı seçim (Battle.purgeTargetOf), kullanım başına bir kez
+        let who = target;
+        if (effect.lowestHp) {
+          const pick = battle.purgeTargetOf(actor, skill, effect);
+          if (!pick || lowestDone.has(effect)) continue;
+          lowestDone.add(effect);
+          who = pick;
+        }
+        const e = entry(who.uid);
+        const names = battle.dispelCandidates(who, effect.status).slice(0, effect.count ?? Infinity).map((s) => battle.statusDef(s.kind)?.name ?? s.kind);
         e.dispel = [...(e.dispel ?? []), ...names];
         if (names.length > 0) e.statuses = [...(e.statuses ?? []), `Removes ${names.join(', ')}`];
       } else if (effect.type === 'bond') {
@@ -578,7 +646,17 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       }
     }
   }
-  if (actor.treeHooks) battle.setCondTargets(prevTargets);
+  } finally {
+    // Önizleme saf kalır (hata olsa bile): hedef listesi, ödenecek can ve geçici preHit durumları geri alınır
+    if (actor.treeHooks) {
+      battle.setCondTargets(prevTargets);
+      battle.restorePreviewHpPaid(prevHpPaid);
+    }
+    for (const { target, status } of preHitAdded) {
+      const i = target.statuses.indexOf(status);
+      if (i >= 0) target.statuses.splice(i, 1);
+    }
+  }
 
   // advanceToFront (Warrior Charge): kullanıcının skill sonrası geçeceği ön sıra hücresi (kendi girdisinde, en sonda)
   if (skill.advanceToFront) {
@@ -690,7 +768,8 @@ function omenPreview(battle: Battle, actor: Combatant, skill: SkillDef, target: 
     const mult = (det ? det.mult : 1) * battle.doomExtraMult(cur); // uzatma yerine Doom bonusu (bonusPerExtraTurn)
     const r = battle.doomRange(target, kind, omens, mult, actor.stats[doom.scale] * (actor.stats.spellPowerMult ?? 1)); // = Battle.doomStat
     if (!r) return undefined;
-    const soak = doom.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
+    // Kalkan ham hasar kuralı (Ömer 2026-11-21): kalkan Doom'un ham karşılığına çarpar (motorla aynı savunma oranı)
+    const soak = shieldCoverOf(p, doom.damageType === 'magic', 1, p.shield > 0 || p.magicShield > 0 ? battle.doomKeep(target, kind) : 1);
     const avg = sureCrit ? r.avg * actor.stats.critMult : r.avg;
     return {
       min: r.min,

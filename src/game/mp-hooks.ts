@@ -7,6 +7,8 @@ import type { ResultAction } from './result-screen';
 
 export interface MpResultInfo {
   victory: boolean;
+  /** Beraberlik (iki takım aynı anda bitti; Ömer 2026-11-21, form r39): sonuç ekranı kazanan sütunu ve MVP göstermez. */
+  draw?: boolean;
   title?: string;
   subtitle?: string;
 }

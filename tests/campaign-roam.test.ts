@@ -285,7 +285,7 @@ describe('kayıt: sürüm 10 göçü (visited / cleared / replays)', () => {
     expect(r.migrated).toBe(true);
     expect(r.file.slots[0]!.saves[0]!.state.at).toBe('7');
     expect(r.file.slots[0]!.saves[0]!.state.visited).toContain('charcoal');
-    expect(SAVE_VERSION).toBe(14);
+    expect(SAVE_VERSION).toBe(15);
   });
 
   it('başlatılmış devriye duraklatma olmadan kayıtta kalmaz; bozuk alanlar onarılır; özet "Cleared"', () => {

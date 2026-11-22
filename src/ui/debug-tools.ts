@@ -51,6 +51,10 @@ import { weaponFor, type WeaponPick } from '../game/poses';
 import { waveTestBattleData } from '../game/wave-test-battle';
 import { BOSS_TESTS, RULES_TESTS, TOUCH_TESTS, bossTestBattleData, rulesTestBattleData, touchTestBattleData } from '../game/rules-test-battle';
 import { offhandItem, weaponItem } from '../game/pose-weapons';
+import { firstFireArt } from '../game/first-fire-fx';
+
+/** Debug: sayaç ilk uyarıdan 2 hamle önceye (The First Fire's Verdict). */
+const firstFireJumpTo = (): number => { const r = content.firstFireRule(); return r.afterMoves - r.warnFirst - 2; };
 
 /** Sekme sırası (menü bu sırayla gösterir). */
 export const DEBUG_TABS = [QUICK_TAB, 'Battle', 'Unit', 'Skills', 'Rolls', 'Speed & View', 'Setup', 'Campaign', 'Test Mode', 'Characters', VERSIONS_TAB, 'Data'];
@@ -418,6 +422,29 @@ export function registerDebugTools({ game, debug }: Ctx): void {
         b.battle.freeMp = BattleScene.freeMp;
         b.refreshCommandsNow();
       }
+    },
+  });
+  debug.register({
+    id: 'battle.first-fire-art',
+    icon: 'next',
+    tab: 'Battle',
+    section: 'Rules',
+    label: () => `First Fire art: ${firstFireArt.mode === 'sprite' ? 'sprite' : 'code (old)'}`,
+    hint: "The First Fire's strike: drawn sprites (seal + white flame) or the first code-drawn version",
+    run: () => {
+      firstFireArt.mode = firstFireArt.mode === 'sprite' ? 'code' : 'sprite';
+    },
+  });
+  debug.register({
+    id: 'battle.first-fire-jump',
+    icon: 'next',
+    tab: 'Battle',
+    section: 'Rules',
+    label: () => `First Fire: jump to move ${firstFireJumpTo()}`,
+    hint: "Set the move counter just before The First Fire's first warning (the warning comes 2 moves later, then the final warning, then the Verdict)",
+    run: () => {
+      const b = battle();
+      if (b && !b.battle.firstFire) b.battle.turnsTaken = Math.max(b.battle.turnsTaken, firstFireJumpTo());
     },
   });
   debug.register({

@@ -4,7 +4,7 @@
  */
 import { logEvent } from '../diag/diag';
 
-export type BattleEndKind = 'victory' | 'defeat' | 'retreat' | 'patrol-retreat' | 'pit-yield';
+export type BattleEndKind = 'victory' | 'defeat' | 'draw' | 'retreat' | 'patrol-retreat' | 'pit-yield';
 
 export function logBattleEnd(kind: BattleEndKind, b: { round: number; turnsTaken: number } | null | undefined): void {
   logEvent('battle', `end ${kind}${b ? ` round ${b.round} turns ${b.turnsTaken}` : ''}`);

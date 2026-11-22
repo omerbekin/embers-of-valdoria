@@ -202,7 +202,7 @@ describe('Faz 4b: Anti-Mage', () => {
       const evs = cast(b, me, 'mana_burn', E(b));
       const burned = evs.reduce((n, e) => n + (e.type === 'manaBurn' && e.source === me.uid ? e.amount : 0), 0);
       if (burned <= 0) return false;
-      expect(healBy(evs, 'antimage:1.ma')).toBe(Math.round(burned * num('antimage', '1.ma', '0.do.0.heal')));
+      expect(healBy(evs, 'antimage:1.ma')).toBe(Math.max(1, Math.round(burned * num('antimage', '1.ma', '0.do.0.heal')))); // şifa en az 1
       return true;
     });
   });

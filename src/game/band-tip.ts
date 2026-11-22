@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { textRes } from './stage-view';
 import { BODY_FONT, DISPLAY_FONT } from '../ui/menu-style';
 import { EL, diamondPts, elText, fitW, hGradient } from './elegant-ui';
+import { drawCornerDots } from './corner-dots-gfx';
 import { drawMiniShape, miniShapeSize } from './shape-draw';
 import type { MiniShape } from '../ui/shape-diagram';
 import { richSegs, splitNow } from '../ui/band-rich';
@@ -411,9 +412,6 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   back.fillGradientStyle(0x1e160e, 0x1e160e, 0x0c0906, 0x0c0906, 0.985).fillRect(0, 0, w, h);
   back.lineStyle(1, mix(accent, 0xd9b26a, 0.4), 0.9).strokeRect(0.5, 0.5, w - 1, h - 1);
   const corner = scene.add.graphics();
-  for (const [cx, cy] of [[0, 0], [w, h]] as const) {
-    corner.fillStyle(0x130d07, 1).fillPoints(diamondPts(cx, cy, 6 * s), true);
-    corner.lineStyle(1, mix(accent, 0xffffff, 0.52), 1).strokePoints(diamondPts(cx, cy, 6 * s), true);
-  }
+  drawCornerDots(corner, 0, 0, w, h, { scale: s }); // köşe süsü: üç nokta (kural src/ui/corner-dots-rule.ts)
   return { container: scene.add.container(0, 0, [back, bandG, ...items, corner]).setDepth(5000), width: w, height: h };
 }

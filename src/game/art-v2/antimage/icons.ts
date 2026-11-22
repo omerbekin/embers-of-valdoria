@@ -1,5 +1,5 @@
 /**
- * Anti-Mage - SÜRÜM 2 İKONLARI. Kılavuz: docs/design/art-v2.md
+ * Redtithe (eski Anti-Mage, id antimage) - SÜRÜM 2 İKONLARI. NOT: aşağıdaki karakter / mor rün anlatımı ESKİ Anti-Mage'e aittir (tablet / runeSword efekt parçaları için kalır); ikonların hepsi artık boyalı Redtithe çizimi. Kılavuz: docs/design/art-v2.md
  *
  * Karakter referansı (assets/sprites/antimage/idle.png): kapüşonlu, koyu örgü zırh + çelik plaka, mürdüm (bordo-mor) kuşak,
  * mor rünlü düz kılıç, kaldırdığı çelik eldivenin çevresinde süzülen KIRIK RÜN TABLETLERİ. Felsefe: büyücü değil, büyü avcısı;
@@ -49,31 +49,17 @@ function runeSword(g: PxGrid, x0: number, y0: number, x1: number, y1: number, w:
 }
 
 export const ICONS: Record<string, V2SpriteEntry> = {
-  // ChatGPT boyalı ikonlar (antimage-sheet.png -> tools/make-class-icons.py); eski kodla çizimler kaldırıldı.
+  // Redtithe boyalı ikonlar (2026-11-21, Codex imagegen; asıllar assets/source/antimage-icons/redtithe-*-sheet.png, kan / pirinç / deri, mor yok):
+  // spellbreaker = Blood Tithe (pirinç ondalık kâsesi), manaburn = Tithe Cut (orak hançer), drainfield = Blood Brand (deride damar rünü),
+  // spellward = Mirror Vein (kan kalkanı), voidstrike = Exsanguinate (şişeler + aşağı saplanan hançer). Evolve sanatı assets/tree-icons/antimage/<satır>_v.
   manaburn: { image: 'antimage/manaburn' },
   drainfield: { image: 'antimage/drainfield' },
   spellward: { image: 'antimage/spellward' },
   voidstrike: { image: 'antimage/voidstrike' },
   overflow: { image: 'antimage/overflow' },
   spellbreaker: { image: 'antimage/spellbreaker' },
-
-
-
-
-  /** Logo: büyüyü kıran kılıç: dik rünlü kılıç, kırılarak dağılan mor rün halkasının içinden geçer. */
-  nullsphere: (g) => {
-    // kırık rün halkası (dört parça, aralıklı)
-    for (let i = 0; i < 4; i++) g.ring(16, 15, 11.5, 'a', 2.4, (i / 4) * Math.PI * 2 + 0.28, ((i + 1) / 4) * Math.PI * 2 - 0.28);
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-      g.disc(16 + Math.cos(a) * 10.3, 15 + Math.sin(a) * 10.3, 0.7, 'z');
-    }
-    // kopan parçalar
-    tablet(g, 27.5, 4, 1.4, 2, 0.6, 'a', 'z');
-    tablet(g, 4, 26, 1.3, 1.8, -0.4, 'a', 'z');
-    runeSword(g, 16, 25, 16, 1, 4.6);
-  },
-
+  // nullsphere = sınıf logosu (çapraz orak hançerler + pirinç ondalık kâsesi + kırmızı kuşak; aynı çizim assets/misc-icons/class/antimage.png). overflow = taşan kan kazanı (2026-11-21, Codex imagegen).
+  nullsphere: { image: 'antimage/nullsphere' },
 };
 
 export const SPRITES: Record<string, V2SpriteEntry> = {

@@ -12,7 +12,7 @@ const ARENAS = ['proving-grounds-sunny-afternoon', 'proving-grounds-sunset', 'pr
 const DROWNED = ['river-gorge', 'saltmarsh', 'saltmere-docks', 'saltmere-pit', 'wreck-cliffs', 'siren-rocks', 'storm-deck', 'sunken-court'];
 /** Harita 3 (Hollow Crown) savaş arka planları (2026-10-29). */
 const HOLLOW = ['snowline', 'glacier', 'kharduin', 'deep-halls', 'warrens', 'forge-heart'];
-const TALL = [...ZONES, 'kings-bridge', 'castle-hall', ...ARENAS, ...DROWNED, ...HOLLOW];
+const TALL = [...ZONES, 'kings-bridge', 'castle-hall', 'castle-morvane', 'pirate-cove', 'dwarf-mine', 'sea-cave', 'wreckers-hall', 'ice-cave', 'flooded-crypt', 'deserters-camp', ...ARENAS, ...DROWNED, ...HOLLOW];
 
 const has = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`assets/backgrounds/${id}.${e}`));
 
@@ -89,7 +89,7 @@ describe('savaş arka planı havuzları', () => {
     for (const id of ZONES) expect(ids, id).toContain(id);
     const bg = (id: string) => (valdoria.nodes.find((n) => n.id === id) as { battleBackground?: string }).battleBackground;
     expect(bg('9')).toBe('kings-bridge');
-    expect(bg('12')).toBe('castle-hall');
+    expect(bg('12')).toBe('castle-morvane');
     expect(bg('6A')).toBe('misty-marsh');
     expect(bg('gate')).toBe('ember-road');
   });

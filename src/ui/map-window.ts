@@ -14,8 +14,10 @@ import { lockInput, unlockInput } from './input-lock';
 import { mountCloseButton } from './nav-close';
 import { attachBandTip, reasonSpec } from './band-tip-attach';
 import { mountHeroPicker } from './hero-picker';
+import { eventArtUrl } from './node-card-events';
 
-export type MwTone = 'info' | 'gain' | 'heal' | 'loss' | 'dim';
+/** note: çerçevesiz düz bilgi satırı (düğme gibi görünmesin; kalıcı seçim uyarıları). */
+export type MwTone = 'info' | 'gain' | 'heal' | 'loss' | 'dim' | 'note';
 export type MwIcon = 'gold' | 'gear' | 'bag' | 'rest' | 'hp' | 'sword' | 'str' | 'dex' | 'int' | 'luck' | 'check';
 export type MwAcc = 'ember' | 'gold' | 'red' | 'violet' | 'green' | 'dim';
 
@@ -60,7 +62,7 @@ export interface MwFallen {
 export type MwBody =
   | { k: 'plates'; plates: MwPlate[]; pick: (id: string) => void }
   | { k: 'chosen'; plate: MwPlate }
-  | { k: 'cards'; cards: MwCard[]; leader?: boolean; onPick?: (id: string) => void; /** Listenin görünen satır sayısı (Recruit: 4). */ rows?: number; /** Önerilenler: listede önce, "Recommended" etiketli. */ recommended?: readonly string[] }
+  | { k: 'cards'; cards: MwCard[]; leader?: boolean; onPick?: (id: string) => void; /** Listenin görünen satır sayısı (Recruit: 4). */ rows?: number; /** Önerilenler: listede önce, "Recommended" etiketli. */ recommended?: readonly string[]; /** Önerilen satırın hover ipucu: classId -> kısa neden (suggest.ts > recommendReasons). */ recommendWhy?: Readonly<Record<string, string>> }
   | { k: 'fallen'; rows: MwFallen[] };
 export interface MwAct {
   label: string;
@@ -80,7 +82,7 @@ export interface MwSpec {
   /** Madalyonun içindeki ikon (misc ikon adı, ör. 'emblem:recruit'); yoksa düğüm türünün ikonu. Çerçeve türden gelir. */
   icon?: string;
   /** Sahne şeridi (data/map-window.json > art). */
-  art?: { file: string; pos: [number, number] } | null;
+  art?: { file: string; pos: [number, number]; url?: string } | null;
   paras: string[];
   /** Arka arkaya savaş bilgisi (src/campaign/chain-info.ts): paragrafların altında sakin tek satır. */
   chain?: string;
@@ -92,6 +94,12 @@ export interface MwSpec {
   name?: { max: number; suggestions: string[] };
   /** Verilirse pencere kapatılabilir (zemin, X, Esc); yoksa zorunlu. */
   onDismiss?: () => void;
+  /** true: zemine dokunmak kapatmaz (yalnız X / Esc); kazara kapanma bedelli olaylarda (Leave olayı tamamlar). */
+  noScrimDismiss?: boolean;
+  /** true: olay penceresi; telefonda (html.short) resim şeridi gizlenmez, alçak görünür (Tur 40). */
+  lowArt?: boolean;
+  /** true: giriş animasyonu yok (aynı pencerede içerik değişimi; yanıp sönme olmasın). */
+  noAnim?: boolean;
   /** C: düğüm / yerin CSS piksel konumu (+ yarım genişlik); null = ortala. */
   anchor?: () => { x: number; y: number; hw?: number } | null;
 }
@@ -108,18 +116,27 @@ const esc = (t: string): string => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', 
 const sceneFiles = import.meta.glob('../../assets/campaign/windows/*.webp', { query: '?url', import: 'default' }) as Record<string, () => Promise<string>>;
 
 /** Tanımlı sahne şeridi (data/map-window.json > art) için anahtar araması. */
-export function windowArt(...keys: string[]): { file: string; pos: [number, number] } | null {
+export function windowArt(...keys: string[]): { file: string; pos: [number, number]; url?: string } | null {
   const art = (mwData as unknown as { art: Record<string, { file: string; pos: [number, number] }> }).art;
-  for (const k of keys) if (art[k]) return art[k]!;
+  for (const k of keys) {
+    if (art[k]) return art[k]!;
+    // veride özel şeridi olmayan olay: olayın kendi geniş resmi (düğüm kartındakiyle aynı; Ömer 2026-11-21)
+    const ev = k.startsWith('event:') ? eventArtUrl(k.slice(6)) : undefined;
+    if (ev) return { file: k, pos: [0.5, 0.4], url: ev };
+  }
   return null;
 }
 
 /** Olay seçeneğinin plaka etiketi / rengi / açıklaması (data/map-window.json > choices; yoksa verisinden türetilir). */
-export function choiceStyle(eventId: string, c: { id: string; hint?: string; battle?: unknown; cost?: number; hpLoss?: number }): { tag: string; acc: MwAcc; desc: string } {
+export function choiceStyle(eventId: string, c: { id: string; hint?: string; battle?: unknown; cost?: number; hpLoss?: number; faction?: unknown; stoneOath?: unknown; oath?: boolean; crownChoice?: unknown; nextBattleStatus?: unknown }): { tag: string; acc: MwAcc; desc: string } {
   const ch = (mwData as unknown as { choices: Record<string, { tag: string; acc: MwAcc; desc: string }> }).choices[`${eventId}.${c.id}`];
   if (ch) return ch;
-  const tag = c.battle ? 'Fight' : c.hpLoss ? 'Blood' : c.cost ? 'Gold' : 'Free';
-  const acc: MwAcc = c.battle ? 'ember' : c.hpLoss ? 'red' : c.cost ? 'gold' : 'green';
+  // Tür rozeti (Ömer 2026-11-21, form r39): "Free" yok. Savaş / can / altın bedeli bugünkü gibi; kalıcı seçim Final, yemin Oath,
+  // sonraki savaşa kötü etki Debuff, başka etkisi olan Gain, hiç etkisi olmayan (yalnız bilgi) Lore.
+  const x = c as Record<string, unknown>;
+  const gain = ['gold', 'heal', 'chest', 'restHeal', 'gift', 'charter', 'light', 'join', 'relic'].some((k) => x[k] !== undefined && x[k] !== false);
+  const [tag, acc]: [string, MwAcc] = c.battle ? ['Fight', 'ember'] : c.hpLoss ? ['Blood', 'red'] : c.cost ? ['Gold', 'gold'] : c.oath ? ['Oath · Final', 'violet']
+    : c.faction || c.stoneOath || c.crownChoice ? ['Final', 'violet'] : c.nextBattleStatus ? ['Debuff', 'red'] : gain ? ['Gain', 'green'] : ['Lore', 'violet'];
   return { tag, acc, desc: c.hint ?? '' };
 }
 
@@ -133,6 +150,7 @@ const CHECK = '<svg class="ck" viewBox="0 0 12 12" fill="none" stroke="currentCo
 const CROWN = '<svg class="crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 19V8l5 5 4-8 4 8 5-5v11z"/><circle cx="12" cy="15.5" r="1.3" fill="#e0702a" stroke="none"/></svg>';
 
 const chipHtml = (c: MwChip, big = false): string => {
+  if (c.tone === 'note') return `<span class="mw-note">${esc(c.text)}</span>`;
   const u = c.icon ? iconUrl(c.icon) : null;
   return `<span class="mw-chip ${c.tone}${big ? ' big' : ''}">${c.icon === 'check' ? CHECK : u ? `<img src="${u}" alt="" draggable="false">` : ''}${esc(c.text)}</span>`;
 };
@@ -200,7 +218,7 @@ export function mwHeaderHtml(o: { type: string; kind?: string; place?: string; r
 
 export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   const wrap = document.createElement('div');
-  wrap.className = `mw mw-in${o.variant === 'C' ? ' anch' : ''}`;
+  wrap.className = `mw${o.noAnim ? '' : ' mw-in'}${o.variant === 'C' ? ' anch' : ''}${o.lowArt ? ' mw-ev' : ''}`;
   const acc = `--ac:${COL[o.type] ?? COL['battle']};--acr:${rgb(COL[o.type] ?? COL['battle']!)}`;
   const body = o.body;
   const bd = body ? `bd-${body.k === 'plates' ? 'plates' : body.k}` : 'bd-none';
@@ -241,12 +259,13 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
     wrap.remove();
     unlockInput('map-window');
   };
-  if (o.onDismiss) wrap.querySelector('.mw-scrim')?.addEventListener('click', dismiss);
+  if (o.onDismiss && !o.noScrimDismiss) wrap.querySelector('.mw-scrim')?.addEventListener('click', dismiss);
   else wrap.querySelector('.mw-scrim')?.addEventListener('click', () => undefined);
 
   // sahne şeridi: tembel yüklenir (eksikse düz zemin; oyun çökmez)
   const artEl = wrap.querySelector<HTMLElement>('.mw-art');
-  if (artEl && o.art) {
+  if (artEl && o.art?.url) artEl.style.backgroundImage = `url(${o.art.url})`;
+  else if (artEl && o.art) {
     const load = sceneFiles[`../../assets/campaign/windows/${o.art.file}.webp`];
     if (load) void load().then((u) => !done && (artEl.style.backgroundImage = `url(${u})`)).catch(() => undefined);
   }
@@ -357,6 +376,6 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   place();
   requestAnimationFrame(() => !done && place());
   // Kahraman seçim penceresi: ortak seçici (satır listesi + yanında kart; src/ui/hero-picker.ts)
-  if (body?.k === 'cards') mountHeroPicker(wrap, body.cards, { place, ...(body.rows ? { rows: body.rows } : {}), ...(body.recommended ? { recommended: body.recommended } : {}) });
+  if (body?.k === 'cards') mountHeroPicker(wrap, body.cards, { place, ...(body.rows ? { rows: body.rows } : {}), ...(body.recommended ? { recommended: body.recommended } : {}), ...(body.recommendWhy ? { recommendWhy: body.recommendWhy } : {}) });
   return { close, place, el: wrap };
 }

@@ -1,7 +1,7 @@
 {
   "_not": "Ömer onayladı 2026-10-31 (ilk ağaç). 2026-11-08 yeniden kuruldu (Ömer: 'çok generic'): düğümler Vesper'in kendi skill'lerinin oynanışını değiştirir; mantık docs/design/classes/skill-tree-logic.md. Yalnız mevcut fx kancaları; yeni mekanik önerileri docs/design/classes/vesper.md bölüm 3. Sayılar sim bekler. Yapı _rules.json rowShape.",
   "class": "vesper",
-  "version": 3,
+  "version": 4,
   "picked": {
     "rows": [
       "D",
@@ -106,14 +106,14 @@
       {
         "at": 20,
         "name": "Iron Rope",
-        "text": "Pealing Bells +1% per bell.",
+        "text": "Pealing Bells +0.25% per bell.",
         "src": "D:rebuild 2026-11-08",
         "fx": [
           {
             "k": "passive",
             "f": "perBell",
             "op": "add",
-            "v": 0.01
+            "v": 0.0025
           }
         ]
       },
@@ -145,14 +145,14 @@
   "nodes": {
     "0.f1": {
       "name": "Bronze Throat",
-      "text": "Pealing Bells +0.4% per bell per rank.",
+      "text": "Pealing Bells +0.25% per bell per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
           "k": "passive",
           "f": "perBell",
           "op": "add",
-          "v": 0.004,
+          "v": 0.0025,
           "rank": true
         }
       ]
@@ -178,7 +178,7 @@
     },
     "0.f3": {
       "name": "Full Peal",
-      "text": "At 5+ bells, your skills have +2% critical chance per rank.",
+      "text": "At 5+ bells, your skills have +0.75% critical chance per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -189,7 +189,7 @@
             "selfBells": 5
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.0075
           },
           "rank": true
         }
@@ -214,7 +214,7 @@
     },
     "0.r": {
       "name": "Prime",
-      "text": "At 3 bells or fewer, your skills deal 4% more damage per rank.",
+      "text": "At 3 bells or fewer, your skills deal 1.5% more damage per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -227,7 +227,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -235,7 +235,7 @@
     },
     "0.ea": {
       "name": "Quickening Peal",
-      "text": "Every 3rd bell you ring brings your next turn 10% sooner.",
+      "text": "Every 3rd bell you ring brings your next turn 3.5% sooner.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -245,7 +245,7 @@
           "every": 3,
           "do": [
             {
-              "sooner": 0.1
+              "sooner": 0.035
             }
           ]
         }
@@ -287,7 +287,7 @@
     },
     "0.fa": {
       "name": "Racing Peal",
-      "text": "Every 2nd bell (instead of every 3rd) brings your next turn 10% sooner. Pealing Bells -1.5% per bell.",
+      "text": "Every 2nd bell (instead of every 3rd) brings your next turn 3.5% sooner. Pealing Bells -1.5% per bell.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -297,7 +297,7 @@
           "every": 2,
           "do": [
             {
-              "sooner": 0.1
+              "sooner": 0.035
             }
           ],
           "drop": "0.ea"
@@ -394,7 +394,7 @@
     },
     "1.f1": {
       "name": "Steady Stroke",
-      "text": "Toll deals 2% more damage per rank for each Toll you cast in a row before it.",
+      "text": "Toll deals 0.75% more damage per rank for each Toll you cast in a row before it.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -404,7 +404,7 @@
             "skillStreak": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.0075
           },
           "rank": true
         }
@@ -412,12 +412,26 @@
     },
     "1.f2": {
       "name": "Ringing Ears",
-      "text": "Toll has a 3% chance per rank to lightly Blind each enemy hit (-10% accuracy) for 1 turn.",
+      "text": "Toll has a 1% chance per rank to lightly Blind each enemy hit (-10% accuracy) for 1 turn.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
           "k": "addEffect",
           "byRank": [
+            {
+              "type": "status",
+              "status": "blinded",
+              "strength": 0.333,
+              "turns": 1,
+              "chance": 0.01
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "strength": 0.333,
+              "turns": 1,
+              "chance": 0.02
+            },
             {
               "type": "status",
               "status": "blinded",
@@ -430,28 +444,14 @@
               "status": "blinded",
               "strength": 0.333,
               "turns": 1,
-              "chance": 0.06
+              "chance": 0.04
             },
             {
               "type": "status",
               "status": "blinded",
               "strength": 0.333,
               "turns": 1,
-              "chance": 0.09
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "strength": 0.333,
-              "turns": 1,
-              "chance": 0.12
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "strength": 0.333,
-              "turns": 1,
-              "chance": 0.15
+              "chance": 0.05
             }
           ]
         }
@@ -459,7 +459,7 @@
     },
     "1.f3": {
       "name": "Dread Peal",
-      "text": "Toll deals 4% more damage per rank to Blinded enemies.",
+      "text": "Toll deals 1.5% more damage per rank to Blinded enemies.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -469,7 +469,7 @@
             "targetStatus": "blinded"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -495,7 +495,7 @@
     },
     "1.r": {
       "name": "Lingering Ears",
-      "text": "Blinded from Toll lowers accuracy by a further 2% per rank.",
+      "text": "Blinded from Toll lowers accuracy by a further 0.75% per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -504,7 +504,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.02
+              "accuracyDelta": -0.0075
             }
           },
           "rank": true
@@ -537,7 +537,7 @@
     },
     "1.eb": {
       "name": "Knell",
-      "text": "Toll deals 15% more damage to the enemy with the lowest HP.",
+      "text": "Toll deals 5.25% more damage to the enemy with the lowest HP.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -547,7 +547,7 @@
             "targetLowestHp": true
           },
           "mod": {
-            "powerMul": 0.15
+            "powerMul": 0.0525
           }
         }
       ]
@@ -578,7 +578,7 @@
     },
     "1.fa": {
       "name": "Hammered Rope",
-      "text": "Toll deals 6% more damage for each Toll in a row before it (instead of Steady Stroke). The first Toll of a streak deals 25% less damage.",
+      "text": "Toll deals 2% more damage for each Toll in a row before it (instead of Steady Stroke). The first Toll of a streak deals 8.75% less damage.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -588,7 +588,7 @@
             "skillStreak": true
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.02
           },
           "drop": "1.f1"
         },
@@ -604,14 +604,14 @@
             }
           },
           "mod": {
-            "powerMul": -0.25
+            "powerMul": -0.0875
           }
         }
       ]
     },
     "1.fb": {
       "name": "Muffled Knell",
-      "text": "Toll deals 40% more damage (instead of 15%) to the enemy with the lowest HP and 15% less to the others.",
+      "text": "Toll deals 14% more damage (instead of 5.25%) to the enemy with the lowest HP and 15% less to the others.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -621,7 +621,7 @@
             "targetLowestHp": true
           },
           "mod": {
-            "powerMul": 0.4
+            "powerMul": 0.14
           },
           "drop": "1.eb"
         },
@@ -658,7 +658,7 @@
     },
     "1.v": {
       "name": "Death Knell",
-      "text": "Toll +25% power. Once per cast, if Toll kills, it tolls again for free.",
+      "text": "Toll +8.75% power. Once per cast, if Toll kills, it tolls again for free.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -666,7 +666,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.25
+          "v": 0.0875
         },
         {
           "k": "hook",
@@ -684,7 +684,7 @@
     },
     "2.f1": {
       "name": "Afterglare",
-      "text": "Thunderpeal deals 4% more damage per rank to Blinded enemies.",
+      "text": "Thunderpeal deals 1.5% more damage per rank to Blinded enemies.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -694,7 +694,7 @@
             "targetStatus": "blinded"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -702,7 +702,7 @@
     },
     "2.f2": {
       "name": "Crowded Row",
-      "text": "Thunderpeal deals 2% more damage per rank for each enemy it hits.",
+      "text": "Thunderpeal deals 0.75% more damage per rank for each enemy it hits.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -712,7 +712,7 @@
             "hitCount": 0
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.0075
           },
           "rank": true
         }
@@ -720,7 +720,7 @@
     },
     "2.f3": {
       "name": "Searing Flash",
-      "text": "Blind from Thunderpeal lowers accuracy by a further 2% per rank.",
+      "text": "Blind from Thunderpeal lowers accuracy by a further 0.75% per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -729,7 +729,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.02
+              "accuracyDelta": -0.0075
             }
           },
           "rank": true
@@ -752,7 +752,7 @@
     },
     "2.r": {
       "name": "Dazzled",
-      "text": "Cracked Bell deals 4% more damage per rank to Blinded enemies.",
+      "text": "Cracked Bell deals 1.5% more damage per rank to Blinded enemies.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -763,7 +763,7 @@
             "targetStatus": "blinded"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -771,7 +771,7 @@
     },
     "2.ea": {
       "name": "Forked Peal",
-      "text": "Thunderpeal also strikes the row behind for 50% damage.",
+      "text": "Thunderpeal also strikes the row behind for 17.5% damage.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -780,7 +780,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.5,
+              "strike": 0.175,
               "to": "rowBehind"
             }
           ]
@@ -789,7 +789,7 @@
     },
     "2.eb": {
       "name": "Thunderstruck",
-      "text": "Thunderpeal has a 30% chance to Stun already Blinded enemies for 1 turn.",
+      "text": "Thunderpeal has a 10.5% chance to Stun already Blinded enemies for 1 turn.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -802,7 +802,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.3
+              "chance": 0.105
             }
           }
         }
@@ -856,7 +856,7 @@
     },
     "2.fb": {
       "name": "Blinding Storm",
-      "text": "Thunderstruck chance is 60% (instead of 30%). Thunderpeal -30% power.",
+      "text": "Thunderstruck chance is 21% (instead of 10.5%). Thunderpeal -30% power.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -869,7 +869,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.6
+              "chance": 0.21
             }
           },
           "drop": "2.eb"
@@ -885,7 +885,7 @@
     },
     "2.mb": {
       "name": "White Flash",
-      "text": "Thunderpeal has +25% critical chance against Blinded enemies.",
+      "text": "Thunderpeal has +8.75% critical chance against Blinded enemies.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -895,14 +895,14 @@
             "targetStatus": "blinded"
           },
           "mod": {
-            "critBonus": 0.25
+            "critBonus": 0.0875
           }
         }
       ]
     },
     "2.v": {
       "name": "Storm Tower",
-      "text": "Thunderpeal claps again at the start of your next turn on the same cells for 60% power. The second clap rings its own bell.",
+      "text": "Thunderpeal claps again at the start of your next turn on the same cells for 21% power. The second clap rings its own bell.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -913,7 +913,7 @@
             {
               "cast": "thunderpeal",
               "delay": 1,
-              "power": 0.6,
+              "power": 0.21,
               "noChain": true
             }
           ]
@@ -922,7 +922,7 @@
     },
     "3.f1": {
       "name": "Bronze Memory",
-      "text": "Cracked Bell deals 0.5% more damage per bell per rank.",
+      "text": "Cracked Bell deals 0.25% more damage per bell per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -932,7 +932,7 @@
             "selfBells": true
           },
           "mod": {
-            "powerMul": 0.005
+            "powerMul": 0.0025
           },
           "rank": true
         }
@@ -940,7 +940,7 @@
     },
     "3.f2": {
       "name": "Jarring Note",
-      "text": "Cracked Bell Stun chance +3% per rank.",
+      "text": "Cracked Bell Stun chance +1% per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -948,14 +948,14 @@
           "sel": "status:stun",
           "f": "chance",
           "op": "add",
-          "v": 0.03,
+          "v": 0.01,
           "rank": true
         }
       ]
     },
     "3.f3": {
       "name": "Bell-Breaker",
-      "text": "Cracked Bell deals 4% more damage per rank to enemies above 50% HP.",
+      "text": "Cracked Bell deals 1.5% more damage per rank to enemies above 50% HP.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -965,7 +965,7 @@
             "targetHpAbove": 0.5
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.015
           },
           "rank": true
         }
@@ -992,7 +992,7 @@
     },
     "3.r": {
       "name": "Aftershock",
-      "text": "When Cracked Bell Stuns, restore 2 MP per rank.",
+      "text": "When Cracked Bell Stuns, restore 1 MP per rank.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1003,7 +1003,7 @@
           "rank": true,
           "do": [
             {
-              "mp": 2
+              "mp": 1
             }
           ]
         }
@@ -1030,7 +1030,7 @@
     },
     "3.eb": {
       "name": "Toll for One",
-      "text": "Cracked Bell deals 25% more damage to elites and bosses.",
+      "text": "Cracked Bell deals 8.75% more damage to elites and bosses.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1043,14 +1043,14 @@
             ]
           },
           "mod": {
-            "powerMul": 0.25
+            "powerMul": 0.0875
           }
         }
       ]
     },
     "3.ma": {
       "name": "Death Bell",
-      "text": "When Cracked Bell Stuns, cast a free Toll at 50% power.",
+      "text": "When Cracked Bell Stuns, cast a free Toll at 17.5% power.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1061,7 +1061,7 @@
           "do": [
             {
               "cast": "toll",
-              "power": 0.5,
+              "power": 0.175,
               "noChain": true
             }
           ]
@@ -1108,7 +1108,7 @@
     },
     "3.mb": {
       "name": "Bell-Toll Verdict",
-      "text": "Cracked Bell deals 3% more damage per bell to elites and bosses.",
+      "text": "Cracked Bell deals 1% more damage per bell to elites and bosses.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1124,14 +1124,14 @@
             "selfBells": true
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.01
           }
         }
       ]
     },
     "3.v": {
       "name": "Sundered Bell",
-      "text": "Cracked Bell +30% power. Shards hit the enemies beside the target for 50% damage.",
+      "text": "Cracked Bell +10.5% power. Shards hit the enemies beside the target for 17.5% damage.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1139,14 +1139,14 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.3
+          "v": 0.105
         },
         {
           "k": "hook",
           "h": "target",
           "splash": {
             "pattern": "perpendicular",
-            "mult": 0.5
+            "mult": 0.175
           }
         }
       ]
@@ -1167,7 +1167,7 @@
     },
     "4.u2": {
       "name": "Royal Peal",
-      "text": "Great Bell of Valdoria +1% power per bell.",
+      "text": "Great Bell of Valdoria +0.25% power per bell.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1175,7 +1175,7 @@
           "sel": "damage",
           "f": "powerPerBell",
           "op": "add",
-          "v": 0.01
+          "v": 0.0025
         }
       ]
     },
@@ -1213,7 +1213,7 @@
     },
     "4.r2": {
       "name": "Glaring Peal",
-      "text": "Great Bell of Valdoria deals 20% more damage to Blinded enemies.",
+      "text": "Great Bell of Valdoria deals 7% more damage to Blinded enemies.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1223,14 +1223,14 @@
             "targetStatus": "blinded"
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.07
           }
         }
       ]
     },
     "4.r3": {
       "name": "Judgement Peal",
-      "text": "The holy and lightning strikes of Great Bell of Valdoria each have a 30% chance to Stun Blinded enemies for 1 turn.",
+      "text": "The holy and lightning strikes of Great Bell of Valdoria each have a 10.5% chance to Stun Blinded enemies for 1 turn.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1243,7 +1243,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.3
+              "chance": 0.105
             }
           }
         }
@@ -1267,7 +1267,7 @@
     },
     "4.d2": {
       "name": "Last Peal",
-      "text": "Great Bell of Valdoria deals 25% more damage to enemies below 50% HP.",
+      "text": "Great Bell of Valdoria deals 8.75% more damage to enemies below 50% HP.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1277,7 +1277,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.25
+            "powerMul": 0.0875
           }
         }
       ]
@@ -1333,7 +1333,7 @@
     },
     "4.l3": {
       "name": "Evensong",
-      "text": "After Great Bell of Valdoria, your next turn comes 30% sooner.",
+      "text": "After Great Bell of Valdoria, your next turn comes 10.5% sooner.",
       "src": "D:rebuild 2026-11-08",
       "fx": [
         {
@@ -1342,7 +1342,7 @@
           "on": "skillUse",
           "do": [
             {
-              "sooner": 0.3
+              "sooner": 0.105
             }
           ]
         }

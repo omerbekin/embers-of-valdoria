@@ -1,0 +1,22 @@
+{
+  "_not": "Jenerik (credits) TASLAĞI (Ömer 2026-11-21 form r38-r39; Ömer düzeltecek). Oyun içi metin İngilizce. Kişi adı UYDURULMAZ: yalnız projede yazılı gerçekler (oyun adı, araçlar, font lisansı assets/fonts/LICENSE.md, görsel üretimi docs/arch/codex-imagegen.md, ses = WebAudio sentezi CLAUDE.md). Boş `lines` olan bölüm ekranda çizilmez (Ömer doldurunca görünür). Kişisel bilgi (e-posta vb.) YOK. Ekran: src/ui/credits.ts (sayfalı; her sayfa bir bölüm, `pageMs` sonra kendiliğinden ilerler, dokunma / Space / Enter = sonraki, X / Esc = kapat). Açıldığı yer: Harita 3 kapanış sinemasından sonra + ana menü > Credits.",
+  "title": "Embers of Valdoria",
+  "pageMs": 5000,
+  "sections": [
+    { "heading": "Design & Direction", "lines": [] },
+    { "heading": "Code", "lines": ["Written in TypeScript", "Built on Phaser 3 and Vite", "Tested with Vitest"] },
+    {
+      "heading": "Art",
+      "lines": [
+        "Images made with OpenAI Codex image generation",
+        "Cinzel by Natanael Gama",
+        "EB Garamond by Georg Duffner and Octavio Pardo",
+        "Fonts under the SIL Open Font License 1.1"
+      ]
+    },
+    { "heading": "Audio", "lines": ["Music and sound synthesized live with the Web Audio API"] },
+    { "heading": "Tools", "lines": ["Phaser 3", "TypeScript", "Vite", "Vitest", "Cloudflare"] },
+    { "heading": "Special Thanks", "lines": [] }
+  ],
+  "closing": "Thank you for playing."
+}

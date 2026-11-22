@@ -65,7 +65,7 @@ describe('Warrior ağacı fx (Faz 2b)', () => {
     expect(avg(true)).toBeGreaterThan(avg(false));
   });
 
-  it('Reckless Heat: Charge 20 Rage verir ve Stun\'ı 1 tur sürer', () => {
+  it('Reckless Heat: Charge 30 Rage verir ve Stun\'ı 1 tur sürer', () => {
     const b = make({ 0: 'warrior' }, { 0: 'archer' }, { 0: { tree: tree(['3.f1*3', '3.f2*5', '3.f3*2', '3.n0', '3.r*3', '3.eb', '3.fb']) } });
     const e = E0(b);
     e.stats = { ...e.stats, evasion: -5 };

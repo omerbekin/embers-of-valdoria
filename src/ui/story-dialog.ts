@@ -63,8 +63,7 @@ export function openStoryDialog(root: HTMLElement, spec: StoryDialogSpec): Story
   wrap.className = spec.className ? `sd ${spec.className}` : 'sd';
   const portraitUrl = (p: string | null | undefined, speaker: string): string | null => (p === null ? null : avatarUrlOf(p ?? speakerPortraitId(speaker)));
   const av = portraitUrl(spec.portrait, spec.speaker);
-  const corners = '<i class="sd-corner tl"></i><i class="sd-corner tr"></i><i class="sd-corner bl"></i><i class="sd-corner br"></i>';
-  const picHtml = (url: string | null): string => (url ? `<div class="sd-pic">${corners}<img src="${url}" alt="" draggable="false"></div>` : '');
+  const picHtml = (url: string | null): string => (url ? `<div class="sd-pic"><img src="${url}" alt="" draggable="false"></div>` : '');
   const gridCls = (url: string | null): string => (url ? 'sd-grid' : spec.keepWho ? 'sd-grid nopic-keep' : 'sd-grid nopic');
   const whoHtml = (url: string | null, speaker: string): string =>
     `${picHtml(url)}<div class="sd-name">${esc(speaker)}</div>${spec.place ? `<div class="sd-place">${esc(spec.place)}</div>` : ''}`;

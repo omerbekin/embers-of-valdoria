@@ -654,6 +654,7 @@ export function isReleasablePoseTexture(key: string, inUse: ReadonlySet<string>,
   if (inUse.has(key)) return false;
   if (key.startsWith('glowfx:')) return true;
   if (key.startsWith('pose:')) return !!opts.atlases;
+  if (key.startsWith('posethrow:')) return !!opts.atlases; // ikinci el hançerinin uçuş kopyası (pose-rig > keepThrowItem): atlasıyla birlikte
   if (key.startsWith('posebody:') && opts.keepBodies) return !opts.keepBodies.has(key.split(':')[1] ?? '');
   return false;
 }

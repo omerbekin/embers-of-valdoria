@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, chooseAction, content, describeSkill, explainChoice, previewForTargets, skillCostAmount, skillCostLabel, type BattleEvent, type BattleMode, type Combatant, type SkillEffect, type Teams } from '../src/engine';
+import { Battle, chooseAction, content, describePassive, describeSkill, explainChoice, previewForTargets, skillCostAmount, skillCostLabel, type BattleEvent, type BattleMode, type Combatant, type SkillEffect, type Teams } from '../src/engine';
+import { passiveNumbers } from '../src/engine/skill-info';
 
 // Redtithe (iç id antimage; Ömer 2026-11-17): kan barı, Tithe Cut, Blood Brand, Mirror Vein, Exsanguinate, Blood Tithe pasifi. Sayılar veriden okunur.
 
@@ -381,6 +382,33 @@ describe('Redtithe: büyü zırhı tamamen kan barına bağlı (Ömer 2026-11-18
 });
 
 describe('Redtithe: Blood Tithe pasifi', () => {
+  it('ipucu metni (Ömer 2026-11-21 form r40): üç cümle; sayılar formulas.bloodBar ve kahramanın statından (stat değişince metin değişir)', () => {
+    const b = make({ 0: 'antimage' }, { 0: 'mage' });
+    const me = P(b);
+    const pas = content.classes.antimage!.passive!;
+    const e = pas.effect as Extract<NonNullable<Combatant['passive']>['effect'], { type: 'spellbreakerInstinct' }>;
+    const pc = (v: number) => `${Math.round(v * 100)}%`;
+    const txt = (st: Combatant['stats']) => describePassive(pas, st, content.formulas);
+    const t = txt(me.stats);
+    expect(t).toContain(`Blood bar: 0-${BB.max}, starts at ${BB.start}.`);
+    expect(t).toContain(`${content.skills.mana_burn!.name} fills it; skills spend it. Missing blood is paid in HP`);
+    expect(t).toContain(`up to ${pc(e.advance + e.bloodAdvance! + e.bloodAdvancePerDex! * me.stats.dex)} of a turn at a full bar. Once between your turns.`);
+    expect(t).toContain(`more Magic armor (up to ${BB.magicArmorBase + BB.magicArmorPerInt * me.stats.int} at 0 blood) and up to ${pc(BB.lifestealMax)} life steal on skill hits.`);
+    // motorla aynı: bar 0'daki büyü zırhı = metindeki sayı
+    me.blood = 0;
+    expect(b.bloodMagicArmor(me)).toBeCloseTo(BB.magicArmorBase + BB.magicArmorPerInt * me.stats.int, 2);
+    expect(b.bloodLifesteal(me)).toBeCloseTo(BB.lifestealMax, 4);
+    // stat değişince sayı değişir (sabit yazılmaz)
+    const more = { ...me.stats, int: me.stats.int + 10, dex: me.stats.dex + 20 };
+    expect(txt(more)).toContain(`up to ${BB.magicArmorBase + BB.magicArmorPerInt * more.int} at 0 blood`);
+    expect(txt(more)).toContain(`up to ${pc(e.advance + e.bloodAdvance! + e.bloodAdvancePerDex! * more.dex)} of a turn`);
+    expect(passiveNumbers(pas, me.stats, content.formulas).map((x) => x.label)).toEqual(['Turn bar ahead (full blood)', 'Magic armor (0 blood)', 'Life steal (0 blood)']);
+    // sabit veri metni (savaş başı kartı, Codex arama) aynı kuralı formülle yazar
+    expect(pas.text).toContain(`0-${BB.max}, starts at ${BB.start}`);
+    expect(pas.text).toContain(`${pc(e.bloodAdvance!)} + DEX x${Math.round(e.bloodAdvancePerDex! * 10000) / 100}%`);
+    expect(pas.text).toContain(`${BB.magicArmorBase} + INT x${BB.magicArmorPerInt}`);
+    expect(pas.text).toContain(`${pc(BB.lifestealMax)} life steal`);
+  });
   it('kayma barla ölçeklenir: advance + (bloodAdvance + bloodAdvancePerDex x DEX) x bar/max (Ömer 2026-11-18)', () => {
     const b = make({ 0: 'antimage' }, { 0: 'mage' });
     const me = P(b);
@@ -494,19 +522,44 @@ describe('Redtithe: yapay zeka', () => {
     expect(onWar).toBeGreaterThan(0);
   });
   it('Blood Brand: MP\'li düşman MP\'siz düşmandan değerli (brand terimi)', () => {
-    const b = make({ 0: 'antimage' }, { 0: 'mage', 1: 'warrior' });
+    // 2x2 alan (Ömer 2026-11-21 form r40): iki düşman aynı alana sığmasın (ön sıra şerit 0, arka sıra şerit 2)
+    const b = make({ 0: 'antimage' }, { 0: 'mage', 11: 'warrior' });
     const me = P(b);
     me.blood = BB.max;
     const mage = E(b, 0);
-    const war = E(b, 1);
+    const war = E(b, 11);
     mage.mp = mage.maxMp;
     war.maxMp = 0;
     war.mp = 0;
     war.hp = war.maxHp = mage.hp = mage.maxHp = 400;
-    const onMage = best(b, me.uid, 'drain_field', mage.uid)?.terms?.brand ?? 0;
-    const onWar = best(b, me.uid, 'drain_field', war.uid)?.terms?.brand ?? 0;
+    // alan adayı: yalnız o düşmanı kapsayan alanlar (hits; anchor boş hücre olabilir)
+    const only = (u: Combatant) => {
+      const xs = cands(b, me.uid).filter((c) => c.skill === 'drain_field' && c.hits.length === 1 && c.hits[0]!.startsWith(`E${u.uid.split('-').pop()}:`));
+      return Math.max(0, ...xs.map((c) => c.terms?.brand ?? 0));
+    };
+    const onMage = only(mage);
+    const onWar = only(war);
     expect(onMage).toBeGreaterThan(onWar);
     expect(onWar).toBeGreaterThan(0);
+  });
+  it('Blood Brand 2x2 (Ömer 2026-11-21 form r40): iki düşmanı kapsayan alan tek düşmanlıdan değerli, ama işaret terimi toplanmaz (en yükseği)', () => {
+    const b = make({ 0: 'antimage' }, { 0: 'warrior', 1: 'warrior' });
+    const me = P(b);
+    me.blood = BB.max;
+    const [w0, w1] = [E(b, 0), E(b, 1)];
+    for (const w of [w0, w1]) {
+      w.maxMp = 0;
+      w.mp = 0;
+      w.hp = w.maxHp = 400;
+    }
+    const lab = (u: Combatant) => `E${u.uid.split('-').pop()}:`;
+    const all = cands(b, me.uid).filter((c) => c.skill === 'drain_field');
+    const both = Math.max(0, ...all.filter((c) => c.hits.length === 2).map((c) => c.terms?.brand ?? 0));
+    const one = Math.max(0, ...all.filter((c) => c.hits.length === 1 && c.hits[0]!.startsWith(lab(w1))).map((c) => c.terms?.brand ?? 0));
+    expect(one).toBeGreaterThan(0);
+    expect(both).toBeGreaterThan(one);
+    // MP'siz iki eş düşman: ek tik terimi iki kez, işaret terimi bir kez sayılır (toplam < 2 x tek)
+    expect(both).toBeLessThan(2 * one - 1e-6);
   });
   it('Mirror Vein: büyücü düşman varken kan değeri (vein terimi) > 0, yalnız fiziksel düşmanda 0; kalkan değeri shield teriminde', () => {
     const b = make({ 0: 'antimage', 1: 'warrior' }, { 0: 'mage' });

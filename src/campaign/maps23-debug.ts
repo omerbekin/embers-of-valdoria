@@ -5,13 +5,15 @@ import { CONFIG, EVENTS, getMap, WAYSHRINES } from './data';
 import { finalNode } from './graph';
 import { grantLoot } from './loot';
 import { nodeLevel } from './power';
-import { activeHeroes, autoResolve, clone, continueToMap, debugEnsureClass, debugTeleport, moveTo, newCampaign, nextMapFor, nextStep, pathTo } from './state';
+import { activeHeroes, autoResolve, chooseEvent, clone, continueToMap, debugEnsureClass, debugTeleport, moveTo, newCampaign, nextMapFor, nextStep, pathTo } from './state';
 import { questDef } from './quests';
 import { equipBest } from './gear';
 import { autoTreeAll } from './tree';
 import { autoAllocateAll, debugSetLevel } from './xp';
 import { caravelDef, withReachForRoute, withReachOpen } from './reach';
-import type { CampaignState } from './types';
+import { CINEMATIC_IDS, CINEMATICS } from './cinematics';
+import { crownChoiceEvent } from './ending';
+import type { CampaignState, CrownChoice } from './types';
 
 export const DROWNED_REACH = 'drowned-reach';
 /** Harita 3 (maps-2-3.md 4; iskelet, campaign.json > mapFlags ile kapalı). */
@@ -284,4 +286,28 @@ export function debugSealedTomb(s: CampaignState, oath: 'sworn' | 'refused' | nu
     t = n;
   }
   return debugSetStoneOath(tidy(t), oath);
+}
+
+/**
+ * Debug "Finish Map 3: Mend / Quench" (Ömer 2026-11-21 r38-r39): Harita 3'ü Mend or Quench düğümüne kadar yürür (debugJumpHollowNode; ilk
+ * seferde yavaş), olayı verilen seçimle bitirir (seçim kayda yazılır). Harita 3 kapanış sinemalarının "görüldü" işareti silinir: harita açılınca
+ * sinema -> jenerik -> harita sonu kartı oynar. Zaten oradaysa yürümeden olay sıfırlanıp yeniden seçilir.
+ */
+export function debugFinishMap3(s: CampaignState, choice: CrownChoice): CampaignState {
+  const ev = crownChoiceEvent(HOLLOW_CROWN);
+  if (!ev) throw new Error('Map 3 has no Mend or Quench event');
+  const pick = ev.choices.find((c) => c.crownChoice === choice);
+  if (!pick) throw new Error(`No ${choice} choice`);
+  const endIds = new Set(CINEMATIC_IDS.filter((id) => { const tr = CINEMATICS[id]!.trigger; return tr.on === 'mapComplete' && tr.map === HOLLOW_CROWN; }).map((id) => `cinematic:${id}`));
+  let t = s.mapId === HOLLOW_CROWN && s.at === ev.node ? clone(s) : clone(debugJumpHollowNode(s, ev.node));
+  t.done = t.done.filter((d) => d !== `${ev.node}:event` && !endIds.has(d));
+  delete t.crownChoice;
+  delete t.eventChoice;
+  for (let i = 0; i < 20; i++) {
+    const k = nextStep(t).kind; // olaydan önce bekleyen adımlar (varsa); olayın kendisi otomatik çözülmez (ilk seçenek = mend olurdu)
+    if (k === 'event' || k === 'move' || k === 'complete') break;
+    t = autoResolve(t, nextStep(t));
+  }
+  if (nextStep(t).kind !== 'event') throw new Error(`Map 3 end event is not waiting (${nextStep(t).kind})`);
+  return tidy(chooseEvent(t, pick.id));
 }

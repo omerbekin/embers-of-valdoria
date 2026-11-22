@@ -13,6 +13,7 @@ import { avatarUrl } from './character-panel';
 import type { MwCard } from './map-window';
 import { heroCardHtml, bindHeroCardTips } from './hero-card';
 import { ms } from './motion';
+import { attachBandTip, reasonSpec } from './band-tip-attach';
 import { once } from './reward-fx';
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
@@ -37,6 +38,8 @@ export interface HeroPickerOpts {
   rows?: number;
   /** Önerilen kahramanlar: listenin başına gelir, satırında küçük "Recommended" etiketi. */
   recommended?: readonly string[];
+  /** "Recommended" satırının hover ipucu: classId -> kısa neden (rozeti koyan kuralın gerekçesi, suggest.ts > recommendReasons). Nedeni olmayan satırda ipucu çıkmaz. */
+  recommendWhy?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -89,7 +92,16 @@ export function mountHeroPicker(wrap: HTMLElement, cards: readonly MwCard[], o: 
     const all = [...list.querySelectorAll<HTMLElement>('.mw-card')];
     const isRec = (r: HTMLElement): boolean => rec.has(r.dataset['card'] ?? '');
     [...all.filter(isRec), ...all.filter((r) => !isRec(r))].forEach((r) => list.append(r));
-    all.filter(isRec).forEach((r) => r.querySelector('.hp-r')?.insertAdjacentHTML('beforeend', '<span class="hp-rec">Recommended</span>'));
+    all.filter(isRec).forEach((r) => {
+      r.querySelector('.hp-r')?.insertAdjacentHTML('beforeend', '<span class="hp-rec">Recommended</span>');
+      const why = o.recommendWhy?.[r.dataset['card'] ?? ''];
+      if (why) {
+        attachBandTip(r, reasonSpec('Recommended', why));
+        // Dokunmada satır düğme olduğu için ipucu açmaz (seçer); nedeni etiketine dokununca açılır (doğrulama turu 2026-11-21)
+        const badge = r.querySelector<HTMLElement>('.hp-rec');
+        if (badge) attachBandTip(badge, reasonSpec('Recommended', why), { touchOnly: true });
+      }
+    });
   }
   // sabit görünen yükseklik (satır sayısı): fit
   const visibleRows = o.rows ?? 0;
@@ -176,11 +188,18 @@ export function mountHeroPicker(wrap: HTMLElement, cards: readonly MwCard[], o: 
     const host = wrap.querySelector<HTMLElement>('.mw-center') ?? wrap.closest<HTMLElement>('.mw-center');
     if (!panel || !host) return;
     panel.style.setProperty('--hp-zoom', '1');
+    panel.style.setProperty('--btn-k', '1');
     const natW = panel.offsetWidth;
-    const natH = panel.offsetHeight;
-    const k = Math.min((host.clientWidth - 12) / natW, (host.clientHeight - 12) / natH, 1);
-    const z = String(Math.max(0.2, Math.floor(k * 1000) / 1000));
-    panel.style.setProperty('--hp-zoom', z);
+    // düğme boyu zoom'a bağlı (gerçek 30 px, phone-buttons.css): iki geçiş; ikinci ölçüm düğmenin büyümüş boyunu da hesaba katar
+    let z = 1;
+    for (let i = 0; i < 2; i++) {
+      panel.style.setProperty('--btn-k', String(z));
+      const natH = panel.offsetHeight;
+      const k = Math.min((host.clientWidth - 12) / natW, (host.clientHeight - 12) / natH, 1);
+      z = Math.max(0.2, Math.floor(k * 1000) / 1000);
+    }
+    panel.style.setProperty('--hp-zoom', String(z));
+    panel.style.setProperty('--btn-k', String(z));
   };
   new ResizeObserver(() => {
     fit();

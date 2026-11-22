@@ -395,6 +395,8 @@ const EFFECT_FLAGS: Record<string, readonly string[]> = {
   self: ['dispel', 'status', 'shield'],
   // Faz 2c: seed'li rastgele silme (Prying Blade), Dark Bond'a bağlı guard (Blood Oath), etki koşulu (Ward Taunt)
   random: ['dispel'],
+  // Purging Ward (Ömer 2026-11-20 r35): silme yalnız canı en düşük dosta
+  lowestHp: ['dispel'],
   bond: ['guard'],
   when: ['status', 'taunt', 'dispel', 'shield', 'guard'],
   // Faz 4c: zemin çarpanları ve tur başı durumları
@@ -728,7 +730,7 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
       if (fx.h === 'target') {
         // Faz 5a: C5 hedef / alan / aura: derleme anında skill / pasif kopyası yamalanır (kanca eklenmez)
         const skillKeys = (['area', 'target', 'count', 'splash', 'range', 'open', 'priority', 'gather', 'guard', 'groundWide'] as const).some((k) => fx[k] !== undefined);
-        applyTarget(fx, acc, skillKeys ? ownSkill(fx.skill ?? p.skill) : null, cls, r);
+        applyTarget(fx, acc, skillKeys ? ownSkill(fx.skill ?? p.skill) : null, cls, r, node);
         return;
       }
       if (fx.h === 'cond') {
@@ -1079,7 +1081,7 @@ function compileRule(tree: TreeData, cls: (typeof classes)[string], fx: Extract<
 const ENEMY_TARGETS: ReadonlySet<string> = new Set(['random_enemies', 'all_enemies', 'single_enemy', 'area_enemies']);
 
 /** C5 hedef fx'i: skill / pasif kopyasını yamalar (sıra: hedef türü -> alan -> sıçrama -> menzil -> açıklık -> öncelik -> çekme -> Guard -> aura -> smite). */
-function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillDef | null, cls: (typeof classes)[string], r: number): void {
+function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillDef | null, cls: (typeof classes)[string], r: number, node: string): void {
   const META = ['k', 'h', 'skill', 'rank', 'drop', 'needs', 'onlyWith', 'unless', 'summon', 'fed', 'skillRow'];
   const KEYS = ['area', 'target', 'count', 'splash', 'range', 'open', 'priority', 'gather', 'guard', 'groundWide', 'aura', 'smite', 'noSelf', 'overflow', 'bellOnly'];
   for (const k of Object.keys(fx)) if (!META.includes(k) && !KEYS.includes(k)) throw new TreeFxError(`target hook: unknown field "${k}"`);
@@ -1139,7 +1141,7 @@ function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillD
       if (!['perpendicular', 'chain', 'row', 'behind'].includes(fx.splash?.pattern)) throw new TreeFxError('splash needs a pattern (perpendicular / chain / row / behind)');
       if (fx.splash.mult !== undefined && !(finiteNum(fx.splash.mult) && fx.splash.mult > 0)) throw new TreeFxError('splash mult must be a positive number');
       if (fx.splash.jumps !== undefined && !(Number.isInteger(fx.splash.jumps) && fx.splash.jumps >= 1)) throw new TreeFxError('splash jumps must be an integer >= 1');
-      d.splash = clone(fx.splash);
+      d.splash = { ...clone(fx.splash), treeNode: node }; // r41 B1: ölçüm işareti (yan vuruş treeProc sayar)
     }
   }
   if (fx.range !== undefined) {
@@ -1188,7 +1190,10 @@ function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillD
     const gs = d.effects.filter((e) => e.type === 'ground') as Array<Extract<SkillEffect, { type: 'ground' }>>;
     // Hoşgörülü derleme: birlikte alınan başka düğüm zemini kaldırdıysa (Desperate Sap) sessizce atlanır
     if (!gs.length && !acc.lenient) throw new TreeFxError(`${d.id} leaves no ground`);
-    for (const g of gs) g.treeWide = 'touch';
+    for (const g of gs) {
+      g.treeWide = 'touch';
+      g.treeWideNode = node; // r41 B1: ölçüm işareti (genişleyen zemin treeProc sayar)
+    }
   }
   if (fx.overflow !== undefined) {
     if (!cls.passive) throw new TreeFxError('this class has no passive');
@@ -1271,6 +1276,8 @@ const ACTION_KEYS: Record<string, readonly string[]> = {
   removeStatus: ['node'],
   damage: ['of', 'stat', 'damageType', 'element', 'crit', 'passive', 'summoner'],
   rage: [],
+  // Redtithe r36 (Open Veins): kan barına düz kan (yalnız kan barlı sınıf)
+  blood: [],
   mp: ['of'],
   hpLoss: ['of'],
   cooldown: ['cd'],
@@ -1401,11 +1408,13 @@ function compileAction(tree: TreeData, cls: (typeof classes)[string], a: Trigger
     case 'shield':
     case 'hpLoss':
     case 'rage':
+    case 'blood':
     case 'mp':
     case 'sooner':
     case 'charge':
       scaleNum(main as keyof TriggerAction);
       if (main === 'rage' && cls.maxRage === undefined) throw new TreeFxError(`${tree.class} has no Rage`);
+      if (main === 'blood' && cls.maxBlood === undefined) throw new TreeFxError(`${tree.class} has no blood bar`);
       break;
     case 'damage':
       scaleNum('damage');

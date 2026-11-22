@@ -859,7 +859,9 @@ export function renderLedgerPage(v: CharacterView & { tab: 'hero' | 'sheet'; hpR
     box.append(...slotsBlock(hero0, v));
   } else box.append(...sheetNodes(c, v, box, { hpRatio: v.hpRatio ?? 1 }));
   // Skill bloğu Hero ve Sheet sekmelerinde aynı yerde (sayfanın altı, tam genişlik; Ömer 2026-10-18); Sheet'te kompakt Recruit alanı (Ömer 2026-11-12)
-  if (c.stats) skills = v.tab === 'sheet' ? skillStrip(c.hero, c.stats, c.after, loadout(c.hero).passivePatch) : skillsNode(c.hero, c.stats, c.after);
+  // Ömer 2026-11-20 (r36): masaüstünde Hero ve Sheet AYNI kompakt şeridi gösterir; telefonda ikisi de Hero'nun skill satırını (skillBar) gösterir
+  const phone = typeof document !== 'undefined' && document.documentElement.classList.contains('short');
+  if (c.stats) skills = phone ? skillsNode(c.hero, c.stats, c.after) : skillStrip(c.hero, c.stats, c.after, loadout(c.hero).passivePatch);
   return { el: box, stats: c.stats, after: c.after, ...(skills ? { skills } : {}) };
 }
 

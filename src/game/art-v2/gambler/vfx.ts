@@ -7,7 +7,7 @@
  * havada döner (kenar/yüz), avuçta yakalanır; kart bıçak gibi kenarıyla saplanır.
  * Bahis sonucu (c.result.bet: win/lose, c.result.doubleHit) görsel olarak anlatılır: kazanınca altın parıltı, kaybedince kararan para.
  *
- *   loaded_dice (Loaded Dice) -> 'loadeddice' : zar elde sallanır, yuvarlanarak hedefe çarpar, seker ve 6 gelir; çifte vuruşta ikinci altın izli zar.
+ *   loaded_dice (Loaded Dice) -> 'loadeddice' : iki gerçek zar (motorun dice olayındaki yüzler), toplama göre 3 kademe vuruş, çiftte altın zarlar.
  *   high_stakes (High Stakes) -> 'duelbet'    : kendi kanından üç damla paraya akar (bahis), para havaya atılıp yakalanır (yazı-tura),
  *                                               sonra hançer fırlatılır: kazanırsa altın patlama, kaybederse kararmış para ve zayıf darbe.
  *   card_trick (Card Trick)   -> 'cardfan'    : elde üç kart yelpaze açılır, iki kart dönerek iki hedefe kenarıyla saplanır,
@@ -16,6 +16,7 @@
  *                                               dönüşür, zar atılır, yuvarlanır: jackpot = 6 + ışık sütunu + altın yağmuru; kayıp = tek göz,
  *                                               zar çatlayıp parçalanır, Gambler kararıp sendeler, mana söner, paralar kül olur.
  */
+import { diceRollsOf, diceTier, faceOf, type DiceRoll } from '../../dice-feel';
 import { FULL_W } from '../../../ui/viewport'; // geniş ekran: tam ekran karartma görünen alanın tamamını kaplar
 import type Phaser from 'phaser';
 import type { V2Vfx } from '../types';
@@ -101,45 +102,60 @@ async function bounceRest(c: VfxCtx, k: VfxKit, s: Img, groundY: number, dx: num
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Loaded Dice: zar elde sallanır (0,22 sn), yuvarlanarak yayla hedefin göğsüne çarpar (vuruş), kemik kıymığı; zar geri seker, yerde iki
- * kez zıplayıp 6 gelerek durur ve kurşun hilesi küçük bir parıltıyla belli olur. Çifte vuruşta ikinci zar altın izle (gate).
+ * Loaded Dice (iki gerçek zar): ikisi birlikte elde sallanır, yayla hedefin göğsüne çarpar (vuruş; hissi iki zarın TOPLAMINA göre 3 kademe:
+ * zayıf = küçük toz, normal = beyaz vuruş, güçlü = büyük vuruş + sarsıntı), geri seker, yerde durup motorun `dice` olayındaki GERÇEK yüzleri
+ * gösterir (düz zar yüzü + toplam). Çift gelirse zarlar altın, altın halka ve "DOUBLE" yazısı (seri +1 ayrı olayla fişi doldurur).
+ * Tekrar atış (gate) yeni zarlarla, sıradaki `dice` olayını okur. Olay yoksa (galeri) sahte yüzler.
  */
 const loadeddice: V2Vfx = async (c, k) => {
   const t = c.targets[0];
   if (!t) return;
   const d = facing(c);
-  const throwDie = async (second: boolean) => {
+  const rolls = diceRollsOf(c.usage?.events, c.actor.combatant.uid);
+  let n = 0;
+  const throwDice = async (second: boolean) => {
+    const roll: DiceRoll = rolls[n++] ?? { values: [4, 3], double: false };
+    const vals = [faceOf(roll.values[0] ?? 1), faceOf(roll.values[1] ?? roll.values[0] ?? 1)];
+    const sum = roll.values.reduce((a, b) => a + b, 0);
+    const tier = diceTier(sum);
+    const gold = roll.double;
+    const tint = gold ? '#ffd23f' : '#e8d9a8';
     const h = diceHand(c, d);
     c.actor.play('attack');
     c.sfx('diceShake');
-    const s = k.v2Sprite(c, 'die_a', '#e8d9a8', h.x, h.y, 46, k.DEPTH + 30);
+    const dice = [0, 1].map((i) => k.v2Sprite(c, gold ? 'gdie_a' : 'die_a', tint, h.x + (i ? 12 : -12), h.y - (i ? 8 : 0), 40, k.DEPTH + 30 + i));
     // elde sallama: küçük titreşimli yay
     await k.counter(c.scene, k.slow(second ? 120 : 220), (u) => {
-      s.setPosition(h.x + Math.sin(u * 40) * 5, h.y - Math.abs(Math.sin(u * 22)) * 10).setRotation(Math.sin(u * 30) * 0.5);
+      dice.forEach((s, i) => s.setPosition(h.x + (i ? 12 : -12) + Math.sin(u * 40 + i * 2) * 5, h.y - (i ? 8 : 0) - Math.abs(Math.sin(u * 22 + i)) * 10).setRotation(Math.sin(u * 30 + i) * 0.5));
     });
-    const stop = tumble(c, k, s, ['die_a', 'die_b', 'die_c'], '#e8d9a8');
+    const stops = dice.map((s, i) => tumble(c, k, s, (i ? ['d', 'b', 'f', 'c', 'e', 'a'] : ['a', 'e', 'c', 'b', 'f', 'd']).map((l) => (gold ? 'gdie_' : 'die_') + l), tint));
     const p = k.contact(c.actor, t, chest(t));
-    const trail = c.scene.time.addEvent({ delay: k.slow(28), loop: true, callback: () => k.burst(c.scene, s.x, s.y, { colors: second ? GOLD : BONE, n: 1, speed: [5, 30], gravity: 0, life: [180, 300], size: [5, 8] }) });
-    await arcTo(c, k, s, { x: p.x - d * 14, y: p.y }, second ? 360 : 420, Math.abs(p.x - h.x) * 0.22 + 40, 2.2 * d);
-    trail.remove();
+    const trails = dice.map((s) => c.scene.time.addEvent({ delay: k.slow(28), loop: true, callback: () => k.burst(c.scene, s.x, s.y, { colors: gold ? GOLD : BONE, n: 1, speed: [5, 30], gravity: 0, life: [180, 300], size: [5, 8] }) }));
+    await Promise.all(dice.map((s, i) => arcTo(c, k, s, { x: p.x - d * (14 + i * 16), y: p.y + (i ? 14 : -10) }, (second ? 360 : 420) + i * 40, Math.abs(p.x - h.x) * 0.22 + 40 + i * 20, (2.2 + i * 0.6) * d)));
+    trails.forEach((tr) => tr.remove());
     c.sfx('diceTable');
-    k.burst(c.scene, p.x, p.y, { colors: second ? GOLD : BONE, n: 7, speed: [100, 300], angle: d > 0 ? [Math.PI * 0.6, Math.PI * 1.4] : [-0.8, 0.8], gravity: 700, life: [240, 420], size: [6, 10] });
-    k.hit(c.scene, p.x, p.y, second ? GOLD : ['#ffffff', '#fdfaf2', '#e8d9a8'], second ? 1.2 : 0.9);
-    c.scene.tweens.add({ targets: t.container, x: t.container.x + d * 10, duration: k.slow(50), yoyo: true });
-    // zar geri seker, yerde durur: 6
+    // vuruş hissi: toplam 3 kademe
+    const col = gold ? GOLD : tier === 'high' ? ['#ffffff', '#ffe9a8', '#ffd23f'] : ['#ffffff', '#fdfaf2', '#e8d9a8'];
+    k.burst(c.scene, p.x, p.y, { colors: col, n: tier === 'high' ? 14 : tier === 'mid' ? 8 : 4, speed: tier === 'low' ? [60, 180] : [100, 340], angle: d > 0 ? [Math.PI * 0.6, Math.PI * 1.4] : [-0.8, 0.8], gravity: 700, life: [240, 440], size: [6, 10] });
+    k.hit(c.scene, p.x, p.y, col, tier === 'high' ? 1.1 : tier === 'mid' ? 0.9 : 0.65);
+    c.scene.tweens.add({ targets: t.container, x: t.container.x + d * (tier === 'high' ? 16 : tier === 'mid' ? 10 : 5), duration: k.slow(50), yoyo: true });
+    // zarlar geri seker, hedefin yanında yere düşüp durur (üstte motorun verdiği yüz); biraz kalır, söner.
+    // Sayı etiketi yok (Ömer 2026-11-22): hasar yazısı diğer skill'lerle aynı, sebep combat log'da.
     void (async () => {
-      await bounceRest(c, k, s, feetOf(t).y + 4, -d * 90, 3);
-      stop();
-      swap(c, k, s, 'die_six', '#e8d9a8');
-      s.setRotation(0);
-      const gl = k.sprite(c.scene, 'spark', '#ffd23f', s.x + 10, s.y - 14, 18, k.DEPTH + 40);
-      k.grow(c.scene, gl, 0.4, 1.8, 300, 'Quad.easeOut', { alpha: 0, onComplete: () => gl.destroy() });
-      c.scene.tweens.add({ targets: s, alpha: 0, delay: k.slow(420), duration: k.slow(280), onComplete: () => s.destroy() });
+      await Promise.all(dice.map((s, i) => bounceRest(c, k, s, feetOf(t).y + 4 + i * 6, -d * (70 + i * 64), 3)));
+      stops.forEach((st) => st());
+      const shadows: Phaser.GameObjects.Ellipse[] = [];
+      dice.forEach((s, i) => {
+        swap(c, k, s, (gold ? 'gdv' : 'dv') + vals[i], tint);
+        s.setRotation(0).setDisplaySize(78, 78).setDepth(k.DEPTH + 60 + i); // 3B küp, geniş parlak üst yüz: telefonda da nokta sayılır
+        shadows.push(c.scene.add.ellipse(s.x, s.y + 22, 62, 16, 0x000000, 0.34).setDepth(k.DEPTH + 58)); // yumuşak yer gölgesi
+      });
+      c.scene.tweens.add({ targets: [...dice, ...shadows], alpha: 0, delay: k.slow(1000), duration: k.slow(260), onComplete: () => [...dice, ...shadows].forEach((o) => o.destroy()) });
     })();
   };
-  await throwDie(false);
+  await throwDice(false);
   c.actor.play('idle');
-  if (c.result?.doubleHit) c.gate(1, () => throwDie(true), () => undefined);
+  if (c.result?.doubleHit) c.gate(1, () => throwDice(true), () => undefined);
 };
 
 /**

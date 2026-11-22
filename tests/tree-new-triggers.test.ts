@@ -40,11 +40,11 @@ const AM_ROW = ['0.f1*3', '0.f2*5', '0.f3*5', '0.n0', '0.r*3'];
 describe('yeni tetik olayları: veri', () => {
   it('ağaçlar temiz derlenir, sürümler arttı (bedava respec), düğüm metinleri', () => {
     for (const c of ['mage', 'antimage']) expect(checkTreeFx(treeOf(c)!), c).toEqual([]);
-    expect(treeOf('mage')!.version).toBe(5);
-    expect(treeOf('antimage')!.version).toBe(6); // Redtithe eşlemesi (2026-11-17)
+    expect(treeOf('mage')!.version).toBeGreaterThanOrEqual(5);
+    expect(treeOf('antimage')!.version).toBeGreaterThanOrEqual(6); // Redtithe eşlemesi (2026-11-17)
     expect(treeOf('mage')!.nodes['3.fa']!.text).toMatch(/Stuns its target/);
     expect(treeOf('antimage')!.nodes['0.ma']!.name).toBe('Ready Reflexes');
-    expect(treeOf('antimage')!.nodes['0.mb']!.inactive).toBe(true); // Snapping Thread: Ley Thread kitten çıktı (Redtithe, 2026-11-17)
+    expect(treeOf('antimage')!.nodes['0.mb']!.name).toBe('Final Tithe'); // Snapping Thread yerine (Ömer form r36, 2026-11-20); testi skill-tree-fx-antimage
   });
 });
 

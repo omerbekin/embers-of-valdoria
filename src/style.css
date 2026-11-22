@@ -1582,3 +1582,8 @@ html.reduced-motion .st-flame {
 html #boot.boot-mini { background: #0a0502; }
 html #boot.boot-mini .boot-bg { opacity: 0.3; }
 html #boot.boot-mini .boot-badge { width: clamp(56px, 9vmin, 84px) !important; right: auto !important; bottom: auto !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; }
+
+/* Settings kutusu sayfa değişince oynamaz (Ömer 2026-11-21, Tur 40): tüm sayfalar aynı hücrede üst üste durur, kutu en uzun sayfa kadar; gizli sayfa görünmez + tıklanmaz */
+.st-pages { display: grid; }
+.st-pages > .st-page { grid-area: 1 / 1; min-width: 0; }
+.st-overlay .st-pages > .st-page[hidden] { display: block !important; visibility: hidden; pointer-events: none; }

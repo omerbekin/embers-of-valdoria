@@ -12,7 +12,7 @@ const BASE = [
 ];
 const BOW = ['bow_shot', 'bow_sky'];
 /** Sınıfa özel ek pozlar (assets/source/poses/<id>-v2/extra-<poz>.png; tools/make-poses-v2.mjs). */
-const EXTRA: Record<string, string[]> = { cutthroat_v2: ['cross_cut'], hexer_v2: ['doll_stab'], skald_v2: ['drum_a', 'drum_b', 'drum_take'] };
+const EXTRA: Record<string, string[]> = { cutthroat_v2: ['cross_cut'], hexer_v2: ['doll_stab'], antimage_v2: ['twin_stab'], skald_v2: ['drum_a', 'drum_b', 'drum_take'] };
 // v3 gövdeleri (ör. archer_v3, yeni çizim; aynı 26 kare kuralı) da burada denetlenir
 const v2 = Object.entries(POSES.classes).filter(([id]) => /_v[23]$/.test(id));
 

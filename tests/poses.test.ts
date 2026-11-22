@@ -517,7 +517,7 @@ describe('hazır tutuş: ağızlı silah YUKARI ve hafif öne (Ömer 2026-10-13 
   const v2 = Object.entries(POSES.classes).filter(([, d]) => d.grips);
   // Hançer bandı 40..120 (Ömer 2026-11-17: "ben kılıç için demişim abicim kuralı. kız hançer tutuyor"): "yukarı ve hafif öne" kuralı
   // kılıç / balta / topuz / çekiç içindir (15..50, değişmedi); hançerde istisna "ucu öne": yukarı-öneden (40) öne-hafif aşağıya (120) kadar.
-  // Redtithe (antimage_v2) idle1 arka yumruğu kalçada sarkar, tutuş ekseni ölçüldü: 110 (ucu öne, hafif aşağı).
+  // Redtithe (antimage_v2) idle1 (v4 R2, 2026-11-21): arka önkol öne-aşağı 45°, yumruk kemer önünde (204,200), tutuş ekseni 45 (önkola dik).
   it('tek el: axes / swords / maces / hammers idle1, step1, guard1 açısı 15..50 (yukarı-öne); daggers 40..120 (ucu öne)', () => {
     for (const [id, def] of v2)
       for (const family of ['axes', 'swords', 'maces', 'hammers', 'daggers'])
@@ -552,8 +552,18 @@ describe('eller yer değiştirmez: main = SAĞ el (arkadaki kol, resimde solda),
 });
 
 describe('yer değiştirme: ana eşya hand "off" ile ön ele geçince ikinci el eşyası ana ele (arka yumruk) geçer', () => {
-  const def = POSES.classes['antimage_v2']!;
-  it('kılıç + hançer idle1: kılıç ön yumrukta, hançer arka yumrukta (110); kalkan da arka yumrukta; çift hançer değişmez', () => {
+  // Mekanik genel (src/game/poses.ts); Redtithe idle1 v4'te takas kalktı (arka yumruk ekseni 45 bandda), test kopya tanımla kurulur.
+  const base = POSES.classes['antimage_v2']!;
+  const def = structuredClone(base);
+  for (const fam of ['swords', 'axes']) def.itemPoses![fam] = { ...(def.itemPoses![fam] ?? {}), 'main:idle1': { hand: 'off' } };
+  it('Redtithe idle1 (v4): kılıç / balta / topuz / çekiç takassız arka yumrukta, ekseni 45', () => {
+    for (const family of ['swords', 'axes', 'maces', 'hammers']) {
+      const pl = itemPlacement(base, 'idle1', { family, look: POSES.weapons[family]!.order[0]! }, 'main')!;
+      expect(pl.hand, family).toBe('main');
+      expect(pl.angle, family).toBe(45);
+    }
+  });
+  it('kılıç + hançer idle1: kılıç ön yumrukta, hançer arka yumrukta; kalkan da arka yumrukta; çift hançer değişmez', () => {
     const items = poseItems(def, 'idle1', { family: 'swords', look: POSES.weapons['swords']!.order[0]!, offhand: { family: 'daggers', look: POSES.weapons['daggers']!.order[0]! } });
     const sw = items.find((p) => p.slot === 'main')!;
     const dg = items.find((p) => p.slot === 'off')!;
