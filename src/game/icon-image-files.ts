@@ -3,7 +3,7 @@
  * (ad = v1 ikon adı: skill.icon / passive.icon / logo). Sahibin v2 icons.ts dosyası `{ image: '<sahip>/<ad>' }` girdisiyle bağlar.
  * Asıllar assets/source/<sahip>-icons altında (oyuna yüklenmez); içe aktarma: `node tools/import-v2-icons.mjs`. Phaser'sız ve DOM'suz.
  */
-const files = import.meta.glob('../../assets/icons-v2/*/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const files = import.meta.glob('../../assets/icons-v2/*/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
 
 const idOf = (path: string): string => {
   const parts = path.split('/');
@@ -27,8 +27,8 @@ export const ICON_IMAGE_SIZE = 128;
  * 'might'. Asıl sayfa assets/source/stat-icons/stat-sheet.png (oyuna yüklenmez); kesim: `node tools/make-stat-icons.mjs`. Tek giriş noktası
  * `statIconName(kind)` (src/ui/stat-icons.ts) -> art-registry 'stat:<kind>' adını bu dosyalara çözer; dosya yoksa kodla çizilen ikona düşer.
  */
-const statFiles = import.meta.glob('../../assets/stat-icons/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const statSmall = import.meta.glob('../../assets/stat-icons/small/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const statFiles = import.meta.glob('../../assets/stat-icons/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
+const statSmall = import.meta.glob('../../assets/stat-icons/small/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
 const byName = (rec: Record<string, string>): Record<string, string> => Object.fromEntries(Object.entries(rec).map(([p, url]) => [(p.split('/').pop() ?? '').replace(/\.(png|webp)$/, ''), url]));
 
 /** Stat -> { url (128, DOM), small (64, Phaser; yoksa url) }. */
@@ -56,8 +56,8 @@ export const smoothUrl = (url: string): string => (url.endsWith(SMOOTH_MARK) ? u
  * fullscreen, menu). Asıl sayfa assets/source/ui-icons/ui-sheet.png; kesim `node tools/make-ui-icons.mjs`. Tek giriş `uiIconName(ad)` ->
  * art-registry 'ui:<ad>'; dosya yoksa kodla çizilen yedek (UI_ICON_FALLBACK) ya da hiç ikon.
  */
-const uiFiles = import.meta.glob('../../assets/ui-icons/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const uiSmall = import.meta.glob('../../assets/ui-icons/small/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const uiFiles = import.meta.glob('../../assets/ui-icons/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
+const uiSmall = import.meta.glob('../../assets/ui-icons/small/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
 
 /** Arayüz ikonu -> { url (128, DOM), small (64, Phaser; yoksa url) }. */
 export const UI_IMAGE_FILES: Readonly<Record<string, { url: string; small: string }>> = (() => {
@@ -76,8 +76,8 @@ export const uiImage = (kind: string): { url: string; small: string } | null => 
  * relic, emblem, class, node. Asıl sayfalar assets/source/misc-icons/*.png; kesim ve dama deseni silme `node tools/make-misc-icons.mjs`. Kimlik
  * '<grup>:<ad>' (src/ui/misc-icons.ts > miscIconName); art-registry bu adı görsele çözer, dosya yoksa çağıran eski kodla çizilen ikonu kullanır.
  */
-const miscFiles = import.meta.glob('../../assets/misc-icons/*/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const miscSmall = import.meta.glob('../../assets/misc-icons/*/small/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const miscFiles = import.meta.glob('../../assets/misc-icons/*/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
+const miscSmall = import.meta.glob('../../assets/misc-icons/*/small/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
 const miscId = (path: string): string => {
   const parts = path.split('/').filter((p) => p !== 'small');
   const file = (parts.pop() ?? '').replace(/\.(png|webp)$/, '');
@@ -100,8 +100,8 @@ export const miscImage = (id: string): { url: string; small: string } | null => 
  * Asıl sayfalar assets/source/mob-icons/*.png; kesim `node tools/import-mob-art.mjs icons`. Kimlik 'mob:<ad>'
  * (src/ui/mob-icons.ts > skillIconName / passiveIconName); art-registry görsele çözer. Dosya yoksa verideki (ödünç) piksel ikon kullanılır.
  */
-const mobFiles = import.meta.glob('../../assets/mob-icons/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const mobSmall = import.meta.glob('../../assets/mob-icons/small/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const mobFiles = import.meta.glob('../../assets/mob-icons/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
+const mobSmall = import.meta.glob('../../assets/mob-icons/small/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
 
 /** <ad> -> { url (128, DOM), small (64, Phaser; yoksa url) }. */
 export const MOB_IMAGE_FILES: Readonly<Record<string, { url: string; small: string }>> = (() => {
@@ -120,7 +120,7 @@ export const mobImage = (name: string): { url: string; small: string } | null =>
  * (evolve onaylıysa skill ikonunun yerine; src/ui/evolve-icon.ts). Kimlik '<sınıf>/<satır>_<düğüm>' (ör. 'warrior/3_v'); ad 'tree:<kimlik>'
  * biçiminde ikon adı olur, art-registry bunu dosyaya çözer. İçe aktarma: `python tools/make-tree-icon.py <kaynak.png> <sınıf> <düğüm>`.
  */
-const treeFiles = import.meta.glob('../../assets/tree-icons/*/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const treeFiles = import.meta.glob('../../assets/tree-icons/*/*.webp', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
 
 export const TREE_ICON_PREFIX = 'tree:';
 
@@ -129,3 +129,28 @@ export const TREE_IMAGE_FILES: Readonly<Record<string, string>> = Object.fromEnt
 
 /** Ağaç ikonunun URL'si (dosya yoksa null). */
 export const treeImage = (id: string): string | null => TREE_IMAGE_FILES[id] ?? null;
+
+// ---------------------------------------------------------------- MENÜ SONRASI ÖNDEN YÜKLEME (hız ölçümü 2026-11-23)
+// İkon dosyaları artık JS parçasına base64 gömülmez (`?no-inline`): ana menü 0,9 MB daha az indirir. Ekranlar ilk açıldığında ikon kutusu
+// boş kalmasın diye menü göründükten sonra boşta, küçük gruplar halinde tarayıcı önbelleğine alınır (src/main.ts).
+const ALL_ICON_RECORDS: Array<Record<string, string>> = [files, statFiles, statSmall, uiFiles, uiSmall, miscFiles, miscSmall, mobFiles, mobSmall, treeFiles];
+
+/** Tüm ikon dosyalarının adresleri (tekrarsız). */
+export const allIconUrls = (): string[] => [...new Set(ALL_ICON_RECORDS.flatMap((r) => Object.values(r)))];
+
+/** İkonları önbelleğe alır: `batch` adet, `gapMs` arayla (ağı ve ana iş parçacığını boğmaz). Hata sessiz. */
+export function warmIcons(batch = 24, gapMs = 40): void {
+  if (typeof Image === 'undefined') return;
+  const urls = allIconUrls();
+  let i = 0;
+  const step = (): void => {
+    for (const u of urls.slice(i, i + batch)) {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = u;
+    }
+    i += batch;
+    if (i < urls.length) window.setTimeout(step, gapMs);
+  };
+  step();
+}

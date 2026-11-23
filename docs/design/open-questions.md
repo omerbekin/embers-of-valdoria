@@ -279,6 +279,7 @@ Hepsi kodda bugünkü davranış. Ömer onayı bekliyor; itiraz gelirse değişi
 - Telefonda Recruit / "Your Company" kutusu aday kartlarını örtüyordu: kutu artık pencere başlığının üstüne biner (başlık yazısı kutunun altında kalır).
 - DÜZELTİLMEDİ (karar gerek): (a) telefonda savaşta skill uzun-basma ipucu tahtanın alt çeyreğini örter (basılı tutarken, bırakınca kapanır); seçenek: ipucunu skill çubuğunun üstüne (stat paneli yerine) bindirmek ya da daraltmak; (b) telefonda "A New Skill" / Whisper kutuları üst sol tahtayı örter (kutu "Got it" ile kapanır); (c) harita sol sütununu (Party) ders kutusu örter (masaüstü 1920, "Wounds Carry Over" / "Wear Your Gear"); (d) telefonda Recruit penceresinde şirket adı kutusu kesik ("Name your co"); (e) Ashford ders kutusu yığını: First Spoils, Wear Your Gear, Gear (2 sayfa), Item Quality, Wounds ayrı ekranlarda sırayla çıkıyor; birleştirme yeni ders sistemi sayılır, yapılmadı.
 
+## 560. Redtithe ağacı r36 uygulama varsayımları (2026-11-20, engine-dev, dal agent/engine-dev-redtithe-dugum)
 ## 549. Redtithe ağacı r36 uygulama varsayımları (2026-11-20, engine-dev, dal agent/engine-dev-redtithe-dugum)
 - Sayılar PROVİZYON, sim yok (Lead Ömer'e soracak). Karar kaydı `docs/arch/areas/character-design.md` madde 17, tablo `antimage.md` bölüm 4.
 - Open Veins (0.eb) kanı ve Widening Cut (2.r) tik sayacı her Bleeding tikinde: tur başı tiki + Blood Brand ek tiki + Bleeding yer değiştirme tiki. Bunun için ek tikler de (genel DoT yolu) kaynağın `at: dot` kancalarını, tik sayacını ve `dotTick` tetiğini işletir (yalnız Bleeding ek tik alır; başka sınıfta Bleeding'e bağlı kanca yok, davranış değişmedi). **Onaylı (Ömer 2026-11-21, r38).**
@@ -290,6 +291,7 @@ Hepsi kodda bugünkü davranış. Ömer onayı bekliyor; itiraz gelirse değişi
 - YZ (yeni terim `veinTree`, ağırlık `data/ai.json > value.blood.wardTypeShare` 0,5): kalkanlıya hasar kancaları (Spell-Proof Vein büyü, Warded Steps fiziksel) beklenen hasarın yarısını o türden sayar. MP yakım tetikleri artık YZ değeri alır: Hush ile birlikte mevcut Drink Deep (1.ma) ve Tempo Thief (1.mb) da değerlenir (Redtithe Tithe Cut'ı biraz daha sık seçebilir).
 - Ağaç sürümü 6 kaldı (bedava respec yok): pasif düğümlere v6'da puan konamıyordu, arkalarındaki yol da kapalıydı.
 
+## 561. Kalkan ham hasar kuralı uygulama varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-kalkan)
 ## 550. Kalkan ham hasar kuralı uygulama varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-kalkan)
 Kural Ömer onaylı (form r38): hasar kalkana ham çarpar, zırh / azaltma yalnız cana giden kısma. Uygulamada verilen onaysız kararlar:
 1. **(KARARLANDI Ömer 2026-11-21 form r40: bu iki düğüm muaf; bkz. Q-NEW. Kalkan muafiyeti yorumu.) Spell-Proof Vein ve Warded Steps (Redtithe ağacı, Mirror Vein altındaki dosta -% hasar) artık yalnız kalkanı KIRAN vuruşun cana inen kısmını azaltır;** kalkan tamamen emdiğinde etkisi yok (hedef tarafı azaltma oldukları için kurala dahil edildi). Alternatif: kalkan koşullu (`shield` alanlı) `damageTaken` kancalarını kuraldan muaf tutmak (kalkana çarpan hasarı azaltmaya devam eder). Ömer seçsin.
@@ -301,6 +303,7 @@ Kural Ömer onaylı (form r38): hasar kalkana ham çarpar, zırh / azaltma yaln�
 7. Sayı değişmedi; kalkan veren sınıfların kalkanı ölçümle sonraki adım (Ömer notu).
 8. YZ'nin vuruş değeri (hpLoss + absorbed) artık kalkandan düşen HAM puanı sayar: zırhlı + kalkanlı hedefte değer 1/keep kadar büyür, bu hedef seçimini biraz kaydırabilir (kalkan kırmak daha değerli görünür). Shocked testindeki "kalkan kaybı = değer" mantığıyla aynı; koda dokunulmadı.
 9. Mana Overflow yükü, Rebuke ve Thorns hâlâ azaltılmış vuruşun tamamını sayar (kalkan yemiş olsa da); savaş kaydındaki "took X" ve sim hasar istatistiği kalkandan düşen ham puanı içerir (biraz yükselir).
+## 562. Kalkan muafiyeti yorumu (2026-11-21, engine-dev, dal agent/engine-dev-r40)
 ## 551. Kalkan muafiyeti yorumu (2026-11-21, engine-dev, dal agent/engine-dev-r40)
 Ömer form r40: Spell-Proof Vein ve Warded Steps kalkan ham hasar kuralından muaf ("Eski sistemden ziyade bunlar kendi skill nodeuna göre hasar azaltmayı hesaplasın"). Lead yorumu, uygulandığı gibi:
 1. Eski sıraya (zırh kalkandan önce) dönülmedi. Bu iki düğüm kendi yüzdesini Mirror Vein kalkanı altındaki dosta gelen ilgili türdeki (büyü / fiziksel) vuruşa kalkana çarpmadan ÖNCE uygular; kalkan azaltılmış ham vuruşu yer. Zırh ve öbür azaltmalar yine yalnız cana inen kısma. Örnek (Warded Steps %5, zırh %50, ham 368): kalkan tamsa kalkandan 348 düşer (önce 368); kalkan 116 ise kalan (348 - 116) x 0,5 = 116 cana iner (düğümsüz 126); kalkan yoksa düğüm işlemez (184, aynı).
@@ -309,6 +312,7 @@ Kural Ömer onaylı (form r38): hasar kalkana ham çarpar, zırh / azaltma yaln�
 4. Çok vuruşlu skill (ör. Warrior temel saldırısı iki vuruş) kalkanı ilk vuruşta kırarsa ikinci vuruşa düğüm işlemez (kalkan yok). Bu zaten motordaki davranıştı; önizleme bunu bilmiyordu, artık biliyor (önizleme = gerçek sonuç).
 5. YZ değeri (`veinTree` terimi) pencerede beklenen hasarın tamamını sayar (kalkanı aşan kısımla sınırlamadan önceki r36 hâline döndü). Sayı değişmedi, sim yok.
 
+## 563. Blood Brand 2x2 uygulama varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-r40)
 ## 552. Blood Brand 2x2 uygulama varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-r40)
 Ömer form r40: "Blood brand alanı 2x2 olsun" (amaç Tithe Cut kullanım payını %45 bandının altına çekmek). Başka denge değerine dokunulmadı. Onaysız kararlar:
 1. **Şekil:** var olan `rect` 2x2 kuralı (Moor Raider Peat Smoke ile aynı veri: `area_enemies`, `range` 4, `anchor bottom_left`). İmleç hücresi alanın ekranda sol-alt köşesi; derinlikte anchor sırası + arkasındaki sıra; tahta dışına taşarsa boyut korunarak kaydırılır. Menzil anchor hücresine bakar, alan menzilin ötesine taşabilir (range.md, Whirlwind gibi).
@@ -317,6 +321,7 @@ Kural Ömer onaylı (form r38): hasar kalkana ham çarpar, zırh / azaltma yaln�
 4. Debug Pose Tester kopyası (`pt_drain_field`, tek hedef) değiştirilmedi (debug aracı, `tools/make-pose-testers.mjs` üretir).
 5. Golden kayıtları yeniden üretildi (quick, comps, endless, items; Blood Brand atışları ve Redtithe'li savaşlar). Sim koşulmadı.
 
+## 564. First Fire's Verdict varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-r40)
 ## 553. First Fire's Verdict varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-r40)
 Ömer form r40/r41: 100 hamleden sonra her tur sonunda iki takıma birer saf vuruş, 30'dan başlayıp +10 artar; uyarılar 10 ve 3 hamle önce. Onaysız kararlar:
 1. **Hamle:** her birimin her eylemi (skill, Rest, Skip, Move, pas; Stun'la atlanan tur da sayılır, mevcut `turnsTaken` sayacı). Ek eylem (actionsPerTurn) ayrı hamle sayılır. Kural 101. hamlede başlar; ilk vuruş çifti o andan bir tur sonra.
@@ -327,6 +332,7 @@ Kural Ömer onaylı (form r38): hasar kalkana ham çarpar, zırh / azaltma yaln�
 6. Ömer 2026-11-21: hasar tipi "pure" (element yok, ateş değil). Varsayım: hasar alınca tetiklenen pasifler (kan, Rage, diken vb.) pure vuruşta TETİKLENMEZ (bugünkü davranış korundu); ölüm tetikleri (ölünce çalışanlar) normal işler.
 7. Sim koşulmadı; golden kayıtları yeniden üretildi (100 hamleyi aşan sefer ve Endless savaşları değişti).
 
+## 565. Oyun sonu r38-r39 uygulama varsayımları (2026-11-21, campaign-dev, dal agent/campaign-dev-oyun-sonu)
 ## 554. Oyun sonu r38-r39 uygulama varsayımları (2026-11-21, campaign-dev, dal agent/campaign-dev-oyun-sonu)
 - **Sıra:** kapanış sineması -> jenerik -> harita sonu kartı. Kart en sonda çünkü "Stay on the map" / "Main Menu" düğmeleri kartta ve değişmemeli. Jenerik X / Esc ile atlanır; yeniden yüklemede tekrar gelmez (ana menü > Credits'ten açılır).
 - **Kart sayıları sefer toplamı:** `s.stats` harita geçişinde taşındığı için Harita 1 kartı da aslında sefer toplamını gösteriyor (Harita 1 sonunda ikisi aynı). Harita 2-3 kartı aynı davranışta bırakıldı. Öneri (yapılmadı): oyunun sonunda toplam doğru; Harita 2 kartında "bu harita" sayıları istenirse harita başı sayaç gerekir (yeni alan).
@@ -340,6 +346,7 @@ Kural Ömer onaylı (form r38): hasar kalkana ham çarpar, zırh / azaltma yaln�
 - Ömer'e: jenerik satırları (`data/credits.json`) onay / düzeltme; özellikle "Images made with OpenAI Codex image generation", font yazarları, "Cloudflare" satırı ve kod üretiminde kullanılan YZ aracının yazılıp yazılmayacağı.
 
 
+## 566. Form r39 motor kararları uygulama varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-r39)
 ## 555. Form r39 motor kararları uygulama varsayımları (2026-11-21, engine-dev, dal agent/engine-dev-r39)
 Kurallar Ömer onaylı (form r39). Uygulamada verilen onaysız kararlar:
 1. **Aynı anda bitiş:** Quick Battle YZ'ye karşı (tek oyunculu) = oyuncu kaybeder (Ömer yalnız sefer / tek oyunculu / çok oyunculu dedi; en dar yorum). Endless da tek oyunculu sayıldı (kayıp). Totem nesnesi kırıldığı anda oyuncu tarafı da bittiyse kayıp. Çok oyunculu beraberlikte sonuç ekranı "DRAW" başlığı + "Both teams fell at the same time"; iki sütunda da kazanan işareti ve MVP yok; final darbe efekti ve ses yenilgininki (görünüş ui işi). Ağ mesajı yok: iki istemci beraberliği kendi motorundan bulur.
@@ -347,6 +354,7 @@ Kurallar Ömer onaylı (form r39). Uygulamada verilen onaysız kararlar:
 3. **Taunt kırma:** bayrak veride (Frozen, Cooling `breaksTaunt: true`); kod kuralı değişmedi (bayraklı durum uygulandığı AN taunt silinir). Yeni bir `skipTurn` durumu eklenirse bayrağı da almalı (test bunu denetler). YZ'de ayrı değer yok: Stun için de yoktu (taunt kırma değeri eklenmedi); YZ hedeflemesi motorun gerçek taunt durumunu okuduğu için kırılınca hemen doğru hedefler. Oyuncu metni "a status that makes it lose its turn" (Cooling CC sayılmadığı için "control status" demedik).
 4. **Sıra çubuğu:** yalnız sayılı hız durumları tahminde biter (Haste, Chilled; süresiz ağaç durumu ve zeminden gelen Chilled tahminde sürer, çünkü süreleri işlemez). Gelecekte olacak olaylar (yeni Haste, ateşin Chilled'ı eritmesi, ölüm) yine bilinmez; her olaydan sonra çubuk yeniden hesaplanır. YZ de `turnQueue` okuduğu için kararları biraz değişebilir (golden farkı commit 5'te).
 
+## 567. Olay penceresi X / kartsız varış varsayımları (2026-11-21, ui-dev, dal agent/ui-dev-olay-r40, form Tur 40)
 ## 556. Olay penceresi X / kartsız varış varsayımları (2026-11-21, ui-dev, dal agent/ui-dev-olay-r40, form Tur 40)
 - **Açık kalan olayda yol:** seçenek sayfasında X yalnız pencereyi kapatır, olay açık kalır. Olayda "çık" seçeneği varsa (Walk away, Leave, Move on, Not yet, Just rest; veride `walkAway` ya da `closer`) kafile yola çıkabilir (Walk away'in bugünkü davranışı, `state.ts > walkAwayHere`); Guild Hall / Ferry Office'te de yol kapanmaz, `again` kuralı bitmiş olayı yine yeniden açar. Çıkış seçeneği olmayan olayda (yalnız gerçek seçenekler) olay açıkken yol kapalı kalır, düğüme yeniden dokununca olay açılır. Bu eski davranıştan farklı: eskiden X "Leave" seçeneğini uygulayıp olayı bitiriyordu; şimdi hiçbir şey uygulanmaz, sonradan seçenek hâlâ alınabilir. Ömer farklı isterse (ör. Leave X ile bitsin) söyle.
 - **Kapat seçenekleri artık yalnız X:** `closer` seçeneği kart olarak zaten gizli, X onu seçmiyor; veride duruyor (sonuç yazısı kullanılmıyor).
@@ -355,6 +363,7 @@ Kurallar Ömer onaylı (form r39). Uygulamada verilen onaysız kararlar:
 - **Kartsız varış:** yalnız seçenekli olay düğümü eklendi (`textOnlyEvent`); nimet / görev çipli seçeneksiz olaylar, tapınak ve başka düğüm türleri bugünkü gibi kartlı.
 - **Telefonda olay resmi:** 46 px şerit, yalnız olay pencerelerinde (`lowArt`); 4 seçenekli Monk's Isle'da seçenekler pencere içinde ~27 px kayar (taşmaz, kesilmez).
 
+## 568. Ağaç kazancı sınıf çarpanı varsayımları (2026-11-21, balance-tester, dal agent/balance-agac, form r41 `tr_fix`)
 ## 557. Ağaç kazancı sınıf çarpanı varsayımları (2026-11-21, balance-tester, dal agent/balance-agac, form r41 `tr_fix`)
 Uygulanan: 10 sınıfın ağaç düğümü güç sayıları tek sınıf çarpanıyla kısıldı (tur 2: Gambler 0,26, Skald 0,27, Warrior 0,29, Undead 0,30, Redtithe 0,20, Defender 0,32, Archer 0,22, Druid 0,34, Vesper 0,35, Cutthroat 0,32; Hexer, Mage, Paladin dokunulmadı). Tam ağaç L20 300 savaş genel kazanç +39,0 -> +35,6 (tur 1) -> +29,0 (tur 2). Varsayımlar (Ömer onayı yok):
 - **Bedel kısılmadı:** blood / "but ..." düğümlerinde kazanç kısıldı, bedel (eksi güç, can, MP) aynı kaldı; bu düğümler eskisine göre daha az cazip (ör. Warrior Whirlwind "Wounded'a +%4,25, Wounded olmayana hiç hasar yok").
@@ -365,6 +374,12 @@ Uygulanan: 10 sınıfın ağaç düğümü güç sayıları tek sınıf çarpan�
 - **Ağaç sürümü artmadı:** önceki sayı ayarları (0.9.6.4) da sürümü artırmadı; sürüm artarsa herkese bir kez bedava sıfırlama gelir (geri alınamaz). Lead kararı.
 - **Evolve, satır 0 / 3, öbür ult kolları** ölçülmedi (sim yalnız satır 1+2, ult u; Defender 2+3, ult r) ama aynı çarpanla kısıldı.
 ## 558. Redtithe koşu adımında arka el tutuş açısı (content-designer, 2026-11-21)
+## 569. Redtithe koşu adımında arka el tutuş açısı (content-designer, 2026-11-21)
+- **Varsayım (hançer):** step1 arka hançeri 45 -> 120. Duruştaki el yönüyle aynı tutuş ~135 isterdi; hançer bandı ("ucu öne", 40..120) en çok 120'ye izin verdiği için 120 seçildi (bilek ~15° kırık). Bıçak öne-hafif aşağı.
+- **Soru (kılıç/balta/topuz/çekiç):** aynı karede bu silahların açısı 35; v4 önkoluna paralele yakın düşüyor (bıçak önkol üstünden geri). Bandı 14..50 olduğu için dik tutuş verilemiyor. Seçenek: (a) böyle kalsın, (b) bu kare için bandı aş, (c) koşu adımının arka kolunu yeniden çizdir (önkol aşağı sarkar).
+
+## 570. YZ MP kazancı sürekli: varsayımlar (engine-dev, 2026-11-22, form tr3_mp "Motor")
+## 558. Redtithe koşu adımında arka el tutuş açısı (content-designer, 2026-11-21)
 - **Varsayım (hançer):** step1 arka hançeri 45 -> 120. Duruştaki el yönüyle aynı tutuş ~135 isterdi; hançer bandı ("ucu öne", 40..120) en çok 120'ye izin verdiği için 120 seçildi (bilek ~15° kırık). Bıçak öne-hafif aşağı.
 - **Soru (kılıç/balta/topuz/çekiç):** aynı karede bu silahların açısı 35; v4 önkoluna paralele yakın düşüyor (bıçak önkol üstünden geri). Bandı 14..50 olduğu için dik tutuş verilemiyor. Seçenek: (a) böyle kalsın, (b) bu kare için bandı aş, (c) koşu adımının arka kolunu yeniden çizdir (önkol aşağı sarkar).
 
@@ -372,3 +387,22 @@ Uygulanan: 10 sınıfın ağaç düğümü güç sayıları tek sınıf çarpan�
 - **Varsayım (taban payı):** ufuk planı MP'yi zaten karşılarken (yenilenme yetiyor) küçük kazanca verilen taban `value.manaGainDeficitShare` 0,05 seçildi: büyük kazançlar eski değere yakın kalsın diye küçük. Ölçümle büyütülebilir (sim ayrı koşacak). **Ömer onayı 2026-11-22 (form r41 tr5_mp): 0,05 kalır.**
 - **Varsayım (zarf şimdiden başlar):** değer eski basamaklı değerden hiç az olmaz; kullanım açmayan kazanç sonraki kullanıma doğru doğrusal pay alır (ör. Skald turns MP 16: 1 MP 0 -> 1,62, 2 MP 3,24 -> 3,24). Sonuç: bir skill eşiğinin hemen altındaki MP başı değer, çok düşük MP'dekinden yüksek olabilir ("açıkla orantı" tam doğrusal değil; doğrusal olan yalnız taban).
 - **Bilinen etki:** Mage turns MP 0, 20 MP: 2,08 -> 3,90 (tabandan; yaklaşık 2 kat).
+- **Varsayım (taban payı):** ufuk planı MP'yi zaten karşılarken (yenilenme yetiyor) küçük kazanca verilen taban `value.manaGainDeficitShare` 0,05 seçildi: büyük kazançlar eski değere yakın kalsın diye küçük. Ölçümle büyütülebilir (sim ayrı koşacak). **Ömer onayı 2026-11-22 (form r41 tr5_mp): 0,05 kalır.**
+- **Varsayım (zarf şimdiden başlar):** değer eski basamaklı değerden hiç az olmaz; kullanım açmayan kazanç sonraki kullanıma doğru doğrusal pay alır (ör. Skald turns MP 16: 1 MP 0 -> 1,62, 2 MP 3,24 -> 3,24). Sonuç: bir skill eşiğinin hemen altındaki MP başı değer, çok düşük MP'dekinden yüksek olabilir ("açıkla orantı" tam doğrusal değil; doğrusal olan yalnız taban).
+- **Bilinen etki:** Mage turns MP 0, 20 MP: 2,08 -> 3,90 (tabandan; yaklaşık 2 kat).
+
+## 571. Büyük ağaç ölçümü ve set ölçümü varsayımları (2026-11-23, balance-tester, dal agent/balance-agac-tur2, r41 gece işleri)
+Raporlar: `eov-forms-archive/uiform-live/r41/agac-buyuk.md`, `set-olcum.md`. Veri değişmedi. Varsayımlar (Ömer onayı yok):
+- **Ağaç, hücre tablosu yeniden koşulmadı.**
+  - Brief'teki "satır 1+2 (--rows ile 9 hücre)" şöyle okundu: ana ölçüm tam kurulum 2 x 10.000 (satır 1+2, ult), artı iki yeni hücre.
+  - Hücre tablosu eski ölçümlerden derlendi. Bu ölçümlerin bir kısmı tur 3-4 öncesi; raporda yıldızlı.
+- **Ağaç, hücre bandı (+10..+14)** tüm takım kipindeki satır-yön değerlerine uygulandı. Bu değerlere Mastery bar 3/5 payı da giriyor; bar payı ayrılmadı.
+- **Set, karşılaştırma tabanı "bütün set yuvaları Epic".**
+  - Taban, sınıfın giyebildiği en yüksek nadirlikli set olmayan taban; Epic zarlanır, setle aynı ilvl.
+  - Seferde gerçek alternatif çoğu zaman daha düşük nadirlik olur. Bu yüzden ölçüm setin aleyhine bir üst sınırdır.
+- **Set, kurulum: tek taşıyıcı, hızlı savaş 4e 4.**
+  - Herkes setin item seviyesinde ve aynı level'da.
+  - Başka item ve ağaç yok. Taşıyıcının set dışı yuvaları boş.
+  - Sefer / Endless ortamı ölçülmedi.
+- **Set, parça seçimi.** k parçada hangi yuvaların set olduğu seed'e göre döner. Bonus yuvadan bağımsız; yuvaların kendi statları ortalamaya girer.
+- **Set, Stormhall Saga, Saint Odran, Almoner's Vestments** brief'teki altı sette yoktu; ölçülmedi.

@@ -258,6 +258,40 @@ Lead dalı `chat/lead-r35`; hiçbir şey gönderilmedi. 5000 eski (cfe08210).
 - Evolve pilot Sunfire hazır (agent/content-designer-evolve-pilot 9c9bab34, BİRLEŞMEDİ; kod çizimi, Codex denenmedi; görüntüler ui-shots-mobil-masaustu/evolve-pilot/; ses dinlenmedi). Kalan evolve başına tahmin 20-30 dk (Mage içi).
 - Gönderim başlatıldı (Ömer sözü 2026-11-23 "her şeyi hallet sonra githuba at"): ready --fixes + push --bg. Ölçümler (balance) sürüyor.
 
+### 2026-11-23 01:50 GÖNDERİLDİ: 0.9.11.8
+- main 5dabb31e; tam test + build yeşil (temiz kopya); canlı embersofvaldoria.com ve 5000 = 0.9.11.8 doğrulandı; Pages 01:52'de hâlâ 0.9.11.7 (CI sürüyor, sonra bakılacak). Golden yenilendi (campaign, comps, endless, items, quick): beklenen (ağaç dengesi, Redtithe sayıları, YZ mana).
+- İçinde: bu oturumun 365 commit'i (ağaç tur 1-4, Redtithe poz / efekt / ses, Gambler zar + fiş, First Fire's Verdict, r41 arka planlar, üç nokta köşe süsü, Vesper ikonları, güvenlik ağı testleri, önizleme düzeltmeleri, testTimeout 60).
+- Önce çakışma: eski Lead 9cd8348f'in lead-open değişikliği main'e iç güncelleme olarak girdi (40d65bfc); merge -X ours ile bu dosyanın güncel hali kaldı.
+- GİTMEDİ: evolve pilot Sunfire (onay bekler), ölçüm önerileri, set bayrağı.
+
+### 2026-11-23 04:00 gece sonu: ölçümler bitti, sabah formu yayında
+- Pages 0.9.11.8 doğrulandı (02:10). Gönderim sonrası 300 savaş: Mage %40,7, Undead %43,9 bant altı (küçük örnek).
+- Büyük ağaç ölçümü (agac-buyuk.md): genel +28,215 bantta; Druid +32,648 üstte, Redtithe +22,698 altta (ağaçsız %65,9); Mage / Defender +31,4 sınırda. Warrior 3b +0,676 > +0,676, Skald 3b -2,137 > -1,709 (t9 etkisiz). Hücre tablosu YENİDEN ÖLÇÜLMEDİ (eski turlardan).
+- Set ölçümü (set-olcum.md, yeni araç src/sim/set-sim.ts): hiçbir set aynı seviye Epic'i geçmiyor (tam set: Kingsfall -1,9, Gallows -3,117, Wayfarer -3,7, Ashguard -4,3, Raven -4,8, Conclave -7,15). Sebep: S3 (A affix yok) + setValue fazla değerli. setsEnabled KAPALI kalır. Stormhall, Saint Odran, Almoner ölçülmedi.
+- agent/balance-agac-tur2 birleşti (sim aracı + belgeler; GÖNDERİLMEDİ, iç iş). Çakışmalar: tree-sim testi lead hali, lead-open lead hali, character-design iki taraf.
+- FORM r41 v112, 12 soru (id n_*): n_sunfire, n_druid, n_magedef, n_redtithe, n_warrior (bekleme 3 mü 4 mü dahil), n_skald, n_cells, n_band, n_sets, n_preview, n_ai, n_donem. Cevap: picks/r41.
+- Kimse dinlemedi: Sunfire sesleri, Redtithe ulti saplama sesleri.
+
+### 2026-11-23 05:30 gece: 1.0 kontrolleri (üçü yapıldı)
+- Gönderilen 5dabb31e = test edilen 6556bdc3 (fark yalnız patch-notes + open-questions numaraları). Birleştirme sonrası test:fast 440 dosya yeşil.
+- Eski kayıt açılma testi KAPANDI (agent/bug-hunter-eski-kayit, birleşti): hata yok; sefer sürüm 6-15 + Endless 1-8 kayıpsız, 1-5 bilerek silinir; bozuk kayıt yedeklenir; previous_session_crashed yanlış alarm yok. Sınır: örnekler bugünkü şemadan geriye kuruldu. Açık risk: ileride sınıf / item id kaldırılırsa göç kuralı gerekir.
+- Üç harita + oyun sonu kontrolü KAPANDI (agent/campaign-dev-uc-harita, birleşti): kilitleyen hata yok; yeni testler campaign-all-maps-check, campaign-chain-check. Sınır: YZ Harita 3 son boss'u doğal oynanışta yenemedi (--on-wall=force ile kanıt); Harita 1'de 3/5 koşu duvara takıldı (denge sinyali). Sorular formda: n_endcard, n_continue, n_flock.
+- Telefon hız ölçümü (rapor uiform-live/r41/hiz-olcumu.md): menüden önce 3,38 MB (ilk rapordaki 4,74 YANLIŞTI; Play kartları zaten menüden sonra iniyor). Düzeltme HAZIR, BİRLEŞMEDİ: agent/ui-dev-hiz-olcumu da4fcda9 (ikonlar ?url&no-inline + warmIcons, menü fontu yalnız Latin + preload) > 2,31 MB. Ömer onayı formda n_speed; onaydan sonra birleştir + gönder. Gerçek telefon / canlı ölçülmedi.
+- Başlamayan 1.0 işleri: iki cihaz çok oyunculu test (Ömer gerekir), onaysız eski varsayımlar formu (28 + 3 grup), metin / ödünç içerik taraması sonuçlarının kapatılması.
+- Lead dalında gönderilmemiş iç iş: set-sim aracı, yeni testler, belgeler (oyuncuya görünen değişiklik yok; sonraki gönderimle gider).
+- FORM r41 v114, 16 soru.
+
+### 2026-11-23 sabah: form r41 (n_*) cevapları
+- n_speed = yes: açılış hızlandırması birleşti, gönderiliyor (0.9.11.9 beklenir).
+- n_endcard = endless: oyun sonu kartına yalnız Endless düğmesi. n_continue = keep. n_donem = drop ("dönem kuralı metin geçişi" listeden ÇIKTI).
+- n_flock = write: Shepherd's Fold "Search for the flock" savaşı için öneri gelecek.
+- n_preview = yes: kalan önizleme sapmaları (c), (d), (g) + Tithe Collector düzeltilecek. n_ai = yes: 21 ağaç tetiğine YZ değeri + ölçüm.
+- n_magedef = yes: Mage ve Defender ağaç gücü %5 kıs + ölç. n_redtithe = base: seviye 20 ağaçsız Redtithe ayrıca ölç, öneri. n_cells = yes: hücre taraması. n_band = yes: Mage / Undead 2 x 1000.
+- n_sets = bonus: yalnız set bonuslarını büyüt, ölç (bayrak kapalı).
+- n_warrior = cost: Reckless Heat Stun 2 tur kalsın, başka bedel önerisi gelecek.
+- n_skald (yalnız not): "Etrafındaki alana değil bulunduğu sıraya atsın. Şu anki özelliklerle". Lead yorumu: Thunder Drum düğümünde War Drum yalnız Skald'a değil Skald'ın bulunduğu SIRAYA Haste verir; 1 tur uzun + %50 güçlü kalır. Ömer'e teyit soruldu.
+- BOŞ KALDI: n_sunfire (evolve pilot), n_druid (Druid %10). Formda yalnız bu ikisi duruyor.
+
 ## DEVİR (2026-11-20, oturum 9cd8348f -> Lead c05f58e0)
 - **Gönderildi: 0.9.11.7** (main 1662d8d6, canlı + 5000). İçinde: agent/balance-redtithe (Redtithe = eski Anti-Mage, Gambler rework, skill payı turları r32-r34 + Exsanguinate 30 kan / güç 1,05), engine-dev-birlesim (şimşek, tek iş tek durum, poz/hand off), ui-dev-wiki, ui-dev-onboarding, bug-hunter-kayit-kaybi, ui-dev-geri-tusu (telefon seçici CSS'i hariç; 2026-11-17 zoom düzeni geçerli), tool-dev-test-secimi, tool-dev-wt-sweep. Son sim M1/M2 (2x1000): 13 sınıf bantta; Tithe Cut %45,4 (sınırda, Lead önerisi dokunma). Ayrıntı `areas/character-design.md` madde 12-15.
 - **GÖNDERİLMEZ:** agent/ui-dev-v3-cekim.

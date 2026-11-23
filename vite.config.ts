@@ -25,7 +25,22 @@ function displayVersion(): string {
   return process.env.npm_package_version ?? '0.0.0';
 }
 
+/** Latin (ext olmayan) font dosyalarını index.html'e preload yapar: dosya adı içerik özetli olduğundan derleme çıktısından bulunur (menü yazıları JS'i beklemeden indirilir). */
+function preloadLatinFonts() {
+  return {
+    name: 'eov-preload-latin-fonts',
+    transformIndexHtml: {
+      order: 'post' as const,
+      handler(_html: string, ctx: { bundle?: Record<string, unknown> }) {
+        const names = Object.keys(ctx.bundle ?? {}).filter((f) => /(Cinzel|EBGaramond)-(normal|italic)-latin-[A-Za-z0-9_-]+.woff2$/.test('/' + f) && !f.includes('latin-ext'));
+        return names.map((f) => ({ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: './' + f, crossorigin: '' }, injectTo: 'head' as const }));
+      },
+    },
+  };
+}
+
 export default defineConfig({
+  plugins: [preloadLatinFonts()],
   // Göreli yollar: GitHub Pages alt klasöründe ve Cloudflare Pages kökünde aynı build çalışır.
   base: './',
   define: {

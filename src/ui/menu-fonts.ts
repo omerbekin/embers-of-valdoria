@@ -1,9 +1,10 @@
 /**
  * Menü fontlarının yüklenmesi (Cinzel 600/700, EB Garamond 400/italik; @font-face `src/style.css`, dosyalar `assets/fonts`, internetsiz).
  * Phaser yazıları çizildiği andaki fontla tuvale basılır: font hazır olmadan çizilirse yedek fontla kalır. Bu yüzden zarif menü
- * (`menu-style.ts`) yazılarını fontlar hazır olunca çizer (`whenMenuFontsReady`). latin-ext alt kümesi Türkçe harfler için ayrıca istenir.
+ * (`menu-style.ts`) yazılarını fontlar hazır olunca çizer (`whenMenuFontsReady`). latin-ext alt kümesi yalnız o harfler görününce (serbest metin) istenir; menü açılışını beklemez.
  */
-const SAMPLE = 'AaBbÖöŞşİıĞğÜüÇç ◂';
+// Yalnız Latin örnek: oyun arayüzü İngilizce, Türkçe harfler eklenirse latin-ext (178 KB) menü açılışında zorla iner. Serbest metin (şirket / oyuncu adı) latin-ext'e düşerse tarayıcı onu o an ister (unicode-range).
+const SAMPLE = 'AaBbCcMmQqWw 0123 ◂';
 const WANT = ['600 32px Cinzel', '700 32px Cinzel', '400 32px "EB Garamond"', 'italic 400 32px "EB Garamond"'];
 /** Font gelmezse (eski tarayıcı, bozuk dosya) menü en fazla bu kadar bekler, sonra yedek fontla çizer. */
 const TIMEOUT_MS = 3000;

@@ -29,6 +29,7 @@ import { installCornerDots } from './ui/corner-dots';
 import { installWiki, openWiki } from './wiki/open';
 import { debugState } from './game/debug-state';
 import { whenMenuFontsReady } from './ui/menu-fonts';
+import { warmIcons } from './game/icon-image-files';
 import './ui/tokens.css';
 import './style.css';
 import './ui/window-header.css'; // Inn / Recruit / küçük diyalog başlığı (çizgi + karo süsü)
@@ -149,7 +150,7 @@ installContextLossNotice(game);
 // ?endless=1, lobi linki) o sahnenin kodu inip sahne kurulunca kapanır (src/game/lazy-scenes.ts). Güvenlik ağı: bir şey takılırsa 25 sn sonra yine kalkar.
 window.setTimeout(markBootReady, 25000);
 // Menü hazır olunca diğer sahnelerin kodu arka planda indirilir (ilk Quick Battle / sefer geçişinde bekleme olmasın)
-whenBootReady(() => window.setTimeout(() => void prefetchScenes(game).then(() => loadNet()).catch(() => undefined), 600));
+whenBootReady(() => window.setTimeout(() => void prefetchScenes(game).then(() => { warmIcons(); return loadNet(); }).catch(() => undefined), 600));
 
 // Dev / local test only: lets the browser console inspect the running game (window.__game; also in a local production build on localhost)
 if (import.meta.env.DEV || ['localhost', '127.0.0.1'].includes(window.location.hostname)) (window as unknown as { __game: Phaser.Game }).__game = game;

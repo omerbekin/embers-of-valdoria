@@ -59,6 +59,18 @@ Son kararlar (2026-11-08, Ömer): Paladin Radiance 18 / Resurrection 14 MP kald�
   - Warrior Reckless Heat: Charge 30 Rage (20 yerine); bekleme 3 ve Stun 1 tur aynı.
   - Skald Thunder Drum: War Drum'ın Skald'a verdiği Haste %50 güçlü (+%45 Speed; `statusPotency.speedMult` 0,15, Taut Skin kalıbı, motor değişmedi), "1 tur uzun" aynı.
   - YZ testi `tests/tree-tur4.test.ts`. Açık: ölçüm (izin yok).
+- **2026-11-23 büyük ölçüm (Ömer onayı; rapor `eov-forms-archive/uiform-live/r41/agac-buyuk.md`, veri değişmedi):**
+  - Tam kurulum: satır 1+2, ult, L20, 2 x 10.000 savaş. Genel kazanç +28,215; bantta (+25..+30).
+  - Bant dışı, açıkça (± tamamen bant dışında): Druid +32,6 (üstünde); Anti-Mage +22,7 (altında).
+  - Sınırda, hata payı içinde:
+    - Mage +31,4 ve Defender +31,4; büyük olasılıkla üstte.
+    - Undead +30,6, Skald +30,5, Archer +24,7, Cutthroat +24,6.
+  - Tur 4 ek etkisi yok. Tek sınıf ölçümü: Warrior 3b +0,676 -> +0,676; Skald 3b -2,137 -> -1,709.
+  - Açık (Ömer), raporun öneri bölümünde:
+    - Druid satır 1+2 yön a güç sayılarını %10 kısmak (Mage / Defender isteğe bağlı %5);
+    - Anti-Mage'de ağaç değil, ağaçsız güç ya da göreli hedef;
+    - Warrior 3b / Skald 3b bedeli tasarım sorusu;
+    - hücre bandı için bar payını ayıran satır taraması.
 
 ## Durum: ikon turu r41 (Ömer 2026-11-21 form Tur 40 "Şimdi yap", dal agent/content-designer-ikonlar2, push yok)
 - Redtithe sınıf logosu / amblemi (çapraz orak hançerler + pirinç ondalık kâsesi + kırmızı kuşak): `assets/misc-icons/class/antimage` (128 + small 64) ve `icons-v2/antimage/nullsphere` (artık görsele bağlı, kodla çizilmiyor). Redtithe ağacı: 16 notable düğüm ikonu (`assets/tree-icons/antimage/{0..3}_{n0,ma,mb}`, `4_{u3,r3,d3,l3}`) + `overflow` (taşan kan kazanı; veride kullanıcısı yok, yalnız Wiki > Assets). Skald ağacı: aynı 16 düğüm için ilk özel ikonlar (`assets/tree-icons/skald/`). Kapanış sineması: 5 sahne resmi `assets/cinematics/cin_{hearth_still,kharduin_gate,long_descent,crownbearer,dark_hearth}.webp` (`_fallback` güvenlik ağı olarak kaldı).

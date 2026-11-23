@@ -16,6 +16,13 @@ Bekleyen düzeltme listesi bu dosyadadır (eski `pending-fixes.md` buraya birle�
 - Ley Thread / ikinci mana yakma → Combat Design (Ley 1,5, Ömer'in son kararı).
 - `assets/source/ui-icons/ring-slot.png` izlenmeyen dosya, bu alana ait değil; commit'e sokma.
 
+## Eski kayıt açılma testi (bug-hunter 2026-11-23, 1.0 öncesi liste; dal agent/bug-hunter-eski-kayit)
+- **Sonuç: hata yok.** Sefer dosyası sürümleri 2..15 ve Endless 1..8 bugünkü okuyucuda çökmeden açılıyor; sürüm 6 ve sonrası kayıpsız (kahraman, level, altın, torba, set parçaları, Valor, yara, ağaç, Ring yuvası taşınır). Sürüm 1-5 kayıtları bilerek yeni haritaya taşınmaz (yuva + "map changed" uyarısı; save.ts sürüm 6 notu).
+- Test: `tests/old-save-open.test.ts` (sürüm matrisi, bozuk / yarım JSON, proto.* anahtar göçü, her sınıfın eski ağaç sürümü, Endless sürümleri), `tests/diag-crash-flow.test.ts` (çökme bayrağı yaşam döngüleri).
+- Tarihte hiçbir sınıf id'si (Anti-Mage -> Redtithe yalnız görünen ad; id `antimage` aynı), item id'si ya da ağaç düğüm anahtarı kaldırılmadı / yeniden adlandırılmadı (git geçmişi tarandı); eski ağaç sürümü tutulan dağılım bedava respec alır.
+- Bilinen boşluk (şu an tetiklenmiyor): roster'daki tanımsız sınıf id'si ve takılı / torbadaki tanımsız item id'si okuyucuyu geçer (yalnız yedek / Inn sınıf denetler); ileride sınıf ya da item kaldırılırsa göç kuralı eklenmeli.
+- `previous_session_crashed`: bayrak yalnız görünürken (canlılık 45 sn kesilince) ölen oturumda kalkıyor; hidden / pagehide temiz sayılır. Normal arka plana gitme, yenileme, kapatma yanlış pozitif vermiyor (test). Kod okumasından kalan zayıf yollar: (1) masaüstünde görünür sekme uykuya dalarsa (kapak kapanması) ikinci sekme açılınca ilki "çöktü" sanılır; (2) iki sekmenin eşzamanlı işaret yazımı (okuma-değiştirme-yazma) nadiren temiz bayrağı ezebilir. Telefondaki 6 rapor büyük ihtimalle gerçek ani ölüm (bellek) ya da hidden olayı gelmeyen ölüm;  olayını da temiz saymak ucuz bir hafifletme ama kanıtsız, yapılmadı.
+
 ## Açık işler: 1.0 öncesi sağlamlık taraması (bug-hunter 2026-11-15; kayıt kaybı maddeleri düzeldi, gönderim bekliyor)
 - **DÜZELDİ (2026-11-15, bug-hunter, dal agent/bug-hunter-kayit-kaybi, gönderilmedi).** Okunamayan sefer dosyası artık ezilmiyor.
   - `save.ts > write`: dosya daha yeni sürümse (ör. v15) hiç yazılmaz; oyuncuya "This save was made by a newer version. Reload to update." (ana menü notu + reddedilen kayıtta uyarı, dakikada en çok bir).
