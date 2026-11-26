@@ -281,7 +281,8 @@ export interface HealFx extends Omit<HealHook, 'h' | 'node'> {
  * - Adlı biçim (Paladin Focused Beam): `mode` + `name` biçimi kurar (`target`, `removeEffects` etki türleri, `powerMul` hasar gücü çarpanı); aynı `mode`
  *   ile gelen sonraki fx'ler ona ekler (`addEffect`, `splash`). Skill'in kendi biçimi de seçenek kalır (keepBase).
  * - Durum seçimi (Gambler Stacked Deck): `statusPick` skill'in randomStatus seçeneklerinin her biri için bir biçim kurar (zar yerine o durum;
- *   `firstOnly` listesindeki durumlar yalnızca ilk hedefe). `secondStatus` (Double Deal) her biçime kalan seçeneklerden rastgele ikinci durum ekler.
+ *   `firstOnly` listesindeki durumlar yalnızca ilk hedefe). `secondStatus` (Double Deal) her biçime kalan seçeneklerden rastgele ikinci durum ekler
+ *   (`secondExclude` listesindekiler hariç).
  *   Her kullanım bir biçim ister (keepBase yok).
  * `text` kartın açıklamasına eklenir, `baseText` skill'in kendi kartı, `title` kartların üstündeki satır.
  */
@@ -301,6 +302,8 @@ export interface ModeFx {
   statusPick?: boolean;
   firstOnly?: string[];
   secondStatus?: boolean;
+  /** r43 (Ömer form r43, Double Deal): rastgele ikinci durum bu durumlardan olamaz (yalnız secondStatus ile; ör. ["stun"]). */
+  secondExclude?: string[];
 }
 
 export type TreeFx = (SkillFx | PassiveFx | StatFx | AddEffectFx | ReplaceEffectFx | RemoveEffectFx | UnitFxFx | GroundStatusFx | CondFx | RageFx | RuleFx | TargetFx | TriggerFx | HealFx | ModeFx) & {

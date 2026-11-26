@@ -6,6 +6,7 @@ import { campaignArtKey, hasCampaignArt, preloadCampaignArt } from '../campaign-
 import { cardArt, hasCardArtFile, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
 import { onReducedMotionChange, reducedMotion } from '../../ui/motion-pref';
+import { drawFuseGfx } from '../menu-fuse-gfx';
 import { motion } from '../../ui/motion';
 import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
@@ -472,11 +473,23 @@ export class MainMenuScene extends Phaser.Scene {
     // Sağ taraftaki etkileşimli parçalar (kaydırıcı, düğme) satırın dokunma alanının üstünde kalsın
     if (o.right) for (const r of o.right) root.bringToTop(r);
     let isOn: boolean | null = null;
+    const u = rh / 64;
+    const lite = document.documentElement.classList.contains('short');
+    // fitil: kor uç karonun eski yerinde (x 10), çizgi yazının altına iner, yazının sağına kadar uzanır (yazı seçilince sağa kaydığı için her karede okunur)
+    const drawFuse = (): void => {
+      const tx = text.x + TPAD;
+      const tw = Math.max(20, text.width - 2 * TPAD);
+      drawFuseGfx(diamond, { hx: 10, hy: 0, lineY: rh * 0.3, xEnd: tx + tw + 30 * u, u, lite }, reducedMotion() ? 0.6 : this.time.now / 1000);
+    };
+    root.once('destroy', () => this.events.off('update', drawFuse));
     const setOn = (v: boolean): void => {
+      // seçili satır işareti = yanan fitil (Ömer 2026-11-25 r47, mockup menu-thread V5; src/ui/menu-fuse.ts): kor uç titrer, kıvılcım fitil boyunca ilerler
+      this.events.off('update', drawFuse);
       diamond.clear();
       if (v) {
-        diamond.fillStyle(EMBER, 1).fillPoints([{ x: 10, y: -8 }, { x: 18, y: 0 }, { x: 10, y: 8 }, { x: 2, y: 0 }], true);
-        diamond.lineStyle(2, 0xffb35a, 0.9).strokePoints([{ x: 10, y: -8 }, { x: 18, y: 0 }, { x: 10, y: 8 }, { x: 2, y: 0 }], true);
+        drawFuse();
+        if (!reducedMotion()) this.events.on('update', drawFuse);
+        else this.time.delayedCall(220, () => isOn && drawFuse()); // yazı kayması bitince sabit kare yazının sonuna uzansın
       }
       text.setColor(!enabled ? '#7d705a' : v ? TXT_ON : base);
       this.tweens.killTweensOf(glow);
@@ -747,7 +760,7 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
     const best = endlessBestWave(storage()?.getItem('eov.endless.scores.v1') ?? null);
     const goQb = (endless: boolean) => {
       this.setEndlessOn(endless);
-      elGo(this, endless ? ENDLESS_SCENE : 'TeamSelectScene');
+      elGo(this, endless ? ENDLESS_SCENE : 'TeamSelectScene', undefined, endless ? { loading: true } : undefined);
     };
     const qbRows: LedgerRow[] = [
       { id: 'qb', name: 'Quick Battle', meta: 'Pick two teams', primary: !this.endlessOn(), enabled: true, run: () => goQb(false) },
@@ -776,7 +789,7 @@ Lv ${lvl} · ${timeAgo(latest.savedAt)}` : '';
         endless: true,
         rows: qbRows,
         rowArt: [cardArt(this, 'quick-battle'), cardArt(this, 'quick-battle-endless')],
-        run: () => (this.endlessOn() ? elGo(this, ENDLESS_SCENE) : elGo(this, 'TeamSelectScene')),
+        run: () => (this.endlessOn() ? elGo(this, ENDLESS_SCENE, undefined, { loading: true }) : elGo(this, 'TeamSelectScene')),
       },
       { name: 'Multiplayer', art: cardArt(this, 'multiplayer') ?? art('duelling-ring-moon') ?? art('kings-bridge'), line: 'Fight a friend online', rows: mpRows, rowArt: [cardArt(this, 'mp-host'), cardArt(this, 'mp-join')], run: () => (mpOk ? mp.host() : undefined) },
     ];

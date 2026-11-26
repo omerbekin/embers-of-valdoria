@@ -14,7 +14,7 @@ function setup(): Battle {
   // Taunt + yaralı Mage: alan atışı Mage'in sırasına değer (taunt-pull.test.ts ile aynı sahne; tauntPull kapalıyken skor alan atışını seçer)
   const def = b.get('party-0')!;
   def.statuses.push({ kind: 'taunt', turns: 3, source: def.uid, taken: 0 });
-  b.get('party-2')!.hp = 20;
+  b.get('party-2')!.hp = 33; // r42 hız 0,25: 20 canda alan atışı bedelsiz de kazanıyordu; r45 Paladin zırhı 30 > 16 (alan atışı Paladin'e daha çok işler): 25'te de bedelsiz kazanıyor; 28-45 arası yalnız scoreCost kazandırır, ortası 33
   return b;
 }
 

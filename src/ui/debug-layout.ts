@@ -76,6 +76,7 @@ export const SECTION_ICONS: Record<string, string> = {
   'Battle setup': 'restart',
   'Test battles': 'flask',
   Multiplayer: 'team',
+  'Owner tests': 'flask',
   'Result screens': 'helm',
   'Animation speed': 'hourglass',
   'Match record': 'clipboard',

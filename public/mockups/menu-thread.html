@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Menu selection thread</title>
+<style>
+  @font-face { font-family: 'Cinzel'; src: url('../fonts/Cinzel-normal-latin.woff2') format('woff2'); font-weight: 400 900; }
+  @font-face { font-family: 'EB Garamond'; src: url('../fonts/EBGaramond-normal-latin.woff2') format('woff2'); font-weight: 400 800; }
+  html, body { margin: 0; height: 100%; background: #070504; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  #stage img { display: block; }
+  #fx { position: absolute; left: 0; top: 0; pointer-events: none; }
+  /* MOCKUP şeridi: oyun dışı olduğu belli, sol altta küçük */
+  #strip { position: fixed; left: 8px; bottom: 8px; z-index: 9; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 96vw;
+    font: 600 11px/1 'Cinzel', serif; letter-spacing: .06em; color: #1a0f05; background: repeating-linear-gradient(135deg, #e9d48a 0 10px, #d9be6a 10px 20px); padding: 5px 7px; border: 1px solid #000; }
+  #strip b { margin-right: 6px; }
+  #strip a { color: #1a0f05; text-decoration: none; border: 1px solid rgba(0,0,0,.45); padding: 4px 6px; min-width: 22px; text-align: center; background: rgba(255,255,255,.25); }
+  #strip a.on { background: #1a0f05; color: #f3d999; }
+  #strip .nm { font: 600 12px 'EB Garamond', serif; letter-spacing: 0; margin-left: 4px; }
+  #strip.clean { display: none; }
+  @media (max-height: 500px) { #strip { font-size: 9px; padding: 3px 4px; gap: 2px; } #strip a { padding: 2px 4px; min-width: 16px; } #strip .nm { display: none; } }
+</style>
+</head>
+<body>
+<div id="stage"><img id="bg" alt=""><canvas id="fx"></canvas></div>
+<div id="strip"></div>
+<script>
+// Menü seçili satır işareti, 5 seçenek (Ömer r46: "Yatay bir çizgi. Etrafında sol baştan sağa doğru gevşekçe dolanan bir şey ... İplik ya da ateş değil arası").
+// Zemin = gerçek oyun ekranı (karo gizli, tools/ui-shot-scenarios/karo2-menu-zemin.mjs). Çizim = tuval (Phaser Graphics ile de aynı şekilde çizilebilir).
+// Adres: #v1..#v5 &scr=menu|settings &size=1920x1080|2580x1080|844x390 &t=<sn> (donmuş kare) &still (hareketi azalt) &clean (şerit gizli)
+const VARS = {
+  v1: 'Ember thread',
+  v2: 'Smoke ribbon',
+  v3: 'Spark helix',
+  v4: 'Braided wick',
+  v5: 'Slow fuse',
+};
+const NOTE = {
+  v1: 'Satırın alt çizgisi boyunca ince kor ipliği, sağa doğru incelip söner',
+  v2: 'Yazının altında yumuşak duman-kor şeridi, yavaş dalgalanır',
+  v3: 'Alt çizgi boyunca kıvılcım noktalarından sarmal, soldan sağa akar',
+  v4: 'Yazının altında altın + kor iki iplik örülür, kesişmeler parlar',
+  v5: 'Solda yanan fitil ucu (karonun yeri), iplik sağa gevşeyip küle döner',
+};
+const q = new URLSearchParams(location.hash.slice(1).replace(/^v\d/, (m) => 'v=' + m));
+const pick = q.get('v') || 'v1';
+const scr = q.get('scr') || 'menu';
+const isPhone = matchMedia('(max-height: 500px)').matches;
+const size = q.get('size') || (isPhone ? '844x390' : innerWidth / innerHeight > 2 ? '2580x1080' : '1920x1080');
+const T0 = q.has('t') ? parseFloat(q.get('t')) : null;
+const still = q.has('still') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const strip = document.getElementById('strip');
+if (q.has('clean')) strip.classList.add('clean');
+const link = (h) => { const p = new URLSearchParams(location.hash.slice(1).replace(/^v\d/, (m) => 'v=' + m)); for (const [k, v] of Object.entries(h)) p.set(k, v); const v = p.get('v'); p.delete('v'); return '#' + v + (p.toString() ? '&' + p.toString() : ''); };
+strip.innerHTML = '<b>MOCKUP</b>' + Object.keys(VARS).map((k) => `<a href="${link({ v: k })}" class="${k === pick ? 'on' : ''}" title="${VARS[k]}">${k.toUpperCase()}</a>`).join('') +
+  ` <a href="${link({ scr: 'menu' })}" class="${scr === 'menu' ? 'on' : ''}">Menu</a><a href="${link({ scr: 'settings' })}" class="${scr === 'settings' ? 'on' : ''}">Settings</a><span class="nm">${VARS[pick]}: ${NOTE[pick]}</span>`;
+addEventListener('hashchange', () => location.reload());
+
+const [W, H] = size.split('x').map(Number);
+const stage = document.getElementById('stage');
+const bg = document.getElementById('bg');
+const cv = document.getElementById('fx');
+stage.style.width = W + 'px';
+stage.style.height = H + 'px';
+cv.width = W; cv.height = H;
+const fit = () => { const s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `translate(${(innerWidth - W * s) / 2}px, ${(innerHeight - H * s) / 2}px) scale(${s})`; };
+fit(); addEventListener('resize', fit);
+bg.src = `menu-thread/${scr}-${size}.webp`;
+const ctx = cv.getContext('2d');
+
+// ---- renkler (oyunun kor / altın tonları: EMBER #e0702a, #ffb35a, altın #d9b26a, fildişi #f6e8bc) ----
+const EMB = [255, 179, 90], EMB2 = [224, 112, 42], GOLD = [217, 178, 106], IVORY = [246, 232, 188], ASH = [150, 140, 128];
+const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const ease = (p) => p * p * (3 - 2 * p);
+
+let G = null; // satır geometrisi (ekran px)
+fetch(`menu-thread/pos-${size}.json`).then((r) => r.json()).then((P) => {
+  if (scr === 'menu') {
+    const m = P.menu;
+    const u = m.rowH / 64; // ölçek (masaüstü satırı ~64 px)
+    G = { x0: m.rowX + 2 * u, x1: m.rowW, yC: m.y, yLine: m.y + m.rowH / 2 - 2 * m.k, tx: m.textX, tw: m.textW, rowH: m.rowH, u };
+  } else {
+    const s = P.settings;
+    const u = s.rowH / 112 * 1.2;
+    G = { x0: s.rowX + 2, x1: s.rowX + s.rowW, yC: s.y, yLine: s.y + s.rowH / 2 - 1, tx: s.textX, tw: s.textW, rowH: s.rowH, u: Math.max(u, 0.45) };
+  }
+  requestAnimationFrame(loop);
+});
+
+function loop(now) {
+  const t = T0 !== null ? T0 : still ? 0.6 : now / 1000;
+  ctx.clearRect(0, 0, W, H);
+  DRAW[pick](t, G);
+  if (T0 === null && !still) requestAnimationFrame(loop);
+}
+
+// yardımcı: soldan sağa incelen ve sönen çizgi
+function baseLine(x0, x1, y, a, wid, col = GOLD) {
+  const g = ctx.createLinearGradient(x0, 0, x1, 0);
+  g.addColorStop(0, rgba(col, a)); g.addColorStop(0.55, rgba(col, a * 0.55)); g.addColorStop(1, rgba(col, 0));
+  ctx.strokeStyle = g; ctx.lineWidth = wid; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+}
+// sarmal iplik: x boyunca y = A(p) sin(phase); arka yarı (cos<0) sönük, ön yarı parlak (çizginin önünden geçer)
+function helix(x0, x1, y, A, lam, ph, colF, colB, wid, fade = 1) {
+  const step = 1.5;
+  let prev = null;
+  for (let x = x0; x <= x1; x += step) {
+    const p = (x - x0) / (x1 - x0);
+    const a = A * (1 - 0.55 * p);
+    const th = ((x - x0) / lam) * Math.PI * 2 - ph;
+    const yy = y + a * Math.sin(th);
+    const front = Math.cos(th) > 0;
+    const alpha = (1 - Math.pow(p, 1.6) * fade) * (front ? 1 : 0.35);
+    if (prev) {
+      ctx.strokeStyle = rgba(front ? colF : colB, Math.max(0, alpha));
+      ctx.lineWidth = wid * (front ? 1 : 0.7) * (1 - 0.4 * p);
+      ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(x, yy); ctx.stroke();
+    }
+    prev = [x, yy];
+  }
+}
+
+const DRAW = {
+  // V1 kor ipliği: satırın alt çizgisi kor-altın olur, ince kor ipliği gevşek iki üç tur dolanarak sağa akar, uçta söner
+  v1(t, g) {
+    const { x0, x1, yLine: y, u } = g;
+    const end = x0 + (x1 - x0) * 0.92;
+    ctx.save();
+    baseLine(x0, end, y, 0.75, 1.2 * u, GOLD);
+    ctx.shadowColor = rgba(EMB2, 0.9); ctx.shadowBlur = 6 * u;
+    helix(x0, end, y, 8 * u, 130 * u, t * 1.6, EMB, EMB2, 1.8 * u);
+    ctx.restore();
+  },
+  // V2 duman şeridi: yazının altında, genişliği değişen yarı saydam şerit (kor > duman grisi), yavaş dalga
+  v2(t, g) {
+    const { x0, tx, tw, yC, rowH, u } = g;
+    const xa = x0, xb = tx + tw + 40 * u, y = yC + rowH * 0.3;
+    ctx.save();
+    baseLine(xa, xb, y, 0.55, 1 * u, GOLD);
+    ctx.filter = `blur(${1.6 * u}px)`;
+    for (let layer = 0; layer < 2; layer++) {
+      ctx.beginPath();
+      const top = [], bot = [];
+      for (let x = xa; x <= xb; x += 3) {
+        const p = (x - xa) / (xb - xa);
+        const w = (3.2 + 2.4 * Math.sin(p * 7 + t * 1.3 + layer)) * u * (1 - 0.5 * p);
+        const off = Math.sin(p * 9 - t * 1.1 + layer * 2) * 5 * u * (0.4 + p);
+        top.push([x, y + off - w]); bot.push([x, y + off + w]);
+      }
+      ctx.moveTo(top[0][0], top[0][1]);
+      top.forEach(([x, yy]) => ctx.lineTo(x, yy));
+      bot.reverse().forEach(([x, yy]) => ctx.lineTo(x, yy));
+      ctx.closePath();
+      const gr = ctx.createLinearGradient(xa, 0, xb, 0);
+      gr.addColorStop(0, rgba(EMB, layer ? 0.35 : 0.55)); gr.addColorStop(0.45, rgba(EMB2, 0.3)); gr.addColorStop(0.8, rgba(ASH, 0.16)); gr.addColorStop(1, rgba(ASH, 0));
+      ctx.fillStyle = gr; ctx.fill();
+    }
+    ctx.restore();
+  },
+  // V3 kıvılcım sarmalı: alt çizgi + sarmal üzerinde kıvılcım noktaları; öndekiler büyük ve parlak, arkadakiler küçük; soldan sağa akar
+  v3(t, g) {
+    const { x0, x1, yLine: y, u } = g;
+    const end = x0 + (x1 - x0) * 0.9;
+    ctx.save();
+    baseLine(x0, end, y, 0.6, 1 * u, GOLD);
+    const n = 34, lam = 120 * u;
+    for (let i = 0; i < n; i++) {
+      const p0 = ((i / n) + t * 0.07) % 1;
+      const x = x0 + p0 * (end - x0);
+      const th = ((x - x0) / lam) * Math.PI * 2;
+      const A = 6 * u * (1 - 0.5 * p0);
+      const yy = y + A * Math.sin(th);
+      const front = Math.cos(th) > 0;
+      const life = 1 - Math.pow(p0, 1.4);
+      const r = (front ? 1.8 : 1) * u * (0.6 + 0.6 * life);
+      ctx.shadowColor = rgba(EMB2, 1); ctx.shadowBlur = front ? 6 * u : 0;
+      ctx.fillStyle = rgba(front ? IVORY : EMB2, (front ? 0.95 : 0.45) * life);
+      ctx.beginPath(); ctx.arc(x, yy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  },
+  // V4 örgü fitil: yazının altında altın + kor iki iplik karşılıklı dolanır (örgü); kesişme noktaları kısa parlar
+  v4(t, g) {
+    const { x0, tx, tw, yC, rowH, u } = g;
+    const xa = x0, xb = tx + tw + 24 * u, y = yC + rowH * 0.3;
+    const lam = 70 * u, A = 4 * u;
+    ctx.save();
+    baseLine(xa, xb, y, 0.35, 1 * u, GOLD);
+    ctx.shadowColor = rgba(EMB2, 0.8); ctx.shadowBlur = 4 * u;
+    helix(xa, xb, y, A, lam, t * 1.2, GOLD, GOLD, 1.4 * u, 0.9);
+    helix(xa, xb, y, A, lam, t * 1.2 + Math.PI, EMB, EMB2, 1.4 * u, 0.9);
+    // kesişmeler (sin = 0): yarım dalga boyunda bir
+    for (let k = 0; ; k++) {
+      const x = xa + ((k + 0.5) * lam) / 2 + ((t * 1.2) / (Math.PI * 2)) * lam % (lam / 2);
+      if (x > xb) break;
+      const p = (x - xa) / (xb - xa);
+      const pulse = 0.5 + 0.5 * Math.sin(t * 3 + k);
+      ctx.fillStyle = rgba(IVORY, (0.35 + 0.5 * pulse) * (1 - p));
+      ctx.beginPath(); ctx.arc(x, y, 1.4 * u, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  },
+  // V5 yavaş fitil: karonun yerinde yanan kor uç (nabız), iplik sağa doğru gevşer, incelir, kül grisine döner; uçtan ince duman
+  v5(t, g) {
+    const { x0, tx, tw, yC, u } = g;
+    const head = x0 + 10 * u, xb = tx + tw + 30 * u, y = yC;
+    const yl = yC + g.rowH * 0.3;
+    ctx.save();
+    // çizgi: kor uçtan yazının altına iner
+    const gr = ctx.createLinearGradient(head, 0, xb, 0);
+    gr.addColorStop(0, rgba(EMB, 0.9)); gr.addColorStop(0.3, rgba(GOLD, 0.55)); gr.addColorStop(1, rgba(ASH, 0));
+    ctx.strokeStyle = gr; ctx.lineWidth = 1.2 * u;
+    ctx.beginPath(); ctx.moveTo(head, y); ctx.quadraticCurveTo(head + 14 * u, yl, head + 34 * u, yl); ctx.lineTo(xb, yl); ctx.stroke();
+    // gevşek iplik
+    ctx.shadowColor = rgba(EMB2, 0.7); ctx.shadowBlur = 3 * u;
+    helix(head + 30 * u, xb, yl, 4.5 * u, 110 * u, t * 0.9, [214, 150, 90], ASH, 1.2 * u, 1);
+    // kor uç
+    const pulse = 0.75 + 0.25 * Math.sin(t * 4.2);
+    const rg = ctx.createRadialGradient(head, y, 0, head, y, 9 * u);
+    rg.addColorStop(0, rgba([255, 236, 190], 0.95)); rg.addColorStop(0.35, rgba(EMB, 0.8 * pulse)); rg.addColorStop(1, rgba(EMB2, 0));
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(head, y, 9 * u, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = rgba([255, 246, 220], 1); ctx.beginPath(); ctx.arc(head, y, 2.2 * u, 0, Math.PI * 2); ctx.fill();
+    // ince duman
+    ctx.shadowBlur = 0;
+    for (let i = 0; i < 3; i++) {
+      const p = ((t * 0.35 + i / 3) % 1);
+      ctx.fillStyle = rgba(ASH, 0.22 * (1 - p));
+      ctx.beginPath(); ctx.arc(head + Math.sin(p * 6 + i) * 3 * u, y - p * 22 * u, (1.5 + p * 3) * u, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  },
+};
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "class": "mage",
-  "version": 6,
+  "version": 8,
   "picked": {
     "rows": [
       "b",
@@ -103,7 +103,7 @@
       {
         "at": 20,
         "name": "Momentum",
-        "text": "When you kill an enemy, your next spell deals 4.5% increased damage.",
+        "text": "When you kill an enemy, your next spell deals 4.25% increased damage.",
         "src": "B:V5:bar2",
         "fx": [
           {
@@ -113,7 +113,7 @@
             "do": [
               {
                 "buff": {
-                  "powerMul": 0.045
+                  "powerMul": 0.0425
                 }
               }
             ]
@@ -165,7 +165,7 @@
     },
     "0.f2": {
       "name": "Searing Mirage",
-      "text": "Heat Mirage's Burning Ground deals 4.5% more damage per rank.",
+      "text": "Heat Mirage's Burning Ground deals 4.25% more damage per rank.",
       "src": "B:V5:0.f2",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -173,14 +173,14 @@
           "k": "passive",
           "f": "power",
           "op": "pct",
-          "v": 0.045,
+          "v": 0.0425,
           "rank": true
         }
       ]
     },
     "0.f3": {
       "name": "Rime Touch",
-      "text": "Enemies that hit you in melee have a 4.5% chance per rank to be Chilled for 1 turn.",
+      "text": "Enemies that hit you in melee have a 4.25% chance per rank to be Chilled for 1 turn.",
       "src": "B:V3:0.f3",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -191,7 +191,7 @@
           "when": {
             "incomingRanged": false
           },
-          "procChance": 0.045,
+          "procChance": 0.0425,
           "rank": "chance",
           "do": [
             {
@@ -238,7 +238,7 @@
     },
     "0.ea": {
       "name": "Backdraft",
-      "text": "When an enemy hits you in melee, it takes 15% INT fire damage (once per round).",
+      "text": "When an enemy hits you in melee, it takes 14.5% INT fire damage (once per round).",
       "src": "B:V3:0.ea",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -252,7 +252,7 @@
           "once": "perTurn",
           "do": [
             {
-              "damage": 0.15,
+              "damage": 0.145,
               "stat": "int",
               "damageType": "magic",
               "element": "fire",
@@ -288,7 +288,7 @@
     },
     "0.ma": {
       "name": "Stoked Flames",
-      "text": "Your skills deal 7.5% increased damage to Burning enemies.",
+      "text": "Your skills deal 7.25% increased damage to Burning enemies.",
       "src": "B:V3:0.ma",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -299,14 +299,14 @@
             "targetStatus": "burning"
           },
           "mod": {
-            "powerMul": 0.075
+            "powerMul": 0.0725
           }
         }
       ]
     },
     "0.fa": {
       "name": "Pyre Heart",
-      "text": "Heat Mirage's Burning Ground deals 30% more damage, but Frost Skin no longer reduces Ice damage.",
+      "text": "Heat Mirage's Burning Ground deals 28.5% more damage, but Heat Mirage no longer reduces Ice damage.",
       "src": "B:V3:0.fa",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -314,7 +314,7 @@
           "k": "passive",
           "f": "power",
           "op": "pct",
-          "v": 0.3
+          "v": 0.285
         },
         {
           "k": "passive",
@@ -326,7 +326,7 @@
     },
     "0.fb": {
       "name": "Hoarfrost",
-      "text": "Frost Skin reduces Fire and Ice damage by 25% instead of 10%, but Heat Mirage's Burning Ground deals 50% less damage.",
+      "text": "Heat Mirage reduces Fire and Ice damage by 25% instead of 10%, but its Burning Ground deals 50% less damage.",
       "src": "B:V3:0.fb",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -352,7 +352,7 @@
     },
     "0.mb": {
       "name": "Brittle Cold",
-      "text": "Your skills deal 7.5% increased damage to Chilled enemies.",
+      "text": "Your skills deal 7.25% increased damage to Chilled enemies.",
       "src": "B:V3:0.mb",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -363,7 +363,7 @@
             "targetStatus": "chilled"
           },
           "mod": {
-            "powerMul": 0.075
+            "powerMul": 0.0725
           }
         }
       ]
@@ -417,14 +417,14 @@
     },
     "1.f2": {
       "name": "Searing Crit",
-      "text": "Fire Bolt gains +4.5% Crit damage per rank.",
+      "text": "Fire Bolt gains +4.25% Crit damage per rank.",
       "src": "B:V5:1.f2",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critMultAdd": 0.045
+            "critMultAdd": 0.0425
           },
           "rank": true
         }
@@ -432,7 +432,7 @@
     },
     "1.f3": {
       "name": "Clean Shot",
-      "text": "Fire Bolt deals 4.5% increased damage per rank against targets at full HP.",
+      "text": "Fire Bolt deals 4.25% increased damage per rank against targets at full HP.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -442,7 +442,7 @@
             "targetFullHp": true
           },
           "mod": {
-            "powerMul": 0.045
+            "powerMul": 0.0425
           },
           "rank": true
         }
@@ -450,7 +450,7 @@
     },
     "1.n0": {
       "name": "Weak Spot",
-      "text": "Fire Bolt critical hits ignore 15% of Magic Armor.",
+      "text": "Fire Bolt critical hits ignore 14.5% of Magic Armor.",
       "src": "B:V5:1.n0",
       "fx": [
         {
@@ -460,7 +460,7 @@
             "hitIsCrit": true
           },
           "mod": {
-            "ignoreDefense": 0.15
+            "ignoreDefense": 0.145
           }
         }
       ]
@@ -485,7 +485,7 @@
     },
     "1.ea": {
       "name": "Keen Gaze",
-      "text": "Fire Bolt cannot miss and gains +5.25% critical chance.",
+      "text": "Fire Bolt cannot miss and gains +5% critical chance.",
       "src": "B:V5:1.ea*",
       "fx": [
         {
@@ -500,13 +500,13 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.0525
+          "v": 0.05
         }
       ]
     },
     "1.eb": {
       "name": "Execution Bolt",
-      "text": "Fire Bolt deals 19% increased damage to targets below 25% HP.",
+      "text": "Fire Bolt deals 18% increased damage to targets below 25% HP.",
       "src": "B:V5:1.eb",
       "fx": [
         {
@@ -516,7 +516,7 @@
             "targetHpBelow": 0.25
           },
           "mod": {
-            "powerMul": 0.19
+            "powerMul": 0.18
           }
         }
       ]
@@ -543,7 +543,7 @@
     },
     "1.fa": {
       "name": "Unstable Focus",
-      "text": "Fire Bolt critical hits deal 26.5% increased damage, but its non-critical hits deal 15% less damage.",
+      "text": "Fire Bolt critical hits deal 25% increased damage, but its non-critical hits deal 14.25% less damage.",
       "src": "B:V5:1.fa",
       "fx": [
         {
@@ -553,7 +553,7 @@
             "hitIsCrit": true
           },
           "mod": {
-            "powerMul": 0.265
+            "powerMul": 0.25
           }
         },
         {
@@ -563,14 +563,14 @@
             "hitIsCrit": false
           },
           "mod": {
-            "powerMul": -0.15
+            "powerMul": -0.1425
           }
         }
       ]
     },
     "1.fb": {
       "name": "Reckless Bolt",
-      "text": "Fire Bolt deals 15% increased damage against targets below 50% HP, but 20% less against healthier ones.",
+      "text": "Fire Bolt deals 14.5% increased damage against targets below 50% HP, but 20% less against healthier ones.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -580,7 +580,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.15
+            "powerMul": 0.145
           }
         },
         {
@@ -620,7 +620,7 @@
     },
     "1.v": {
       "name": "Sunfire",
-      "text": "Fire Bolt evolves into Sunfire: it deals 22.5% more damage, and a critical Sunfire splashes its full damage to the enemies beside the target.",
+      "text": "Fire Bolt evolves into Sunfire: it deals 21.5% more damage, and a critical Sunfire splashes its full damage to the enemies beside the target.",
       "src": "B:V5:1.v",
       "fx": [
         {
@@ -628,7 +628,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.225
+          "v": 0.215
         },
         {
           "k": "hook",
@@ -645,7 +645,7 @@
     },
     "2.f1": {
       "name": "Biting Gale",
-      "text": "Blizzard has a 6% chance per rank to Hobble each enemy hit for 1 turn.",
+      "text": "Blizzard has a 5.75% chance per rank to Hobble each enemy hit for 1 turn.",
       "src": "A:V2:2.f1",
       "fx": [
         {
@@ -656,19 +656,19 @@
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.06
+              "chance": 0.0575
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.12
+              "chance": 0.115
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.18
+              "chance": 0.1725
             }
           ]
         }
@@ -676,7 +676,7 @@
     },
     "2.f2": {
       "name": "Numbing Cold",
-      "text": "Blizzard deals 4.5% increased damage per rank against Hobbled or Chilled enemies.",
+      "text": "Blizzard deals 4.25% increased damage per rank against Hobbled or Chilled enemies.",
       "src": "A:V2:2.f2",
       "fx": [
         {
@@ -689,7 +689,7 @@
             ]
           },
           "mod": {
-            "powerMul": 0.045
+            "powerMul": 0.0425
           },
           "rank": true
         }
@@ -698,7 +698,7 @@
     },
     "2.f3": {
       "name": "Driving Snow",
-      "text": "Blizzard has a 3.75% chance per rank to Blind each enemy hit for 1 turn.",
+      "text": "Blizzard has a 3.5% chance per rank to Blind each enemy hit for 1 turn.",
       "src": "A:V2:2.f3",
       "fx": [
         {
@@ -709,31 +709,31 @@
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.0375
+              "chance": 0.035
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.075
+              "chance": 0.07
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.1125
+              "chance": 0.105
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.15
+              "chance": 0.14
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.1875
+              "chance": 0.175
             }
           ]
         }
@@ -778,7 +778,7 @@
     },
     "2.ea": {
       "name": "Flash Freeze",
-      "text": "Each enemy already Hobbled or Chilled when Blizzard hits has a 26.5% chance to be Stunned for 1 turn.",
+      "text": "Each enemy already Hobbled or Chilled when Blizzard hits has a 25% chance to be Stunned for 1 turn.",
       "src": "A:V2:2.ea",
       "fx": [
         {
@@ -794,7 +794,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.265
+              "chance": 0.25
             }
           }
         }
@@ -936,7 +936,7 @@
     },
     "3.f1": {
       "name": "Deep Crater",
-      "text": "Ice Crater deals 3% increased damage per rank.",
+      "text": "Ice Crater deals 2.75% increased damage per rank.",
       "src": "A:V2:3.f1",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -945,14 +945,14 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.03,
+          "v": 0.0275,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Hard Landing",
-      "text": "Ice Crater's crash deals 7.5% more damage per rank.",
+      "text": "Ice Crater's crash deals 7.25% more damage per rank.",
       "src": "A:V1:3.f2",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -961,14 +961,14 @@
           "sel": "push",
           "f": "crashPower",
           "op": "pct",
-          "v": 0.075,
+          "v": 0.0725,
           "rank": true
         }
       ]
     },
     "3.f3": {
       "name": "Bitter Frost",
-      "text": "Ice Crater deals 3.75% increased damage per rank to enemies already Chilled.",
+      "text": "Ice Crater deals 3.5% increased damage per rank to enemies already Chilled.",
       "src": "A:V2:3.f3",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -979,7 +979,7 @@
             "targetStatus": "chilled"
           },
           "mod": {
-            "powerMul": 0.0375
+            "powerMul": 0.035
           },
           "rank": true
         }
@@ -1005,7 +1005,7 @@
     },
     "3.r": {
       "name": "Long Chill",
-      "text": "Ice Crater's Chill has an 11.5% chance per rank to last 1 turn longer.",
+      "text": "Ice Crater's Chill has a 10.5% chance per rank to last 1 turn longer.",
       "src": "A:V2:3.r",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -1013,7 +1013,7 @@
           "k": "hook",
           "h": "cond",
           "sel": "status:chilled",
-          "procChance": 0.115,
+          "procChance": 0.105,
           "mod": {
             "turns": 1
           },
@@ -1023,7 +1023,7 @@
     },
     "3.ea": {
       "name": "Frostbitten Mark",
-      "text": "Ice Crater deals 19% increased damage to enemies standing on Chill Ground or Ice.",
+      "text": "Ice Crater deals 14.4% increased damage to enemies standing on Chill Ground or Ice.",
       "src": "A:V2:3.ea",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -1041,7 +1041,7 @@
             ]
           },
           "mod": {
-            "powerMul": 0.19
+            "powerMul": 0.144
           }
         }
       ]
@@ -1071,7 +1071,7 @@
     },
     "3.ma": {
       "name": "Glacial Spike",
-      "text": "Ice Crater is a sure critical hit against Chilled enemies.",
+      "text": "Ice Crater is a sure critical hit against its Chilled target (not the enemies beside it).",
       "src": "A:V2:3.ma",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -1079,7 +1079,8 @@
           "k": "hook",
           "h": "cond",
           "when": {
-            "targetStatus": "chilled"
+            "targetStatus": "chilled",
+            "targetInCast": true
           },
           "mod": {
             "guaranteedCrit": true
@@ -1139,7 +1140,7 @@
     },
     "3.mb": {
       "name": "Black Frost",
-      "text": "Enemies on Ice Crater's Chill Ground take 11.5% INT ice damage at the start of their turns.",
+      "text": "Enemies on Ice Crater's Chill Ground take 10.5% INT ice damage at the start of their turns.",
       "src": "A:V3:3.ma",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -1148,14 +1149,14 @@
           "sel": "ground:storm",
           "f": "power",
           "op": "add",
-          "v": 0.115,
+          "v": 0.105,
           "needs": "3.n0"
         }
       ]
     },
     "3.v": {
       "name": "Glacier Crater",
-      "text": "Ice Crater evolves into Glacier Crater: it deals 22.5% more damage; the enemies beside its target take half its damage and are Chilled for 2 turns.",
+      "text": "Ice Crater evolves into Glacier Crater: it deals 21.5% more damage; the enemies beside its target take half its damage and are Chilled for 2 turns.",
       "src": "A:V5:3.v",
       "_not": "content-designer 2026-10-29 (Mage/AM reworkü): yeni düğüm, yalnızca var olan fx sözlüğü; sayılar PROVİZYON (open-questions 457).",
       "fx": [
@@ -1164,7 +1165,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.225
+          "v": 0.215
         },
         {
           "k": "hook",
@@ -1185,7 +1186,7 @@
       ]
     },
     "4.u1": {
-      "name": "Long Smoulder",
+      "name": "Long Smolder",
       "text": "Meteor's Burning ground lasts 2 → 3 turns.",
       "src": "A:V1:4.u1",
       "fx": [
@@ -1200,7 +1201,7 @@
     },
     "4.u2": {
       "name": "White Heat",
-      "text": "Meteor's Burning ground deals 15% more damage.",
+      "text": "Meteor's Burning ground deals 14.5% more damage.",
       "src": "A:V1:4.u2",
       "fx": [
         {
@@ -1208,7 +1209,7 @@
           "sel": "ground",
           "f": "power",
           "op": "pct",
-          "v": 0.15
+          "v": 0.145
         }
       ]
     },
@@ -1246,7 +1247,7 @@
     },
     "4.r2": {
       "name": "Ringing Ears",
-      "text": "Enemies on Meteor's outer cells have a 15% chance to be Stunned for 1 turn.",
+      "text": "Enemies on Meteor's outer cells have a 14.5% chance to be Stunned for 1 turn.",
       "src": "A:V2:4.r2",
       "fx": [
         {
@@ -1259,7 +1260,7 @@
             "addStatus": {
               "status": "stun",
               "turns": 1,
-              "chance": 0.15
+              "chance": 0.145
             }
           }
         }
@@ -1267,7 +1268,7 @@
     },
     "4.r3": {
       "name": "Earthshaker",
-      "text": "Each enemy Meteor hits has a 26.5% chance to be Stunned for 1 turn.",
+      "text": "Each enemy Meteor hits has a 25% chance to be Stunned for 1 turn.",
       "src": "A:V2:4.r3",
       "fx": [
         {
@@ -1276,7 +1277,7 @@
             "type": "status",
             "status": "stun",
             "turns": 1,
-            "chance": 0.265
+            "chance": 0.25
           },
           "after": "damage"
         }
@@ -1284,7 +1285,7 @@
     },
     "4.d1": {
       "name": "Flung Embers",
-      "text": "Meteor flings an ember at a random enemy outside its area: 15% INT and Burning for 2 turns.",
+      "text": "Meteor flings an ember at a random enemy outside its area: 14.5% INT and Burning for 2 turns.",
       "src": "A:V1:4.d1",
       "fx": [
         {
@@ -1293,7 +1294,7 @@
           "on": "skillUse",
           "do": [
             {
-              "damage": 0.15,
+              "damage": 0.145,
               "stat": "int",
               "damageType": "magic",
               "element": "fire",
@@ -1341,7 +1342,7 @@
     },
     "4.d3": {
       "name": "Twin Meteors",
-      "text": "One turn after Meteor lands, a second meteor strikes the same cells for 26.5% power.",
+      "text": "One turn after Meteor lands, a second meteor strikes the same cells for 25% power.",
       "src": "A:V1:4.d3",
       "new": true,
       "approved": true,
@@ -1355,7 +1356,7 @@
             {
               "cast": "meteor",
               "delay": 1,
-              "power": 0.265,
+              "power": 0.25,
               "noChain": true
             }
           ]
@@ -1364,7 +1365,7 @@
     },
     "4.l1": {
       "name": "Crater's Heart",
-      "text": "Meteor deals 22.5% increased damage to the enemy at its center.",
+      "text": "Meteor deals 21.5% increased damage to the enemy at its center.",
       "src": "A:V1:4.l1",
       "fx": [
         {
@@ -1374,7 +1375,7 @@
             "targetIsCenter": true
           },
           "mod": {
-            "powerMul": 0.225
+            "powerMul": 0.215
           }
         }
       ]
@@ -1395,7 +1396,7 @@
     },
     "4.l3": {
       "name": "Extinction",
-      "text": "Meteor's center target takes 11.5% increased damage for each other enemy the Meteor hits.",
+      "text": "Meteor's center target takes 10.5% increased damage for each other enemy the Meteor hits.",
       "src": "A:V1:4.l3",
       "fx": [
         {
@@ -1408,7 +1409,7 @@
             "hitCount": 1
           },
           "mod": {
-            "powerMul": 0.115
+            "powerMul": 0.105
           }
         }
       ]

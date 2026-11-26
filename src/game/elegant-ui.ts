@@ -95,16 +95,29 @@ export function fadeLine(g: Phaser.GameObjects.Graphics, x0: number, x1: number,
   }
 }
 
-/** Kor elmas (dolu, hafif ışıltılı) ya da içi boş altın elmas; merkez (0, 0). */
-export function elDiamond(scene: Phaser.Scene, r: number, hollow = false): Phaser.GameObjects.Graphics {
+/**
+ * Karo 3. tur (Ömer 2026-11-26 r48): karo yerine DOLU nokta (varsayılan) ya da ince altın halka (`ring`: yalnız Quick Battle ve sonuç ekranı).
+ * `r` eski karonun yarı köşegeni; yuvarlak aynı görsel ağırlık için 0,8 r. Merkez (cx, cy).
+ */
+export function elDot(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number, color: number, alpha = 1, ring = false): void {
+  if (ring) g.lineStyle(Math.max(1.2, r * 0.26), color, alpha).strokeCircle(cx, cy, r * 0.8);
+  else g.fillStyle(color, alpha).fillCircle(cx, cy, r * 0.8);
+}
+
+/** Kor nokta (dolu, hafif ışıltılı), `hollow` = soluk altın dolu nokta, `ring` = ince altın halka; merkez (0, 0). */
+export function elDiamond(scene: Phaser.Scene, r: number, hollow = false, ring = false): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
-  if (hollow) {
-    g.lineStyle(1, EL.GOLD, 0.45).strokePoints(diamondPts(0, 0, r), true);
+  if (ring) {
+    elDot(g, 0, 0, r, EL.GOLD, 0.95, true);
     return g;
   }
-  g.fillStyle(EL.EMBER, 0.25).fillPoints(diamondPts(0, 0, r + 4), true);
-  g.fillStyle(EL.EMBER, 1).fillPoints(diamondPts(0, 0, r), true);
-  g.lineStyle(1, EL.EMBER2, 1).strokePoints(diamondPts(0, 0, r), true);
+  if (hollow) {
+    elDot(g, 0, 0, r, EL.GOLD, 0.45);
+    return g;
+  }
+  g.fillStyle(EL.EMBER, 0.25).fillCircle(0, 0, r + 3);
+  g.fillStyle(EL.EMBER, 1).fillCircle(0, 0, r * 0.8);
+  g.lineStyle(1, EL.EMBER2, 1).strokeCircle(0, 0, r * 0.8);
   return g;
 }
 
@@ -158,12 +171,12 @@ export function elLink(
   scene: Phaser.Scene,
   label: string,
   run: () => void,
-  o: { size?: number; small?: string; enabled?: boolean; isBusy?: () => boolean; onHover?: (on: boolean) => void; sound?: UiSoundKind; icon?: string | undefined; iconSize?: number; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
+  o: { size?: number; small?: string; enabled?: boolean; isBusy?: () => boolean; onHover?: (on: boolean) => void; sound?: UiSoundKind; icon?: string | undefined; iconSize?: number; /** hover işareti ince halka (Quick Battle, karo 3. tur) */ ring?: boolean; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
 ): ElLink {
   const size = o.size ?? 21;
   const root = scene.add.container(0, 0);
   // hover elması yazıya oranlı (Ömer 2026-11-11: süs karoları yanındaki öğeye oranlı, sabit px yok): varsayılan 21 boyda r = 7
-  const dia = elDiamond(scene, size / 3).setPosition(11, 0).setAlpha(0).setScale(0.4);
+  const dia = elDiamond(scene, size / 3, false, o.ring).setPosition(11, 0).setAlpha(0).setScale(0.4);
   // isteğe bağlı ikon (doku anahtarı; ör. boyalı arayüz ikonu Gear / Formation): elmasın sağında, yazının solunda
   const isz = o.iconSize ?? Math.round(size * 1.5);
   const icon = o.icon ? scene.add.image(28 + isz / 2, 0, o.icon).setDisplaySize(isz, isz) : null;
@@ -333,7 +346,7 @@ export function elButton(
   scene: Phaser.Scene,
   label: string,
   run: () => void,
-  o: { kind?: 'primary' | 'secondary'; /** Adlı boy (BTN_SIZE); verilmezse primary = screen, secondary = dialog. */ sz?: BtnSize; w?: number; minLabel?: string; isBusy?: () => boolean; ready?: boolean; icon?: string | undefined; iconSize?: number; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (görünüm aynı; touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
+  o: { kind?: 'primary' | 'secondary'; /** Adlı boy (BTN_SIZE); verilmezse primary = screen, secondary = dialog. */ sz?: BtnSize; w?: number; minLabel?: string; isBusy?: () => boolean; ready?: boolean; icon?: string | undefined; iconSize?: number; /** Düğme uçları: varsayılan SÜS YOK (karo 3. tur, Ömer r48 C); 'ring' = ince altın halka (yalnız Quick Battle + sonuç ekranı). */ ends?: 'ring'; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (görünüm aynı; touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
 ): ElButton {
   const primary = (o.kind ?? 'primary') === 'primary';
   const preset = BTN_SIZE[o.sz ?? (primary ? 'screen' : 'dialog')];
@@ -348,6 +361,7 @@ export function elButton(
   const h = phoneH || preset.h;
   // yan elmaslar çerçeve yüksekliğine oranlı (masaüstü 1, telefonda 30 px çerçeveyle küçülür)
   const dk = h / preset.h;
+  const ring = o.ends === 'ring';
   const root = scene.add.container(0, 0);
   const breath = scene.add.image(0, 0, ensureGlow(scene)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(w * 1.35, h * 2.6).setAlpha(0);
   const plate = scene.add.graphics();
@@ -382,15 +396,11 @@ export function elButton(
       plate.fillStyle(0x261b11, 0.88).fillRect(-w / 2, -h / 2, w, h);
       plate.fillGradientStyle(0x0c0906, 0x0c0906, 0x0c0906, 0x0c0906, 0, 0, 0.75, 0.75).fillRect(-w / 2, -h / 2, w, h);
       plate.lineStyle(2, ready && hover ? EL.ON_N : EL.GOLD, ready ? 1 : 0.28).strokeRect(-w / 2, -h / 2, w, h);
-      for (const sx of [-1, 1]) {
-        const cx = sx * (w / 2 + 2);
-        if (ready) {
-          plate.fillStyle(EL.EMBER, 0.3).fillPoints(diamondPts(cx, 0, 13 * dk), true);
-          plate.fillStyle(EL.EMBER, 1).fillPoints(diamondPts(cx, 0, 8.5 * dk), true);
-          plate.lineStyle(1, EL.EMBER2, 1).strokePoints(diamondPts(cx, 0, 8.5 * dk), true);
-        } else {
-          plate.fillStyle(0x3a2d20, 1).fillPoints(diamondPts(cx, 0, 8.5 * dk), true);
-          plate.lineStyle(1, EL.GOLD, 0.35).strokePoints(diamondPts(cx, 0, 8.5 * dk), true);
+      if (ring) {
+        for (const sx of [-1, 1]) {
+          const cx = sx * (w / 2 + 2);
+          if (ready) elDot(plate, cx, 0, 10 * dk, EL.EMBER2, 1, true);
+          else elDot(plate, cx, 0, 10 * dk, EL.GOLD, 0.35, true);
         }
       }
       text.setColor(ready ? EL.ON : EL.DIM);
@@ -400,10 +410,8 @@ export function elButton(
       plate.fillGradientStyle(0x1e160e, 0x1e160e, 0x0c0906, 0x0c0906, 0.78).fillRect(-w / 2, -h / 2, w, h);
       const on = hover && ready;
       plate.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 0.9 : EL.LINE.a2).strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1);
-      for (const sx of [-1, 1]) {
-        const dx = sx * (w / 2 + 1);
-        plate.fillStyle(0x1a130c, 1).fillPoints(diamondPts(dx, 0, 6 * dk), true);
-        plate.lineStyle(1, on ? EL.EMBER2 : EL.GOLD, on ? 1 : 0.45).strokePoints(diamondPts(dx, 0, 6 * dk), true);
+      if (ring) {
+        for (const sx of [-1, 1]) elDot(plate, sx * (w / 2 + 1), 0, 6.5 * dk, on ? EL.EMBER2 : EL.GOLD, on ? 1 : 0.55, true);
       }
       text.setColor(!ready ? EL.DIM : on ? EL.ON : EL.TXT);
       elGlow(text, on);
@@ -513,7 +521,7 @@ export function elPanel(scene: Phaser.Scene, x: number, y: number, w: number, h:
 }
 
 /** Altın degradeli Cinzel başlık + iki yanda (ince çizgi + içi boş elmas) süs. Kök = başlığın ortası. */
-export function elHeading(scene: Phaser.Scene, x: number, y: number, text: string, size = 40, o: { ornament?: number } = {}): Phaser.GameObjects.Container {
+export function elHeading(scene: Phaser.Scene, x: number, y: number, text: string, size = 40, o: { ornament?: number; /** uç işareti ince halka (Quick Battle; karo 3. tur), varsayılan dolu nokta */ ring?: boolean } = {}): Phaser.GameObjects.Container {
   const c = scene.add.container(x, y);
   const t = scene.add
     .text(0, 0, text.toUpperCase(), { fontFamily: DISPLAY_FONT, fontSize: `${size}px`, fontStyle: '600', color: '#ffffff', letterSpacing: size * 0.14 })
@@ -530,7 +538,7 @@ export function elHeading(scene: Phaser.Scene, x: number, y: number, text: strin
       // süs başlığa oranlı (40 boyda: boşluk 22, elmas r 5.6, çizgi başı 16)
       const k = size / 40;
       const d0 = half + 22 * k;
-      orn.lineStyle(1, EL.GOLD, 0.8).strokePoints(diamondPts(dir * (d0 + 4 * k), 0, 5.6 * k), true);
+      elDot(orn, dir * (d0 + 4 * k), 0, 5.6 * k, EL.GOLD, o.ring ? 0.95 : 0.9, o.ring);
       fadeLine(orn, dir * (d0 + 16 * k + len), dir * (d0 + 16 * k), 0, EL.GOLD, 0.6, 'in');
     }
   c.add([orn, t]);
@@ -667,8 +675,8 @@ export function elScreenIn(scene: Phaser.Scene): void {
 }
 
 /** Ekrandan çıkış: sahne kararır, sonra `key` sahnesi açılır (yeni sahne elScreenIn ile açılır). Azaltılmış harekette hemen. */
-export function elGo(scene: Phaser.Scene, key: string, data?: object): void {
-  screenGo(scene, key, data);
+export function elGo(scene: Phaser.Scene, key: string, data?: object, opts?: { loading?: boolean }): void {
+  screenGo(scene, key, data, opts);
 }
 
 /** Pencere açılışı: kök solarak belirir, `panel` (yoksa kök) 'rise' px aşağıdan yükselir. */

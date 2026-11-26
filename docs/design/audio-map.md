@@ -47,6 +47,8 @@ Item kaldırma (sürükleme başı) aynı malzeme sesini `itemPickupGain` ile k�
 
 Her mob skill'inin kendi sesi vardır (Bölge I-III, Harita 2 önderleri ve sıradan mobları); ödünç ses yalnız tabloda olmayan skill için yedektir. Efekt eski ses adını ister, `roles` tablosu bunu role çevirir (cast, travel, hit, none; `skills.<id>.roles` ezer). Tarifler ve tepe seviyeleri `data/audio-mobs.json`'dadır; Codex > Assets > Sounds > "Campaign enemies" grubunda ▶ ile dinlenir. Kaydırıcı: Sound Effects. Mob başına ses tarif paragrafları: `docs/archive/design/audio-map-mob-sounds.md`.
 
+- **Ödünç sesler kalktı (2026-11-26):** Bridge Warden (Anchor Smash, Breaking Span, Chain Hook, Ash Brand, Fall of King's Bridge) ve Road Hound Bite artık kendi sesine sahip (13 yeni ses, `mobAnchor*`, `mobSpan*`, `mobWardenHook*`, `mobBrandSear`, `mobFall*`, `mobHound*`): taş, zincir, kor, köprü çöküşü, kısa ısırık. Skeleton Strike/Slash Undead'in, Root Smash/Vine Snare Druid'in kendi v2 ses setiyle zaten kapsanır, dokunulmadı. Gain değerleri ölçülmedi (Node'da WebAudio yok), Ömer kulakla onaylar.
+
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 
 | Parça | Ad | Nerede | Karakter |

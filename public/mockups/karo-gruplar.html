@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Diamond groups</title>
+<style>
+  @font-face { font-family: 'Cinzel'; src: url('../fonts/Cinzel-normal-latin.woff2') format('woff2'); font-weight: 400 900; }
+  @font-face { font-family: 'EB Garamond'; src: url('../fonts/EBGaramond-normal-latin.woff2') format('woff2'); font-weight: 400 800; }
+  html, body { margin: 0; min-height: 100%; background: #0b0806; color: #e8dcc0; font: 16px/1.35 'EB Garamond', serif; }
+  main { padding: 18px 22px 90px; }
+  h1 { font: 600 24px/1.1 'Cinzel', serif; letter-spacing: .08em; color: #f3d999; margin: 0 0 4px; text-transform: uppercase; }
+  .sub { color: #b9a67e; margin: 0 0 14px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  .opts a { font: 600 13px/1 'Cinzel', serif; letter-spacing: .06em; text-transform: uppercase; color: #d9b26a; text-decoration: none; border: 1px solid rgba(217,178,106,.45); padding: 10px 14px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; }
+  .opts a.on { background: #d9b26a; color: #140e09; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+  .grid.cmp { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  figure { margin: 0; background: #070504; border: 1px solid rgba(217,178,106,.25); }
+  figure img { display: block; width: 100%; height: auto; image-rendering: auto; }
+  figcaption { padding: 6px 9px; font-size: 15px; color: #cdbb94; }
+  figcaption b { font-family: 'Cinzel', serif; color: #f3d999; margin-right: 6px; }
+  .row-h { font: 600 15px 'Cinzel', serif; color: #f3d999; margin: 18px 0 6px; letter-spacing: .05em; }
+  .miss { padding: 40px 10px; text-align: center; color: #7d6c50; }
+  /* MOCKUP şeridi: oyun dışı olduğu belli, sol altta küçük */
+  #strip { position: fixed; left: 8px; bottom: 8px; z-index: 9; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 96vw;
+    font: 600 11px/1 'Cinzel', serif; letter-spacing: .06em; color: #1a0f05; background: repeating-linear-gradient(135deg, #e9d48a 0 10px, #d9be6a 10px 20px); padding: 5px 7px; border: 1px solid #000; }
+  #strip b { margin-right: 6px; }
+  #strip a { color: #1a0f05; text-decoration: none; border: 1px solid rgba(0,0,0,.45); padding: 4px 6px; min-width: 22px; text-align: center; background: rgba(255,255,255,.25); }
+  #strip a.on { background: #1a0f05; color: #f3d999; }
+  #strip.clean { display: none; }
+  @media (max-height: 500px) { main { padding: 10px 12px 60px; } h1 { font-size: 18px; } .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); } #strip { font-size: 9px; padding: 3px 4px; gap: 2px; } #strip a { padding: 2px 4px; min-width: 16px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="ttl"></h1>
+  <p class="sub" id="sub"></p>
+  <nav class="opts" id="opts"></nav>
+  <div id="body"></div>
+</main>
+<div id="strip"></div>
+<script src="karo-gruplar/groups.js"></script>
+<script>
+// Karo grupları (Ömer 2026-11-25 r47 g_all: "diğerlerini de grupla grup grup önerilerini mockup yap"). Her kare GERÇEK oyun ekranından kırpıntı:
+// "now" = bugünkü karo, A = nokta, B = halka, C = süs yok (seçenek oyuna kurulmadı; çekim anında stil enjekte edildi: tools/ui-shot-scenarios/karo2-lib.mjs > optCss).
+// Adres: #g=<grup> &o=now|a|b|c|all &tel (telefon kırpıntısı; telefonda yalnız now + A çekildi) &clean (şerit gizli)
+const G = window.KARO_GROUPS;
+const OPTS = { now: 'Now (diamond)', a: 'A · Dot', b: 'B · Ring', c: 'C · None', all: 'Compare' };
+const hp = () => Object.fromEntries(location.hash.slice(1).split('&').filter(Boolean).map((s) => { const [k, v] = s.split('='); return [k, v ?? '1']; }));
+const link = (o) => '#' + Object.entries({ ...hp(), ...o }).filter(([, v]) => v !== null).map(([k, v]) => (v === '1' ? k : `${k}=${v}`)).join('&');
+function img(id, o, tel) {
+  const f = `karo-gruplar/${id}-${o}-${tel ? 'tel' : 'desk'}.webp`;
+  return `<img src="${f}" alt="" loading="lazy" onerror="this.outerHTML='<div class=miss>not captured</div>'">`;
+}
+function render() {
+  const h = hp();
+  const gk = G[h.g] ? h.g : Object.keys(G)[0];
+  const g = G[gk];
+  const tel = 'tel' in h;
+  let o = OPTS[h.o] ? h.o : 'all';
+  if (tel && (o === 'b' || o === 'c')) o = 'a';
+  document.getElementById('ttl').textContent = g.name;
+  document.getElementById('sub').textContent = g.note;
+  document.getElementById('opts').innerHTML = Object.entries(OPTS).filter(([k]) => !tel || k === 'now' || k === 'a' || k === 'all')
+    .map(([k, v]) => `<a href="${link({ o: k })}" class="${k === o ? 'on' : ''}">${v}</a>`).join('') + `<a href="${link({ tel: tel ? null : '1' })}">${tel ? 'Desktop' : 'Phone'}</a>`;
+  const b = document.getElementById('body');
+  if (o === 'all') {
+    const cols = tel ? ['now', 'a'] : ['now', 'a', 'b', 'c'];
+    b.innerHTML = g.items.map((it) => `<div class="row-h">#${it.n} ${it.label}</div><div class="grid cmp" style="grid-template-columns:repeat(${cols.length},minmax(0,1fr))">` +
+      cols.map((c) => `<figure>${img(it.n, c, tel)}<figcaption><b>${OPTS[c]}</b></figcaption></figure>`).join('') + '</div>').join('');
+  } else {
+    b.innerHTML = `<div class="grid">` + g.items.map((it) => `<figure>${img(it.n, o, tel)}<figcaption><b>#${it.n}</b>${it.label}</figcaption></figure>`).join('') + '</div>';
+  }
+  const s = document.getElementById('strip');
+  s.className = 'clean' in h ? 'clean' : '';
+  s.innerHTML = '<b>MOCKUP</b>' + Object.entries(G).map(([k, v]) => `<a href="${link({ g: k })}" class="${k === gk ? 'on' : ''}" title="${v.name}">${v.short}</a>`).join('');
+}
+addEventListener('hashchange', render);
+</script>
+<script>render();</script>
+</body>
+</html>

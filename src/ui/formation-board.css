@@ -219,8 +219,8 @@
   width: 9px;
   height: 9px;
   margin: -5px 0 0 -5px;
-  transform: rotate(45deg);
-  border: 1px solid rgba(217, 178, 106, 0.22);
+  border-radius: 50%; /* karo 3. tur (Ömer r48): boş hücre işareti = dolu soluk nokta */
+  background: rgba(217, 178, 106, 0.4);
 }
 
 .fb-cell:hover {

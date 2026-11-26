@@ -22,10 +22,10 @@
 
 | Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
-| Quick Shot (`quick_shot`) | Tek hedef, fiziksel DEX; kendine Haste | 0 / yok | sınıf (6) | hasar physical DEX 0,42; status: status=haste, turns=2, self=true |
-| Piercing Arrow (`piercing_arrow`) | Hedefin sütunu boyunca delip geçer, her düşmanda azalır | 3 / 2 | sınıf (6) | hasar physical DEX 0,605, falloff=0,7; area={shape:column, stages:row} |
-| Arrow Rain (`arrow_rain`) | Gökten 3x3 alana ok yağmuru | 16 / 3 | sınıf (6) | hasar physical DEX 0,4; area={shape:rect, rows:3, cols:3, anchor:bottom_left} |
-| Aimed Shot (`aimed_shot`) | Tek hedef güçlü atış, zırhın yarısını yok sayar | 10 / 3, ilk 3 | sınıf (6) | hasar physical DEX 1,455, ignoreDefense=0,5 |
+| Quick Shot (`quick_shot`) | Tek hedef, fiziksel DEX; kendine Haste | 0 / yok | sınıf (6) | hasar physical 4 + DEX 0,286 (r48 düz taban); status: status=haste, turns=2, self=true |
+| Piercing Arrow (`piercing_arrow`) | Hedefin sütunu boyunca delip geçer, her düşmanda azalır | 3 / 2 | sınıf (6) | hasar physical 6 + DEX 0,403 (r48 düz taban), falloff=0,85; area={shape:column, stages:row} |
+| Arrow Rain (`arrow_rain`) | Gökten 3x3 alana ok yağmuru | 16 / 3 | sınıf (6) | hasar physical 4 + DEX 0,287 (r48 düz taban); area={shape:rect, rows:3, cols:3, anchor:bottom_left} |
+| Aimed Shot (`aimed_shot`) | Tek hedef güçlü atış, zırhın yarısını yok sayar | 10 / 3, ilk 3 | sınıf (6) | hasar physical 14,5 + DEX 1,046 (r48 düz taban), ignoreDefense=0,5 |
 
 Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-archer.test.ts`) ve bu tablo birlikte güncellenir.
 

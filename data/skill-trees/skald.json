@@ -1,7 +1,7 @@
 {
   "_not": "Thunder Skald ağacı v1 (2026-11-08, Lead isteği; Ömer kuralı: generic bonus yok). Mantık docs/design/classes/skill-tree-logic.md; düğüm listesi ve yeni mekanik önerileri docs/design/classes/skald.md bölüm 3. Yalnız mevcut fx kancaları. Sayılar tahmin, sim Ömer onayıyla. Yapı _rules.json rowShape.",
   "class": "skald",
-  "version": 2,
+  "version": 4,
   "picked": {
     "rows": [
       "D",
@@ -562,7 +562,7 @@
     },
     "1.eb": {
       "name": "Split the Storm",
-      "text": "Against Shocked enemies, Hammer Spark ignores 5.5% of armor and magic armor.",
+      "text": "Against Shocked enemies, Hammer Spark ignores 5.5% of armor and Magic Armor.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -991,7 +991,7 @@
     },
     "3.ea": {
       "name": "Dancing Steps",
-      "text": "War Drum also lightly Shrouds (+10% Evasion) for 2 turns.",
+      "text": "War Drum also lightly Shrouds (+8% Evasion) for 2 turns.",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -999,7 +999,7 @@
           "effect": {
             "type": "status",
             "status": "shrouded",
-            "strength": 0.5,
+            "strength": 0.4,
             "turns": 2
           }
         }
@@ -1068,7 +1068,7 @@
     },
     "3.fb": {
       "name": "Thunder Drum",
-      "text": "Each War Drum lowers Stormcall's cooldown by 2 turns (instead of 1). War Drum Hastes only you, 1 turn longer and 50% stronger (+45% Speed).",
+      "text": "War Drum lowers Stormcall's cooldown by 2 turns (instead of 1) and Hastes only allies in your row, 1 turn longer and 50% stronger (+45% Speed).",
       "src": "D:skald v1 2026-11-08",
       "fx": [
         {
@@ -1086,7 +1086,9 @@
         {
           "k": "hook",
           "h": "target",
-          "target": "self"
+          "area": {
+            "shape": "row"
+          }
         },
         {
           "k": "skill",

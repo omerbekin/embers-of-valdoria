@@ -308,18 +308,36 @@ export function variantMult(def: CombatantDef, variant: keyof SummonVariants | u
 export function patchedPassive(p: PassiveDef, patch: PassivePatch | undefined): PassiveDef {
   if (!patch || p.id !== patch.passive) return p;
   const effect = JSON.parse(JSON.stringify(p.effect)) as Record<string, unknown>;
-  const path = patch.field.split('.');
-  let at = effect;
-  for (const k of path.slice(0, -1)) {
-    const next = at[k];
-    if (!next || typeof next !== 'object') return p;
-    at = next as Record<string, unknown>;
-  }
-  const key = path[path.length - 1]!;
-  const cur = at[key];
-  if (typeof cur !== 'number') return p;
-  at[key] = Math.round((cur + patch.delta) * 1000) / 1000;
+  // Alan başına uygulanır: ana alan sayı değilse pasif aynen döner (eski davranış); ek alan (`also`) pasifte yoksa 0 sayılır
+  const apply = (field: string, delta: number, missingIsZero: boolean): boolean => {
+    const path = field.split('.');
+    let at = effect;
+    for (const k of path.slice(0, -1)) {
+      const next = at[k];
+      if (!next || typeof next !== 'object') return false;
+      at = next as Record<string, unknown>;
+    }
+    const key = path[path.length - 1]!;
+    const cur = at[key] === undefined && missingIsZero ? 0 : at[key];
+    if (typeof cur !== 'number') return false;
+    at[key] = Math.round((cur + delta) * 1000) / 1000;
+    return true;
+  };
+  if (!apply(patch.field, patch.delta, false)) return p;
+  for (const x of patch.also ?? []) apply(x.field, x.delta, true);
   return { ...p, effect: effect as unknown as PassiveDef['effect'] };
+}
+
+/**
+ * Berserker (rage pasifi) eğrisinin doluluk oranı (saf; motor, önizleme, YZ, açıklama ve arayüz HEPSİ bunu kullanır): hasar çarpanı
+ * 1 + maxBonus x bu oran. fullAt yoksa (0) eski doğrusal oran (1 - can/maksCan, aynı işlem); fullAt varsa min(1, eksik / (1 - fullAt)).
+ */
+export function rageMissFrac(pe: { fullAt?: number }, hp: number, maxHp: number): number {
+  if (!(maxHp > 0)) return 0;
+  const miss = 1 - hp / maxHp;
+  const fullAt = pe.fullAt ?? 0;
+  if (!fullAt) return miss;
+  return fullAt >= 1 ? 1 : Math.min(1, miss / (1 - fullAt));
 }
 
 /** Primary'si olmayan çağıran için (mob, hazır çağrı) en yüksek temel stat. */

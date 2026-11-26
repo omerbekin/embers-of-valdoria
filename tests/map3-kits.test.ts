@@ -1,4 +1,6 @@
 // Harita 3 kit dilimi: 7 ortak mob + 6 palet mob (maps-2-3.md 4.3). Kit, pasif, YZ; iki savaş modu. Bayrak kapalı, karşılaşmaya bağlı değil. Sayılar veriden okunur.
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content, describePassive } from '../src/engine';
 import type { AiTrace } from '../src/engine/ai';
@@ -46,8 +48,10 @@ describe.each(MODES)('%s modu', (mode) => {
     m.cooldowns = {};
     m.mp = m.maxMp;
     if (mode === 'turns') turnOf(b, m.uid);
+    const n = b.log.length;
     expect(b.useSkill(m.uid, skill, h.uid).ok).toBe(true);
-    expect(has(h, 'frozen')).toBe(true); // ikinci skill atışı
+    // ikinci skill atışı; Frozen hedefin hemen sıradaki turunda (hız zarı) tüketilebilir, bu yüzden canlı durum yerine olaya bakılır
+    expect(b.log.slice(n).some((e) => e.type === 'status' && e.status === 'frozen' && e.target === h.uid)).toBe(true);
   };
   // Frost Bite zarı (%35) ve donma: tests/map3-picks.test.ts
   it('Rime Hound: Rime Bite aynı kural', () => freezes('rime_hound', 'rime_bite'));
@@ -406,14 +410,13 @@ describe('içerik', () => {
       for (const s of m.skills) expect(classSkills.has(s), `${id} ${s}`).toBe(false);
     }
   });
-  it('kendi çizimleri kullanılır; palet mobları taban çizimde', () => {
+  it('kendi çizimleri kullanılır; ödünç sprite kalmadı (r49)', () => {
     for (const id of SEVEN) expect(content.mobs[id]!.spriteId, id).toBe(id);
-    expect(content.mobs['wight']!.spriteId).toBe('ghoul');
-    expect(content.mobs['rime_hound']!.spriteId).toBe('ash_hound');
-    expect(content.mobs['molten_hound']!.spriteId).toBe('ash_hound');
-    expect(content.mobs['clan_slinger']!.spriteId).toBe('clan_slinger'); // kendi çizimi (2026-11-02)
-    expect(content.mobs['rime_witch']!.spriteId).toBe('fen_witchling');
-    expect(content.mobs['hollow_warden']!.spriteId).toBe('stonebound_warden');
+    for (const id of ['wight', 'rime_hound', 'molten_hound', 'clan_slinger', 'rime_witch', 'hollow_warden']) {
+      expect(content.mobs[id]!.spriteId, id).toBe(id);
+      expect(existsSync(join(__dirname, '..', 'assets', 'sprites', id, 'idle.png')), id).toBe(true);
+      expect(existsSync(join(__dirname, '..', 'assets', 'avatars', id + '.png')), id).toBe(true);
+    }
   });
   it('13 mob karşılaşmalara bağlı: belgedeki adla gelen her birim kendi sınıfında (Ömer 2026-11-02); yer tutucu sınıf adı taşımaz', () => {
     const nodes = Object.entries(enc as unknown as Record<string, { units?: { class: string; name?: string }[] }>).filter(([k]) => k !== '_not');

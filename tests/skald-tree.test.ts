@@ -92,7 +92,7 @@ describe('Skald ağacı: veri', () => {
     expect(iron.cooldown).toBe((S.thunder_strike!.cooldown ?? 0) + 1);
     const wild = sk({ '3.ea': 1, '3.fa': 1 }, 'war_drum');
     expect(statusEff(wild, 'shrouded')!.turns).toBe(4); // Ömer 2026-11-16: Fleet -> yarım güçte Shrouded
-    expect(statusEff(wild, 'shrouded')!.strength).toBe(0.5);
+    expect(statusEff(wild, 'shrouded')!.strength).toBe((TREE.nodes['3.ea']!.fx![0] as unknown as { effect: { strength: number } }).effect.strength); // r41 gece: 3a kesimi 0,5 -> 0,4, veriden
     expect(wild.cost.amount).toBe(S.war_drum!.cost.amount + 6);
     expect(dmg(sk({ '4.u1': 1 }, 'stormcall')).falloff).toBeCloseTo((dmg(S.stormcall!).falloff ?? 0) + vOf('4.u1'), 6);
     expect(sk({ '4.r1': 1 }, 'stormcall').initialCooldown).toBe((S.stormcall!.initialCooldown ?? 0) - 1);
@@ -192,7 +192,7 @@ describe('Skald ağacı: savaşta', () => {
   it('Dancing Steps (3.ea): War Drum hafif Shrouded da verir (eski Fleet; Ömer 2026-11-16)', () => {
     const b = treed({ '3.ea': 1 }, { 1: 'warrior' }, { 1: 'warrior' });
     cast(b, 'war_drum');
-    for (const c of b.combatants.filter((x) => x.side === 'party')) expect(c.statuses.some((s) => s.kind === 'shrouded' && s.strength === 0.5), c.defId).toBe(true);
+    for (const c of b.combatants.filter((x) => x.side === 'party')) expect(c.statuses.some((s) => s.kind === 'shrouded' && s.strength === (TREE.nodes['3.ea']!.fx![0] as unknown as { effect: { strength: number } }).effect.strength), c.defId).toBe(true);
   });
   it('Thunder Drum (3.fb): War Drum yalnız Skald\'a, Stormcall cooldown 2 kısalır (Storm Drum yerine)', () => {
     const b = treed({ '3.eb': 1, '3.fb': 1 }, { 1: 'warrior' }, { 1: 'warrior' });

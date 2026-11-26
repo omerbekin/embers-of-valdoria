@@ -1238,7 +1238,7 @@
       ]
     },
     "map_reach": {
-      "label": "The Grey Delta",
+      "label": "The Gray Delta",
       "desc": "Campaign map II (The Drowned Reach): drifting down the river to the sea. E dorian 4/4, rolling tide-like lute over a swelling E-B drone, soft oar-stroke frame drum, low recorder; four sections and five loop variants.",
       "bpm": 76,
       "beatsPerBar": 4,
@@ -1616,7 +1616,7 @@
     },
     "town_reach": {
       "label": "Salt and Tar",
-      "desc": "Town screen II (The Drowned Reach): a harbour alehouse. D mixolydian 3/4 capstan lilt, mellow lute, recorder shanty tune, deck-stamp bodhran over a D-A drone; four sections and four loop variants.",
+      "desc": "Town screen II (The Drowned Reach): a harbor alehouse. D mixolydian 3/4 capstan lilt, mellow lute, recorder shanty tune, deck-stamp bodhran over a D-A drone; four sections and four loop variants.",
       "bpm": 96,
       "beatsPerBar": 3,
       "tonic": "D",

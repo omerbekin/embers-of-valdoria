@@ -71,7 +71,7 @@
     {
       "id": "III",
       "title": "III · Saltmere, the Harbor City",
-      "tagline": "Grey stone, grey sea and a cathedral sinking into the docks",
+      "tagline": "Gray stone, gray sea and a cathedral sinking into the docks",
       "label": [
         0.7476,
         0.2179
@@ -492,7 +492,7 @@
       "type": "treasure",
       "name": "Sunken Chapel",
       "subtitle": "Treasure · Salvage Dive",
-      "lore": "Only the bell tower of the chapel stands above the water. Something in rusted armour still keeps its vigil.",
+      "lore": "Only the bell tower of the chapel stands above the water. Something in rusted armor still keeps its vigil.",
       "region": "II",
       "pos": [
         0.5173,
@@ -604,7 +604,7 @@
       "type": "battle",
       "name": "Saltmere Gate",
       "subtitle": "Battle · Order Quarantine",
-      "lore": "The Order of St. Brann has closed the road to the harbour. No one passes the gate without their leave.",
+      "lore": "The Order of St. Brann has closed the road to the harbor. No one passes the gate without their leave.",
       "region": "II",
       "pos": [
         0.5933,
@@ -617,7 +617,7 @@
       "type": "town",
       "name": "Saltmere",
       "subtitle": "City · Inn, Blacksmith, Recruits, Trade",
-      "lore": "The harbour city at the river mouth, grey stone and grey sea, its half-sunken cathedral leaning over the docks.",
+      "lore": "The harbor city at the river mouth, gray stone and gray sea, its half-sunken cathedral leaning over the docks.",
       "region": "III",
       "pos": [
         0.7476,
@@ -678,7 +678,7 @@
                 0.33,
                 0.37
               ],
-              "note": "The harbour garrison sleeps in empty bunks. Every sword in Saltmere already answers to the Guild or the Inquisition."
+              "note": "The harbor garrison sleeps in empty bunks. Every sword in Saltmere already answers to the Guild or the Inquisition."
             },
             {
               "id": "pit",
@@ -753,7 +753,7 @@
       "type": "elite",
       "name": "Harbor Fort",
       "subtitle": "Elite · Guild Enforcer",
-      "lore": "The harbour fort has changed hands twice this year. Its new masters do not want to give it back.",
+      "lore": "The harbor fort has changed hands twice this year. Its new masters do not want to give it back.",
       "region": "III",
       "pos": [
         0.8876,
@@ -828,7 +828,7 @@
       "type": "battle",
       "name": "The Old Mole",
       "subtitle": "Battle · Wreckers",
-      "lore": "The old mole shields the harbour from the sea. Wreckers use it to watch for easy ships.",
+      "lore": "The old mole shields the harbor from the sea. Wreckers use it to watch for easy ships.",
       "region": "III",
       "pos": [
         0.8283,
@@ -842,7 +842,7 @@
       "type": "event",
       "name": "Ferry Office",
       "subtitle": "Event",
-      "lore": "The ferry office keeps the harbour's ledgers, and the clerk keeps the harbour's secrets.",
+      "lore": "The ferry office keeps the harbor's ledgers, and the clerk keeps the harbor's secrets.",
       "region": "III",
       "pos": [
         0.7476,
@@ -856,7 +856,7 @@
       "type": "rest",
       "name": "Beacon Quay",
       "subtitle": "Rest · Camp",
-      "lore": "A beacon fire burns at the end of the quay, and the harbour watch lets travellers rest beside it.",
+      "lore": "A beacon fire burns at the end of the quay, and the harbor watch lets travelers rest beside it.",
       "region": "III",
       "pos": [
         0.9091,
@@ -1142,7 +1142,7 @@
       "type": "battle",
       "name": "The Sound",
       "subtitle": "Crossing · Corsair Boarders",
-      "lore": "The sound between the coast and the isles is narrow and busy, and not every ship on it flies honest colours.",
+      "lore": "The sound between the coast and the isles is narrow and busy, and not every ship on it flies honest colors.",
       "region": "V",
       "pos": [
         0.7685,

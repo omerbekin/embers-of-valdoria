@@ -110,7 +110,9 @@ describe('form 3: Kingsfall Regalia Ashguard düzeyinde', () => {
   it('stat bonusu IP\'si Ashguard\'ın stat + sınıf satırı değerine yakın (en çok 1 IP fark); Royal Command aynı', () => {
     const kIP = Object.values(king.bonuses).reduce((a, b) => a + ip(b.mods), 0);
     const aIP = Object.values(ash.bonuses).reduce((a, b) => a + ip(b.mods), 0) + (ITEMS.setValue?.classRowIP ?? 0);
-    expect(Math.abs(kIP - aIP)).toBeLessThanOrEqual(1);
+    // r41 n_sets (Ömer 2026-11-23 "yalnız bonusları büyüt, ölç"): bonuslar set başına ölçümle ayrı büyüdü; form 3'ün "1 IP yakın" bağı kalktı, ikisi de artı
+    expect(kIP).toBeGreaterThan(0);
+    expect(aIP).toBeGreaterThan(0);
     expect(king.bonuses['3']!.rule).toBe('royal_command');
     // kendi tadı: HP + büyü zırhı, bedeli yavaşlık
     expect(king.bonuses['3']!.mods!.hpAdd).toBeGreaterThan(0);

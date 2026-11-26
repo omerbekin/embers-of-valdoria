@@ -1,0 +1,81 @@
+/* Debug > Setup > Owner tests: Sound check paneli (debug-sound-check.ts) ve Endless yükleme sayacı (debug-load-timer.ts). */
+.ot-panel {
+  position: fixed;
+  z-index: 19; /* debug panelinin (20) altında */
+  top: calc(8px + var(--et, 0px));
+  left: calc(8px + var(--el, 0px));
+  width: min(520px, calc(100vw - 150px - var(--el, 0px) - var(--er, 0px)));
+  max-height: calc(100vh - 16px - var(--et, 0px) - var(--eb, 0px));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  background: rgba(11, 8, 6, 0.9);
+  border: 1px solid var(--el-line2);
+  color: var(--el-txt);
+  font-size: 14px;
+}
+.ot-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.ot-warn {
+  padding: 6px 8px;
+  background: rgba(150, 40, 30, 0.35);
+  border: 1px solid #c4624f;
+  color: #ffd9d0;
+}
+.ot-warn[hidden] {
+  display: none;
+}
+.ot-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.ot-title {
+  font-weight: 600;
+}
+.ot-sub {
+  opacity: 0.65;
+  font-size: 12px;
+}
+.ot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ot-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 4px 12px;
+  background: rgba(60, 44, 30, 0.9);
+  color: inherit;
+  border: 1px solid var(--el-line2);
+  font: inherit;
+  cursor: pointer;
+}
+.ot-btn:hover:not(:disabled) {
+  background: rgba(96, 70, 44, 0.95);
+}
+.ot-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ot-timer {
+  position: fixed;
+  z-index: 120; /* yükleme ekranının (#boot, 100) üstünde: yükleme sırasında da görünsün */
+  top: calc(8px + var(--et, 0px));
+  left: calc(8px + var(--el, 0px));
+  padding: 6px 12px;
+  background: rgba(11, 8, 6, 0.9);
+  border: 1px solid var(--el-line2);
+  color: var(--el-txt);
+  font-size: 18px;
+  pointer-events: none;
+}

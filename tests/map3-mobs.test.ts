@@ -5,6 +5,7 @@ import type { BattleMode, Combatant, Side, Teams } from '../src/engine';
 import { RULES_TESTS } from '../src/game/rules-test-battle';
 import { buildMechanics } from '../src/wiki/catalog';
 import enc from '../data/campaign/hollow-crown-encounters.json';
+import { noPace } from './pace-helpers';
 
 const cells = (at: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => at[i] ?? '');
 const MODES: BattleMode[] = ['turns', 'test'];
@@ -385,7 +386,10 @@ describe('YZ mekaniği kullanır', () => {
     if (c?.skillId === 'headlong') expect(c.dir ?? 'back').toBe('back');
   });
   it('Kahraman YZ eşit iki hedeften Stormhide taşımayana yakın dövüşle vurur', () => {
-    const b = make(undefined, { 0: 'warrior' }, { 0: 'stormhorn_ram', 2: 'stormhorn_ram' }, 'turns');
+    // "Eşit iki hedef": hız zarı kapalı; yoksa iki ram'ın tur hızı zarla ayrışır ve YZ hedef skorunu (tur değeri) buna göre kaydırır
+    const b = new Battle(noPace(content.battleSetup('random-battle', 5, 'turns', { party: cells({ 0: 'warrior' }), enemies: cells({ 0: 'stormhorn_ram', 2: 'stormhorn_ram' }) }, false)));
+    b.debug.dodge = 'never';
+    b.debug.crit = 'never';
     const [plain, hide] = [at(b, 'enemy', 0), at(b, 'enemy', 2)];
     delete plain.passive;
     const w = at(b, 'party', 0);

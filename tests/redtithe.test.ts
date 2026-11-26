@@ -377,7 +377,7 @@ describe('Redtithe: büyü zırhı tamamen kan barına bağlı (Ömer 2026-11-18
     const { describeBlood } = await import('../src/engine');
     const lines = describeBlood(F, 0, BB.max, 10).join(' | ');
     expect(lines).toContain(`${BB.magicArmorBase} + INT x${BB.magicArmorPerInt}`);
-    expect(lines).toContain(`+${BB.magicArmorBase + BB.magicArmorPerInt * 10} Magic armor`);
+    expect(lines).toContain(`+${BB.magicArmorBase + BB.magicArmorPerInt * 10} Magic Armor`);
   });
 });
 
@@ -393,7 +393,7 @@ describe('Redtithe: Blood Tithe pasifi', () => {
     expect(t).toContain(`Blood bar: 0-${BB.max}, starts at ${BB.start}.`);
     expect(t).toContain(`${content.skills.mana_burn!.name} fills it; skills spend it. Missing blood is paid in HP`);
     expect(t).toContain(`up to ${pc(e.advance + e.bloodAdvance! + e.bloodAdvancePerDex! * me.stats.dex)} of a turn at a full bar. Once between your turns.`);
-    expect(t).toContain(`more Magic armor (up to ${BB.magicArmorBase + BB.magicArmorPerInt * me.stats.int} at 0 blood) and up to ${pc(BB.lifestealMax)} life steal on skill hits.`);
+    expect(t).toContain(`more Magic Armor (up to ${BB.magicArmorBase + BB.magicArmorPerInt * me.stats.int} at 0 blood) and up to ${pc(BB.lifestealMax)} life steal on skill hits.`);
     // motorla aynı: bar 0'daki büyü zırhı = metindeki sayı
     me.blood = 0;
     expect(b.bloodMagicArmor(me)).toBeCloseTo(BB.magicArmorBase + BB.magicArmorPerInt * me.stats.int, 2);
@@ -402,7 +402,7 @@ describe('Redtithe: Blood Tithe pasifi', () => {
     const more = { ...me.stats, int: me.stats.int + 10, dex: me.stats.dex + 20 };
     expect(txt(more)).toContain(`up to ${BB.magicArmorBase + BB.magicArmorPerInt * more.int} at 0 blood`);
     expect(txt(more)).toContain(`up to ${pc(e.advance + e.bloodAdvance! + e.bloodAdvancePerDex! * more.dex)} of a turn`);
-    expect(passiveNumbers(pas, me.stats, content.formulas).map((x) => x.label)).toEqual(['Turn bar ahead (full blood)', 'Magic armor (0 blood)', 'Life steal (0 blood)']);
+    expect(passiveNumbers(pas, me.stats, content.formulas).map((x) => x.label)).toEqual(['Turn bar ahead (full blood)', 'Magic Armor (0 blood)', 'Life steal (0 blood)']);
     // sabit veri metni (savaş başı kartı, Codex arama) aynı kuralı formülle yazar
     expect(pas.text).toContain(`0-${BB.max}, starts at ${BB.start}`);
     expect(pas.text).toContain(`${pc(e.bloodAdvance!)} + DEX x${Math.round(e.bloodAdvancePerDex! * 10000) / 100}%`);

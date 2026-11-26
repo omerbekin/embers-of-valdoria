@@ -116,7 +116,7 @@
   top: 0.72em;
   width: 0.26em;
   height: 0.26em;
-  transform: rotate(45deg);
+  border-radius: 50%; /* karo 3. tur: madde imi = dolu nokta */
   background: rgba(217, 178, 106, 0.55);
 }
 

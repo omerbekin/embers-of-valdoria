@@ -76,6 +76,8 @@ export interface VfxCtx {
   usage?: SkillUsage;
   /** uid -> birimin görünümü (ceset, bağlı dost gibi hedef listesinde olmayan birimler için; yoksa undefined). */
   viewOf?: (uid: string) => CombatantView | undefined;
+  /** Sahnedeki tüm birim görünümleri (yoksa undefined). Büyük ekran efektleri can çubuğu bölgesini okunur bırakmak için kullanır. */
+  allViews?: () => CombatantView[];
   /** Yalnızca OLAY efektlerinde (src/game/event-fx.ts: çağrı doğuşu, ceset emme, Doom...): efekti tetikleyen motor olayı. */
   event?: BattleEvent;
 }

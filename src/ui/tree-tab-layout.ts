@@ -153,7 +153,8 @@ export function buildCols(o: ColsIn, rules: TreeRules): ColsLayout {
   });
   const coreD = short ? 26 : 46;
   const core = { x: px(labW / 2), y: px(ultY0 + ultH * 0.44), d: coreD };
-  const upts = { x: core.x, y: px(core.y + coreD / 2 + (short ? 8 : 12)) };
+  // çekirdek CSS ile 1,3 kat çizilir (Ömer 2026-11-25 r47): puan yazısı büyüyen elmasın altına iner
+  const upts = { x: core.x, y: px(core.y + coreD * 0.65 + (short ? 8 : 12)) };
   const wGoal = clamp(Math.floor(cw * 0.25) - 1, 20, HIT_GOAL);
   const hit = hitBoxes(pos, wGoal, HIT_GOAL);
   // ult düğümlerinde dikey kutu, ult bandının içinde kalır (üstte kol etiketi için yer bırakılır)

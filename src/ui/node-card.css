@@ -24,7 +24,7 @@
 .nc .nc-head { display: flex; align-items: center; width: 100%; justify-content: center; gap: max(8px, calc(14 * var(--u))); }
 .nc .nc-head .rl { flex: 1 1 0; min-width: max(16px, calc(30 * var(--u))); height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.7)); position: relative; }
 .nc .nc-head .rl.r { background: linear-gradient(270deg, transparent, rgba(217, 178, 106, 0.7)); }
-.nc .nc-head .rl::after { content: ''; position: absolute; right: -4px; top: -3px; width: 6px; height: 6px; transform: rotate(45deg); border: 1px solid var(--g-gold); background: #120c08; }
+.nc .nc-head .rl::after { content: ''; position: absolute; right: -4px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: rgba(217, 178, 106, 0.9); }
 .nc .nc-head .rl.r::after { right: auto; left: -4px; }
 .nc .sbc-t { flex: none; max-width: 80%; text-align: center; text-wrap: balance; }
 

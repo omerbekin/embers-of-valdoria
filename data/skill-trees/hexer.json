@@ -1,6 +1,6 @@
 {
   "class": "hexer",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "a",
@@ -84,7 +84,7 @@
       {
         "at": 15,
         "name": "Long Rot",
-        "text": "Wither you apply lasts 1 turn longer.",
+        "text": "Withering you apply lasts 1 turn longer.",
         "src": "A:V2:bar3",
         "fx": [
           {
@@ -100,7 +100,7 @@
       {
         "at": 20,
         "name": "Carrion Feast",
-        "text": "Wither on an enemy below 30% HP deals 10% increased damage.",
+        "text": "Withering on an enemy below 30% HP deals 10% increased damage.",
         "src": "A:V2:bar2",
         "fx": [
           {
@@ -625,7 +625,7 @@
     },
     "2.f2": {
       "name": "Fog of Ill Luck",
-      "text": "Wither also Blinds the enemy: -1% accuracy per rank.",
+      "text": "Withering also Blinds the enemy: -1% accuracy per rank.",
       "_not": "Ömer 2026-11-16 Tur 24: isabet eki yerine aynı güçte Blinded (withStatus; güç = -0,01 / Blinded -0,3 = 1/30 rank başına, 0,0333).",
       "src": "B:V3:2.f3",
       "fx": [
@@ -645,7 +645,7 @@
     },
     "2.f3": {
       "name": "Leeching Rot",
-      "text": "Wither ticks heal you for 4% of their damage per rank.",
+      "text": "Withering ticks heal you for 4% of their damage per rank.",
       "src": "B:V5:2.f2",
       "fx": [
         {
@@ -723,7 +723,7 @@
     },
     "2.eb": {
       "name": "Seeping Rot",
-      "text": "When Wither ends on an enemy, the enemies next to it are Withered for 2 turns.",
+      "text": "When Withering ends on an enemy, the enemies next to it are Withered for 2 turns.",
       "src": "B:V2:2.eb",
       "fx": [
         {
@@ -766,7 +766,7 @@
     },
     "2.fa": {
       "name": "Thin Plague",
-      "text": "Withering Curse hits every enemy, but deals half damage and its Wither lasts 1 turn.",
+      "text": "Withering Curse hits every enemy, but deals half damage and its Withering lasts 1 turn.",
       "src": "B:V4:2.fa",
       "fx": [
         {
@@ -792,7 +792,7 @@
     },
     "2.fb": {
       "name": "Swift Blight",
-      "text": "Withering Curse's Wither deals 25% more damage, but lasts 2 turns.",
+      "text": "Withering Curse's Withering deals 25% more damage, but lasts 2 turns.",
       "src": "B:V2:2.fa",
       "fx": [
         {
@@ -833,7 +833,7 @@
     },
     "2.v": {
       "name": "Plague Curse",
-      "text": "Withering Curse evolves: its Wither is contagious: each tick also Withers an enemy next to the host for 2 turns.",
+      "text": "Withering Curse evolves: its Withering is contagious: each tick also Withers an enemy next to the host for 2 turns.",
       "src": "B:V4:2.v",
       "new": true,
       "approved": true,
@@ -928,7 +928,7 @@
       ]
     },
     "3.r": {
-      "name": "Rumour Mill",
+      "name": "Rumor Mill",
       "text": "Jinx has a 10% chance per rank to also Jinx an enemy next to the target.",
       "src": "B:V4:3.r",
       "fx": [
@@ -950,14 +950,14 @@
     },
     "3.ea": {
       "name": "Lasting Jinx",
-      "text": "Jinx may jump to an enemy next to the target (50%, plus Rumour Mill), Jinxing it and dealing its full damage.",
+      "text": "Jinx may jump to an enemy next to the target (40%, plus Rumor Mill), Jinxing it and dealing its full damage.",
       "src": "B:V3:3.ea",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
           "on": "skillUse",
-          "procChance": 0.5,
+          "procChance": 0.4,
           "addChanceOf": [
             "3.r"
           ],
@@ -999,13 +999,14 @@
     },
     "3.ma": {
       "name": "Woeful Turn",
-      "text": "A Jinxed enemy that misses loses its next action.",
+      "text": "A Jinxed enemy that misses loses its next action. The same enemy cannot lose two actions in a row this way (2-turn wait); bosses are immune.",
       "src": "B:V3:3.ma",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
           "on": "enemyMissed",
+          "cdTurns": 2,
           "when": {
             "targetStatus": "jinxed"
           },

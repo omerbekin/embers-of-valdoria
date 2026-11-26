@@ -3,6 +3,8 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
+import { evolvedSkillIds } from '../progression/skill-tree-evolve';
+import { MAGE_EVOLVES } from '../game/owner-tests';
 import { CINEMATIC_IDS, CONFIG, debugOpenSlot, autoResolve, acknowledgeLoot, advanceDay, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, grantPilotSets, debugTeleport, debugWinNode, debugRequireFormation, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
@@ -14,6 +16,7 @@ import { isLessonSeen, resetTutorials, setTutorialsOn, tutorialsOn } from '../tu
 import { registerMaps23Debug } from './maps23-debug';
 
 export const CAMPAIGN_TAB = 'Campaign';
+const OWNER_SECTION = 'Owner tests';
 
 const SCENES = ['BattleScene', 'TeamSelectScene', 'CampaignMapScene', 'MainMenuScene'];
 
@@ -210,7 +213,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     icon: 'eye',
     on: () => regionDbg !== null,
     label: () => (regionDbg ? `Region view: ${regionDbg}` : 'Region view: whole map'),
-    hint: 'Cycle the map view: zoom to region I, II, III, then the whole map (region names only, stops hidden). Neighbour stops show faded; stops of unseen regions stay hidden. Fog stays put in every view',
+    hint: 'Cycle the map view: zoom to region I, II, III, then the whole map (region names only, stops hidden). Neighbor stops show faded; stops of unseen regions stay hidden. Fog stays put in every view',
     run: () => {
       const ids = getMap(current()?.mapId ?? 'valdoria').regions.map((r) => r.id);
       const i = regionDbg === null ? 0 : ids.indexOf(regionDbg) + 1;
@@ -486,6 +489,27 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: 'Gives the first Warrior in your campaign roster a confirmed skill tree that reaches the Charge evolve (Herald of Ruin), raising the Warrior to the level it needs (stat points are left to spend). Then open Gear: the Charge icon shows the evolve art and glows in a slow loop on the Hero tab skill row, the Tree tab (plate and evolve node), skill tooltips, formation cards and the battle skill bar. Needs a Warrior in the roster; use Reset skill tree to undo.',
     run: () => {
       setState(debugGrantEvolve(ensureState(), 'warrior', 'charge'));
+      reload();
+    },
+  });
+  // Owner tests (Ömer 2026-11-24): Mage evrimleri, sefer Mage'ine ONAYLI ağaçla. Seferde en çok 1 evrim ulaşılır (2. evrim 38 ağaç puanı ister, L30 = 29),
+  // bu yüzden her basış SIRADAKİ evrimi verir (Mirage Veil > Sunfire > Eternal Winter > Glacier Crater > başa); ağaç her seferinde sıfırdan kurulur.
+  const mageNext = (): (typeof MAGE_EVOLVES)[number] => {
+    const h = current()?.roster.find((x) => x.class === 'mage');
+    const on = h ? evolvedSkillIds(h, 'campaign') : [];
+    const i = MAGE_EVOLVES.findIndex((e) => on.includes(e.skill));
+    return MAGE_EVOLVES[(i + 1) % MAGE_EVOLVES.length]!;
+  };
+  debug.register({
+    id: 'owner.mage-grant',
+    tab: 'Setup',
+    section: OWNER_SECTION,
+    icon: 'wand',
+    label: () => (current()?.roster.some((x) => x.class === 'mage') ? `Mage evolve to campaign Mage (saved), next: ${mageNext().evolve}` : 'Mage evolve to campaign Mage (saved): no Mage in roster'),
+    hint: 'Gives the first Mage in your campaign roster a confirmed skill tree with ONE evolve and raises the Mage to the level it needs. Each press gives the next one: Mirage Veil (Heat Mirage passive), Sunfire (Fire Bolt), Eternal Winter (Blizzard), Glacier Crater (Ice Crater), then Mirage Veil again. Only one evolve fits a campaign hero (a second needs 38 tree points, level 30 gives 29). Needs a Mage in the roster; then open Gear or start a battle. Use Reset skill tree to undo.',
+    run: () => {
+      if (!current()?.roster.some((x) => x.class === 'mage')) return; // Mage yoksa hiçbir şey yapma (yeni sefer de açma)
+      setState(debugGrantEvolve(ensureState(), 'mage', mageNext().skill));
       reload();
     },
   });

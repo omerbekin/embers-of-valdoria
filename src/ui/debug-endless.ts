@@ -128,7 +128,7 @@ export function registerEndlessDebug(game: Phaser.Game, debug: DebugMenu): void 
     section: SECTION,
     icon: 'skull',
     label: 'Toggle first hero fallen',
-    hint: 'Make the first hero of the run fallen (HP 0) or revive them: a fallen hero is shown greyed in Gear and their gear is locked',
+    hint: 'Make the first hero of the run fallen (HP 0) or revive them: a fallen hero is shown grayed in Gear and their gear is locked',
     run: () => {
       const run = readyRun();
       const h = run.heroes[0];

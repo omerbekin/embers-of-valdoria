@@ -89,7 +89,7 @@ export function registerCloudDebug(game: Phaser.Game, debug: Pick<DebugMenu, 're
         debugButton('Name prompt (sample)', () => go(() => void screens().then(([d, s]) => d.openNamePrompt({ required: true, api: s.sampleAccountApi() }))), { icon: 'info', title: 'First sign-in "Choose a name" (required; Confirm saves nothing)' }),
         debugButton('Delete dialog (sample)', () => go(() => void screens().then(([d, s]) => d.openDeleteDialog({ api: s.sampleAccountApi() }))), { icon: 'skull', title: 'Delete account confirm (type DELETE; deletes nothing)' }),
         debugButton('Newer version notice', () => go(() => void screens().then(([d]) => d.openNewerVersionNotice())), { icon: 'restart', title: 'Cloud save from a newer game version (Reload reloads the page)' }),
-        debugButton('Sign-in error toast', () => go(() => void screens().then(([d]) => d.showSignInError('denied'))), { icon: 'skull', title: 'The notice shown after a failed or cancelled sign-in' }),
+        debugButton('Sign-in error toast', () => go(() => void screens().then(([d]) => d.showSignInError('denied'))), { icon: 'skull', title: 'The notice shown after a failed or canceled sign-in' }),
       );
       el.append(sg);
     },

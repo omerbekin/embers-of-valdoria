@@ -39,7 +39,7 @@
           "label": "Press on",
           "hint": "March through the storm. Everyone loses some health.",
           "hpLoss": 0.1,
-          "result": "You lean into the wind and walk until the white thins to grey. The company is frostbitten, but you are through."
+          "result": "You lean into the wind and walk until the white thins to gray. The company is frostbitten, but you are through."
         },
         {
           "id": "wait",
@@ -67,7 +67,7 @@
     },
     "hc_stone_gate": {
       "title": "The Stone Gate",
-      "text": "The gate of Kharduin rises out of the ice, carved with kings and anvils. A small door opens in it, and a dwarf in stone-grey armour looks you over. \"You carry fire,\" he says. \"Come in, then. The Thanes will want to see it.\""
+      "text": "The gate of Kharduin rises out of the ice, carved with kings and anvils. A small door opens in it, and a dwarf in stone-gray armor looks you over. \"You carry fire,\" he says. \"Come in, then. The Thanes will want to see it.\""
     },
     "hc_hall_of_oaths": {
       "title": "Hall of Oaths",

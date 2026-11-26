@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Fen Witchling; palet YOK, fen_witchling çizimi.",
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Fen Witchling; kendi çizimi (spriteId = id, r49).",
   "id": "rime_witch",
   "name": "Rime Witch",
   "family": "hexes",
-  "spriteId": "fen_witchling",
+  "spriteId": "rime_witch",
   "color": "#8fc0dc",
   "logo": "rune",
   "frontPriority": 7,

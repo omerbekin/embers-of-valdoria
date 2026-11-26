@@ -233,7 +233,9 @@ describe('A5 Thunderflash', () => {
     b.useSkill(tester(b).uid, 'storm_test_iron', hero.uid);
     const fl = b.log.find((e) => e.type === 'thunderflash');
     expect(fl && fl.type === 'thunderflash' && fl.blinded).toBe(hero.uid);
-    expect(hero.statuses.some((s) => s.kind === 'blinded')).toBe(true);
+    // Blinded kısa sürer; hız zarıyla kahraman hemen sıradaysa durum tüketilmiş olabilir: uygulanışı olaydan, testte ayrıca canlı durumdan doğrula
+    expect(b.log.some((e) => e.type === 'status' && e.status === 'blinded' && e.target === hero.uid)).toBe(true);
+    if (mode === 'test') expect(hero.statuses.some((s) => s.kind === 'blinded')).toBe(true);
     if (mode === 'test') expect(b.isDark()).toBe(false);
     // İlk kahraman turu bitince karanlık döner
     if (mode === 'turns') for (let i = 0; i < 10 && b.currentUid && b.get(b.currentUid)!.side !== 'party'; i++) b.skipTurn();

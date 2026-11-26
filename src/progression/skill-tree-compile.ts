@@ -223,12 +223,18 @@ function patchSkill(def: SkillDef, fx: Extract<TreeFx, { k: 'skill' }>, rank: nu
     for (const t of targets) {
       const S = typeof t.powerAdd === 'number' ? t.powerAdd : 0;
       const n = fx.rank ? fx.v * rank : fx.v;
+      // Düz taban (damage.flat, Ömer 2026-11-25): çarpımsal yüzde yamaları flat'i de güçle AYNI oranda çarpar (skill'in tüm hasarı büyür);
+      // add / set / base yalnız ölçeğe dokunur. flat yoksa bu satırlar hiçbir şey yazmaz.
+      const flat = typeof t.flat === 'number' ? (t.flat as number) : undefined;
       if (fx.op === 'pct' && rules.percentRule === 'mul' && isPoolDamage(node, n) && typeof t.power === 'number') {
         t.power = r6(((t.power as number) / (1 + S)) * (1 + S + n));
         t.powerAdd = r6(S + n);
+        if (flat !== undefined) t.flat = r6((flat / (1 + S)) * (1 + S + n));
       } else {
+        const before = t.power;
         t.power = applyOp(t.power, fx, rank, fx.f, rules);
         if ((fx.op === 'set' || fx.op === 'base') && S) delete t.powerAdd;
+        if (flat !== undefined && (fx.op === 'mul' || fx.op === 'pct') && typeof before === 'number' && before !== 0) t.flat = r6((flat * (t.power as number)) / before);
       }
     }
     return;
@@ -826,6 +832,9 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
             ...(fx.scale ? { scale: clone(fx.scale) } : {}),
             ...(fx.rule ? { rule: fx.rule } : {}),
           });
+          // Tooltip: düz, koşulsuz, kullanım başı Rage (Reckless Heat) skill satırında görünsün; kancalar skill'i bilmediği için sayı skill kopyasında da tutulur
+          if (skill && fx.gain !== undefined && fx.gain > 0 && (fx.on ?? 'cast') === 'cast' && !fx.when && !fx.scale && !fx.once && !fx.rule && fx.floor === undefined)
+            ownSkill(skill).treeRage = r6((ownSkill(skill).treeRage ?? 0) + fx.gain * r);
           any = true;
         }
         if (!any) throw new TreeFxError('rage hook has no effect');
@@ -857,7 +866,7 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
 
 /* ------------------------------------------------------------------ Faz 8: skill biçimleri (Focused Beam, Stacked Deck) ------------------------------------------------------------------ */
 
-const MODE_KEYS = ['k', 'skill', 'mode', 'name', 'text', 'baseText', 'title', 'target', 'removeEffects', 'powerMul', 'addEffect', 'splash', 'statusPick', 'firstOnly', 'secondStatus', 'needs', 'onlyWith', 'unless'];
+const MODE_KEYS = ['k', 'skill', 'mode', 'name', 'text', 'baseText', 'title', 'target', 'removeEffects', 'powerMul', 'addEffect', 'splash', 'statusPick', 'firstOnly', 'secondStatus', 'secondExclude', 'needs', 'onlyWith', 'unless'];
 const MODE_ID_RE = /^[a-z][a-z0-9_]*$/;
 
 /** Biçim fx'inin biçim denetimi (alanlar, türler); hangi biçime eklendiği buildModes'ta denetlenir. */
@@ -874,10 +883,12 @@ function checkModeFx(fx: Extract<TreeFx, { k: 'mode' }>, node: string, rank: num
     if (fx.statusPick !== undefined && fx.statusPick !== true) throw new TreeFxError('statusPick must be true');
     if (fx.secondStatus !== undefined && fx.secondStatus !== true) throw new TreeFxError('secondStatus must be true');
     if (fx.firstOnly !== undefined && !(Array.isArray(fx.firstOnly) && fx.firstOnly.every(knownStatus))) throw new TreeFxError('firstOnly must be a list of known statuses');
+    if (fx.secondExclude !== undefined && !(fx.secondStatus && Array.isArray(fx.secondExclude) && fx.secondExclude.length && fx.secondExclude.every(knownStatus))) throw new TreeFxError('secondExclude needs secondStatus and a list of known statuses');
     return;
   }
   if (typeof fx.mode !== 'string' || !MODE_ID_RE.test(fx.mode)) throw new TreeFxError('mode needs an id ("mode": "focused_beam")');
   if (fx.firstOnly !== undefined) throw new TreeFxError('firstOnly only fits statusPick');
+  if (fx.secondExclude !== undefined) throw new TreeFxError('secondExclude only fits secondStatus');
   if (fx.target !== undefined && fx.target !== 'single_enemy') throw new TreeFxError('mode target must be "single_enemy"');
   if (fx.removeEffects !== undefined && !(Array.isArray(fx.removeEffects) && fx.removeEffects.every((t) => typeof t === 'string' && EFFECT_FIELDS[t]))) throw new TreeFxError('removeEffects must be a list of effect types');
   if (fx.powerMul !== undefined && !(finiteNum(fx.powerMul) && fx.powerMul > 0)) throw new TreeFxError('powerMul must be a positive number');
@@ -908,10 +919,14 @@ function buildModes(acc: Acc, lenient: boolean): Record<string, SkillModeSet> | 
     let title: string | undefined;
     let pick: { node: string; firstOnly: string[] } | undefined;
     let second: string | undefined;
+    let secondExclude: readonly string[] = []; // r43 (Ömer form r43, Double Deal): rastgele ikinci durumun olamayacağı durumlar
     for (const { fx, node } of ops) {
       if (fx.title) title = fx.title;
       if (fx.statusPick) pick = { node, firstOnly: fx.firstOnly ?? [] };
-      if (fx.secondStatus) second = node;
+      if (fx.secondStatus) {
+        second = node;
+        secondExclude = fx.secondExclude ?? [];
+      }
       if (fx.statusPick || fx.secondStatus) continue;
       let m = named.get(fx.mode!);
       if (fx.name !== undefined) {
@@ -952,7 +967,7 @@ function buildModes(acc: Acc, lenient: boolean): Record<string, SkillModeSet> | 
         const d = cloneSkill(final);
         const only = pick.firstOnly.includes(o.status);
         const fixed = { type: 'status', status: o.status, turns: o.turns, ...(only ? { firstOnly: true } : {}), treeNode: pick.node } as SkillEffect;
-        const extra = second ? rs.options.filter((x) => x.status !== o.status).map(tag) : [];
+        const extra = second ? rs.options.filter((x) => x.status !== o.status && !secondExclude.includes(x.status)).map(tag) : [];
         d.effects.splice(rsIdx, 1, fixed, ...(extra.length ? [{ type: 'randomStatus', options: extra, treeNode: second } as SkillEffect] : []));
         const st = STATUSES[o.status];
         list.push({
@@ -969,7 +984,7 @@ function buildModes(acc: Acc, lenient: boolean): Record<string, SkillModeSet> | 
       // Cold Deck + Double Deal: seçim yok (durum sabit); kendi tanıma kalan özgün seçeneklerden rastgele ikinci durum
       const base = SKILLS[skillId]?.effects.find((x) => x.type === 'randomStatus') as Extract<SkillEffect, { type: 'randomStatus' }> | undefined;
       const have = new Set(final.effects.flatMap((x) => (x.type === 'status' ? [x.status] : [])));
-      const extra = (base?.options ?? []).filter((o) => !have.has(o.status));
+      const extra = (base?.options ?? []).filter((o) => !have.has(o.status) && !secondExclude.includes(o.status));
       if (extra.length) {
         const own = (acc.skills[skillId] ??= cloneSkill(SKILLS[skillId]!));
         const at = own.effects.findIndex((x) => x.type === 'status' && have.has(x.status));
@@ -1334,7 +1349,8 @@ function compileTrigger(tree: TreeData, fx: Extract<TreeFx, { h: 'trigger' }>, n
   if (fx.near !== undefined && !(finiteNum(fx.near) && fx.near >= 0)) throw new TreeFxError('near must be a number');
   if (fx.every !== undefined && !(Number.isInteger(fx.every) && fx.every >= 2)) throw new TreeFxError('every must be an integer >= 2');
   if (fx.perCast !== undefined && !(Number.isInteger(fx.perCast) && fx.perCast >= 1)) throw new TreeFxError('perCast must be an integer >= 1');
-  if (fx.once !== undefined && !([true, 'perTarget', 'perTurn', 'perShield'] as unknown[]).includes(fx.once)) throw new TreeFxError(`unknown once "${String(fx.once)}"`);
+  if (fx.cdTurns !== undefined && !(Number.isInteger(fx.cdTurns) && fx.cdTurns >= 1)) throw new TreeFxError('cdTurns must be an integer >= 1');
+  if (fx.once !== undefined && !([true, 'perTarget', 'perTurn', 'perShield', 'perSummoner'] as unknown[]).includes(fx.once)) throw new TreeFxError(`unknown once "${String(fx.once)}"`);
   if (fx.once === 'perShield' && on !== 'shieldAbsorb') throw new TreeFxError('once "perShield" is only for shieldAbsorb');
   if (fx.procChance !== undefined && !(finiteNum(fx.procChance) && fx.procChance > 0 && fx.procChance <= 1)) throw new TreeFxError('procChance must be in (0, 1]');
   if (fx.rank === 'chance' && fx.procChance === undefined) throw new TreeFxError('rank "chance" needs "procChance"');
@@ -1366,6 +1382,7 @@ function compileTrigger(tree: TreeData, fx: Extract<TreeFx, { h: 'trigger' }>, n
     ...(fx.by !== undefined ? { by: fx.by } : {}),
     ...(fx.every !== undefined ? { every: fx.every } : {}),
     ...(fx.perCast !== undefined ? { perCast: fx.perCast } : {}),
+    ...(fx.cdTurns !== undefined ? { cdTurns: fx.cdTurns } : {}),
     ...(fx.once !== undefined ? { once: fx.once } : {}),
     ...(fx.procChance !== undefined ? { procChance: Math.min(1, r6(fx.procChance * chanceRank)) } : {}),
     ...(fx.addChanceOf ? { addChanceOf: fx.addChanceOf.map((k) => `${tree.class}:${k}`) } : {}),

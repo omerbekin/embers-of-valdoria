@@ -1,5 +1,5 @@
 {
-  "_not": "Lord Morvane: Castle Morvane (düğüm 12) final boss'u (mob-plan.md 10.3, campaign-dev 2026-10-17). INT'e dayalı ateş büyücüsü-şövalye; boss altyapısı (fazlar, telgraf, areaByPhase) Bridge Warden'la ortak, kurallar farklı: Ashfall alan telgrafı (Move ile kaçılır), faz 3'te güvenli hücresiz Pyre of Morvane, pasif Crown of Ash (YM23; passive.effect). GÖRSEL YER TUTUCU: spriteId 'high_priest_of_the_undying', spriteScale encounters.json'da (kendi ChatGPT çizimi + poz sayfası gelince spriteId 'lord_morvane'). Gizli boss tanımı (data/bosses): rastgele havuzda ve takım seçiminde YOK. Endless'ın eski 'lord_morvane' karşılaşması (Undead class kopyası) değişmedi. Sayılar PROVİZYON (npm run sim:campaign).",
+  "_not": "Lord Morvane: Castle Morvane (düğüm 12) final boss'u (mob-plan.md 10.3, campaign-dev 2026-10-17). INT'e dayalı ateş büyücüsü-şövalye; boss altyapısı (fazlar, telgraf, areaByPhase) Bridge Warden'la ortak, kurallar farklı: Ashfall alan telgrafı (Move ile kaçılır), faz 3'te güvenli hücresiz Pyre of Morvane, pasif Crown of Ash (YM23; passive.effect). GÖRSEL: kendi sprite'ı var (spriteId 'lord_morvane', yer tutucu değil); spriteScale encounters.json'da. Gizli boss tanımı (data/bosses): rastgele havuzda ve takım seçiminde YOK. Endless'ın eski 'lord_morvane' karşılaşması (Undead class kopyası) değişmedi. Sayılar PROVİZYON (npm run sim:campaign).",
   "id": "lord_morvane",
   "name": "Lord Morvane",
   "spriteId": "lord_morvane",
@@ -55,7 +55,7 @@
       }
     ],
     "notes": [
-      "Warnings: Ashfall and the Pyre of Morvane do not hit at once. The marked cells smoulder and the attack lands at the start of Morvane's next turn, before he acts. Every hero gets at least one turn in between. These hits cannot miss.",
+      "Warnings: Ashfall and the Pyre of Morvane do not hit at once. The marked cells smolder and the attack lands at the start of Morvane's next turn, before he acts. Every hero gets at least one turn in between. These hits cannot miss.",
       "Ashfall marks a block of cells: move out of it (Move). From phase 2 the block is wider.",
       "The Pyre of Morvane marks your whole side and has no safe cell: shield, guard, fortify or heal your heroes before it lands."
     ],

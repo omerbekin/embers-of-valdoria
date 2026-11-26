@@ -8,7 +8,7 @@ import { openMerchant, type MerchantSource } from '../ui/merchant-screen';
  * seferin saf tüccar kurallarıyla (src/campaign/merchant.ts) açar. Ekran değişirse yalnızca bu dosya uyarlanır. Kuşanma Gear kaynağıyla aynı.
  * İşlem sonuç vermezse (altın / yer yok) kurallar Error fırlatır: ekran uyarır.
  */
-export function campaignMerchantSource(get: () => CampaignState, set: (s: CampaignState) => void, sub = 'Travelling merchant · Forward Camp'): MerchantSource {
+export function campaignMerchantSource(get: () => CampaignState, set: (s: CampaignState) => void, sub = 'Traveling merchant · Forward Camp'): MerchantSource {
   const gear = campaignGearSource(get, set);
   const s0 = get();
   const trader = s0.at ? node(mapOf(s0), s0.at).trader : undefined; // düğümün kendi tüccarı (yoksa Odo)

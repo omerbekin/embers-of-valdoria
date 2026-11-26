@@ -184,9 +184,9 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
     case 'magicArmor': {
       const r = armorReduction(stats.magicArmor, f);
       return {
-        title: `Magic armor ${num1(stats.magicArmor)}`,
+        title: `Magic Armor ${num1(stats.magicArmor)}`,
         lines: [
-          stats.magicArmor > 0 ? `Reduces magic damage taken by ${pct(r, 1)}` : 'No magic armor: magic damage is not reduced',
+          stats.magicArmor > 0 ? `Reduces magic damage taken by ${pct(r, 1)}` : 'No Magic Armor: magic damage is not reduced',
         ],
       };
     }
@@ -197,7 +197,7 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
 /** Kan barı (Redtithe) kural satırı (İngilizce; sınıf ipucu, wiki). Sayılar formulas.bloodBar'dan. */
 export function bloodBarText(b: NonNullable<Formulas['bloodBar']>, max = b.max): string {
   const p = (v: number) => `${Math.round(v * 1000) / 10}%`;
-  return `Blood ${b.start}/${max} at the start of battle: no mana. Magic armor up to ${b.magicArmorBase} + INT x${b.magicArmorPerInt}: full at 0 blood, none at ${max} blood. The lower the bar, the more life your skill hits steal (up to ${p(b.lifestealMax)} of the damage at 0). Missing blood is paid with HP (${p(b.hpPerBlood)} of max HP per blood)`;
+  return `Blood ${b.start}/${max} at the start of battle: no mana. Magic Armor up to ${b.magicArmorBase} + INT x${b.magicArmorPerInt}: full at 0 blood, none at ${max} blood. The lower the bar, the more life your skill hits steal (up to ${p(b.lifestealMax)} of the damage at 0). Missing blood is paid with HP (${p(b.hpPerBlood)} of max HP per blood)`;
 }
 
 export function describeClass(def: CombatantDef, skills: Record<string, SkillDef>, f: Formulas): StatInfo {
@@ -205,7 +205,7 @@ export function describeClass(def: CombatantDef, skills: Record<string, SkillDef
   const names = def.skills.map((id) => skills[id]?.name ?? id).join(', ');
   const lines = [
     `STR ${s.str}   DEX ${s.dex}   INT ${s.int}   LUCK ${s.luck}`,
-    `HP ${s.hp}   MP ${s.mp}   SPD ${speedText(s.spd, f)}   Armor ${num1(s.armor)}${s.magicArmor > 0 ? `   Magic armor ${num1(s.magicArmor)}` : ''}   Crit ${pct(s.critChance, 1)}   ACC ${pct(s.accuracy)}   EVA ${pct(s.evasion)}`,
+    `HP ${s.hp}   MP ${s.mp}   SPD ${speedText(s.spd, f)}   Armor ${num1(s.armor)}${s.magicArmor > 0 ? `   Magic Armor ${num1(s.magicArmor)}` : ''}   Crit ${pct(s.critChance, 1)}   ACC ${pct(s.accuracy)}   EVA ${pct(s.evasion)}`,
     ...(def.maxRage !== undefined ? [`Rage 0/${def.maxRage}: gained by damaging with skills (+${f.rage.hitBase} to +${f.rage.perHitCap} per hit), spent by Rage skills`] : []),
     ...(def.maxBlood !== undefined && f.bloodBar ? [`${bloodBarText(f.bloodBar, def.maxBlood)}`] : []),
     ...(def.passive ? [`Passive - ${def.passive.name}: ${describePassive(def.passive, def.stats, f)}`] : []),

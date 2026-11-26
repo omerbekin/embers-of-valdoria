@@ -96,7 +96,7 @@ describe('zaman ve durum satırları', () => {
     expect(deleteConfirmOk(' DELETE ')).toBe(true);
     expect(deleteConfirmOk('delete')).toBe(false);
     expect(deleteConfirmOk('DELET')).toBe(false);
-    expect(signInErrorText('denied')).toMatch(/cancelled/);
+    expect(signInErrorText('denied')).toMatch(/canceled/);
     expect(signInErrorText('identity-taken')).toMatch(/already linked/);
     expect(signInErrorText(undefined)).toMatch(/try again/i);
   });

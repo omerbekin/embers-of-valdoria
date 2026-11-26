@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ ELİT (Thornwood Hollow; pasif + 3 aktif, poz sayfası yarın). GÖRSEL YER TUTUCU: spriteId 'charcoal_burner', spriteScale 1,15 (kendi çizimi gelince 'drake_priest' + data/mob-poses.json > _pending kaydı). Sayılar PROVİZYON (npm run sim:campaign).",
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ ELİT (Thornwood Hollow; pasif + 3 aktif, poz sayfası yarın). GÖRSEL: kendi sprite'ı var (spriteId 'drake_priest', 2026-11 itibarıyla yer tutucu değil). spriteScale 1,15. Sayılar PROVİZYON (npm run sim:campaign).",
   "id": "drake_priest",
   "name": "Drake Priest",
   "family": "ember_cult",

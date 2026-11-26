@@ -172,7 +172,7 @@
   "_companyName": "Bölük adı (Ömer 2026-11-01, D4): Form your company kutusu; max harf, Suggest'in hazır adları (İngilizce, medieval). Okuma kuralı src/campaign/state.ts > cleanCompanyName.",
   "companyName": {
     "max": 24,
-    "suggestions": ["The Border Wardens", "Ashen Banner", "Ember Company", "The Last Lanterns", "Iron Hollow Watch", "The Grey Wolves", "Valdorian Vanguard", "The Mill Road Few", "Wardens of the Marches", "The Cinder Guard", "Company of the Thorn", "The Oathkeepers"]
+    "suggestions": ["The Border Wardens", "Ashen Banner", "Ember Company", "The Last Lanterns", "Iron Hollow Watch", "The Gray Wolves", "Valdorian Vanguard", "The Mill Road Few", "Wardens of the Marches", "The Cinder Guard", "Company of the Thorn", "The Oathkeepers"]
   },
   "_companySuggest": "Yoldaş önerisi (Ömer 2026-11-01): 'Choose a companion' penceresinde takımın ilk eksik rolünü dolduran kahramanların hepsinin portresi altında 'Suggested', üstüne gelince A Band ipucunun 2. satırı altın gerekçe. Yalnız nodes listesindeki düğümlerde (harita id -> düğüm id: Ashford 4, Valdren Keep 7; King's Bridge ve eski kayıt yok). order = eksik rol öncelik sırası (ön saf > arka saf > takımı besleyen); roles = kahramanın saydığı roller (birden çok olabilir; sınıfların kitine göre: front = frontPriority <= 2, back = frontPriority >= 6.5 ve menzil >= 5, feed = can ya da kalkan veren skill: heal / hot / shield); aynı rolde birden çok aday varsa takımda olmayanların hepsi önerilir (Ömer 2026-11-01: 'örneğin druid için tek frontline warrior değil'). Kod: src/campaign/suggest.ts. Oyunda 'support' kavramı yok: rol adı 'feed'.",
   "companySuggest": {

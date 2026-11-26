@@ -109,7 +109,7 @@ export const UI_TEXT = {
   shopTitle: 'Merchant',
   merchantName: 'Odo the Peddler',
   previewRun: 'Preview run · not saved, not scored',
-  merchantSub: 'Travelling merchant · follows the company',
+  merchantSub: 'Traveling merchant · follows the company',
   merchantLines: {
     idle: 'Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.',
     poor: 'That one is beyond your purse, friend. Come back after the next fight.',

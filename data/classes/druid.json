@@ -28,7 +28,7 @@
     "id": "natures_grudge",
     "name": "Nature's Grudge",
     "icon": "leaves",
-    "text": "When an ally falls, its killer is gripped by roots: Hobbled and Wither for 3 turns.",
+    "text": "When an ally falls, its killer is gripped by roots: Hobbled and Withering for 3 turns.",
     "effect": {
       "type": "naturesGrudge",
       "status": "slow",

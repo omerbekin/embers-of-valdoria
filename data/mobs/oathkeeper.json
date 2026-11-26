@@ -32,7 +32,7 @@
     "id": "stone_oath",
     "name": "Stone Oath",
     "icon": "shield",
-    "text": "Whenever an ally dies (not a summon), it permanently gains +6 armor and +6 magic armor.",
+    "text": "Whenever an ally dies (not a summon), it permanently gains +6 armor and +6 Magic Armor.",
     "effect": {
       "type": "stoneOath",
       "armor": 6,

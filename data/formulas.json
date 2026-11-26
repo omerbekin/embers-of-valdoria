@@ -6,7 +6,7 @@
     "mpBase": 30,
     "mpPerInt": 0.2,
     "spdBase": 14,
-    "spdPerDex": 0.4,
+    "spdPerDex": 0.25,
     "spdStep": 0.001,
     "spdMin": 1,
     "spdShowStep": 0.01,

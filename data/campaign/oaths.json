@@ -14,7 +14,7 @@
     {
       "id": "breakwater",
       "name": "Oath of the Breakwater",
-      "vow": "Stand like the harbour wall, and strike as slowly.",
+      "vow": "Stand like the harbor wall, and strike as slowly.",
       "plus": { "hpMult": 1.15 },
       "minus": { "damageAdd": -0.08 }
     },

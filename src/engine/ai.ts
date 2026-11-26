@@ -8,7 +8,7 @@ import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './
 import { previewForTargets } from './preview';
 import { splitParts } from './spec';
 import { bellsOfSkill, bounceHitAt, effFirst, effFlag, manaShieldNeed, type TriggerAction } from './tree-hooks';
-import { armorReduction, attributePower, dotOutgoingMult, hitChance } from './stats';
+import { armorReduction, attributePower, dotOutgoingMult, hitChance, rageMissFrac } from './stats';
 import type { Attribute, Combatant, CorpseChoice, GroundEffect, GroundReactionDef, PassiveEffect, PushDir, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef } from './types';
 import { capBurn, castBurnAmount, groundBurnAmount } from './mana-burn';
 import { isHealSkillGround, DEFAULT_VALUE, ValueContext, coverageOf, pAtLeast, scoredMpCost, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
@@ -55,7 +55,7 @@ export interface AiProfile {
   cleanseSkipTurnMult?: number;
   cleanseMinValue?: number;
   /**
-   * Hexer: yığını 3'e TAMAMLAMAYAN her eklenen Omen'in ertelenmiş değeri = ölçek statı (Luck) x powerPerStack x omenValueShare (madde Ö2 sonrası 0,85:
+   * Hexer: yığını 3'e TAMAMLAMAYAN her eklenen Omen'in ertelenmiş değeri = (ölçek statı (Luck) x powerPerStack + doom.flatPerStack) x omenValueShare (madde Ö2 sonrası 0,85:
    * Omen süre dolunca da patlar; iskonto 1-3 tur gecikme ve fazla hasar riskini temsil eder). Wither (DoT) beklenen toplamı da bu payla sayılır. Varsayılan 0,85.
    */
   omenValueShare?: number;
@@ -314,10 +314,12 @@ export interface Option {
   terms: Record<string, number>;
   score: number;
   /**
-   * Hexer laneti ertelenmiş değeri (can-eşdeğer): yığını tamamlamayan Omen'ler (Luck x powerPerStack x omenValueShare) + Wither tiklerinin beklenen toplamı
+   * Hexer laneti ertelenmiş değeri (can-eşdeğer): yığını tamamlamayan Omen'ler ((Luck x powerPerStack + flatPerStack) x omenValueShare) + Wither tiklerinin beklenen toplamı
    * (x omenValueShare), isabet ve kritik (critStacks) ihtimaliyle. Anında tetiklenen Doom'un beklenen hasarı `damage`'a (ve öldürüyorsa `kills`'e) girer.
    */
   curse: number;
+  /** Hexer: bu kullanımın patlatacağı Doom (hedef başına ihtimal = isabet x (kritiksiz / kritikli dal), yığın sayısı); ağaç 'doom' tetiği için (curseValue yazar). */
+  doomBy?: Record<string, { p: number; omens: number; dealt: number }>;
   /**
    * Telgraf değeri (can-eşdeğer): kaçmak zorunda kalacak hedeflerin kaybedeceği tur (telgrafı atan) + Chain Hook kombinasyonu (çekilen birim bekleyen çökmenin
    * içine düşerse) + bağlı yardımcıyı kırmanın değeri (Iron Mooring: boss eylem kaybı, iptal olan çökme, düşen zırh).
@@ -327,6 +329,8 @@ export interface Option {
   notes: string[];
   /** YZ kapsamı: bırakılan zeminin durum yan etkileri (tik hasarı hariç; 'ground' terimi) ve hücre tepkimeleri ('reaction'). */
   groundFx?: number;
+  /** r43: bu seçeneğin zemin bıraktığı hücrelerdeki birimler ve zemin türleri (groundCreationValue yazar; Conclave taşıyanı terimi okur). */
+  groundOn?: Record<string, string[]>;
   reactionFx?: number;
   /** Mana Steal (manaBurn.gainRatio): kullanıcının kazanacağı MP ('manaGain' terimi). */
   mpGain?: number;
@@ -691,6 +695,15 @@ function modeOptions(battle: Battle, actor: Combatant, skillId: string, modes: S
   const base = skillOptions(battle, actor, skillId, profile);
   if (!modes.keepBase) {
     const pick = statusModePick(battle, actor, skillId, modes);
+    // r44 (Ömer form r44 t_deal, Double Deal): seçilen kartın ikinci durumu belli (Slow > Wound, Wound > Slow; Stun > ikisinden biri). Kartın
+    // biçim tanımında hâlâ randomStatus varsa (yalnız Double Deal'de kalır) değer o tanımla hesaplanır; yalnız Stacked Deck'te değer eskisi gibi
+    // skill'in kendi (rastgele) tanımıyla. Stun kartının firstOnly'si önemsiz: Stun yalnız tek düşman kalınca seçilir.
+    const m = modes.list.find((x) => x.id === pick);
+    if (m?.status && m.skill.effects.some((e) => e.type === 'randomStatus')) {
+      const opts = battle.withMode(actor.uid, skillId, pick, () => skillOptions(battle, actor, skillId, profile));
+      for (const o of opts) o.mode = pick;
+      return opts;
+    }
     for (const o of base) o.mode = pick;
     return base;
   }
@@ -832,9 +845,10 @@ function buffValue(battle: Battle, actor: Combatant, o: Option, alt: number, bas
   const span = ctx ? Math.min(turns, ctx.vc.horizon) : turns;
   const defend = mitigation > 0 ? mitigation * share * span : 0;
   const pe = actor.passive?.effect;
-  const rage = pe?.type === 'rage' ? pe.maxBonus : 0;
   const lost = selfHpCost(actor, o.skill);
-  const offense = rage * (actor.maxHp > 0 ? lost / actor.maxHp : 0) * basicDamage * turns;
+  // Berserker: kaybedilen canla gelen ek hasar oranı. fullAt yoksa eski eğim (birebir aynı işlem); varsa eğri doyar: önce/sonra farkı
+  const rageGain = pe?.type !== 'rage' ? 0 : pe.fullAt ? pe.maxBonus * (rageMissFrac(pe, actor.hp - lost, actor.maxHp) - rageMissFrac(pe, actor.hp, actor.maxHp)) : pe.maxBonus * (actor.maxHp > 0 ? lost / actor.maxHp : 0);
+  const offense = rageGain * basicDamage * turns;
   // Kendine hasar beni bir sonraki turumdan önce öldürülebilir yapıyorsa (hasar azaltmasıyla bile): kurtarma değerim kadar bedel
   // Hasar azaltmasıyla bile bir sonraki turumdan önce ölüyorsam buff boşa gider (yalnızca bedel); bedeli ödemeseydim yaşayacak idiysem kurtarma değerim de kaybedilir
   if (ctx) {
@@ -1376,7 +1390,7 @@ function settleBlocks(battle: Battle, skill: SkillDef, o: Option): void {
  * ihtimaliyle (c: kullanıcının geçerli kritik şansı; kritikte critStacks):
  * - Hamle yığını doldurursa (ya da detonate) Doom'un beklenen can kaybı (kritik beklentisiyle, kalan canla sınırlı) ANINDA `damage`'a eklenir; kritiksiz
  *   dalda bile vuruş + Doom hedefin canını bitiriyorsa (h >= aiKillMin) `kills`'e girer.
- * - Doldurmazsa eklenen her Omen = ölçek statı x powerPerStack x omenValueShare ertelenmiş değer (`curse`).
+ * - Doldurmazsa eklenen her Omen = (ölçek statı x powerPerStack + doom.flatPerStack x spellPowerMult) x omenValueShare ertelenmiş değer (`curse`).
  * - Wither: tik x tur toplamı (vuruştan sonra kalan canla sınırlı) x omenValueShare, isabet şansıyla (`curse`).
  */
 function curseValue(battle: Battle, actor: Combatant, skill: SkillDef, previews: ReturnType<typeof previewForTargets>, o: Option, profile: AiProfile): void {
@@ -1394,13 +1408,18 @@ function curseValue(battle: Battle, actor: Combatant, skill: SkillDef, previews:
     if (p.omen) {
       const om = p.omen;
       const def = battle.statusDef(om.status);
-      const per = def?.doom ? attributePower(actor.stats, def.doom.scale, battle.formulas) * def.doom.powerPerStack * share : 0;
+      const per = def?.doom ? (attributePower(actor.stats, def.doom.scale, battle.formulas) * def.doom.powerPerStack + (def.doom.flatPerStack ?? 0) * (actor.stats.spellPowerMult ?? 1)) * share : 0;
       // sureCrit (kritik Jinx'in tamamladığı Doom, critDoomOnCrit): hpLoss zaten kritik ortalaması, ek kritik beklentisi yok
       const doomExp = (d: NonNullable<typeof om.doom>) => Math.min(left, d.sureCrit ? d.hpLoss : d.hpLoss * (1 + d.critChance * (cm - 1)));
       const branch = (after: number, d: typeof om.doom) => (d ? { now: doomExp(d), later: 0 } : { now: 0, later: Math.max(0, after - om.before) * per });
       const nc = branch(om.after, om.doom);
       const cr = om.afterCrit !== om.after || om.doomOnCrit ? branch(om.afterCrit, om.doomOnCrit) : nc;
       o.damage += h * ((1 - crit) * nc.now + crit * cr.now);
+      // Ağaç 'doom' tetiği (2026-11-23, (e)): Doom'un işleme ihtimali (kritiksiz dal + kritikli dal; kritik ayrı dal yoksa kritiksizle aynı) ve yığın sayısı
+      const critDoom = om.afterCrit !== om.after || om.doomOnCrit ? om.doomOnCrit : om.doom;
+      const doomP = h * ((1 - crit) * (om.doom ? 1 : 0) + crit * (critDoom ? 1 : 0));
+      const dm = om.doom ?? critDoom;
+      if (doomP > 0 && dm) (o.doomBy ??= {})[target.uid] = { p: doomP, omens: dm.omens, dealt: Math.min(left, dm.hpLoss) };
       o.curse += h * ((1 - crit) * nc.later + crit * cr.later);
       const hk = h * (1 - battle.luckyEscapeChance(target.uid)); // madde 258
       if (om.doom && p.damage && (p.damage.hpLoss + om.doom.hpLoss >= target.hp) && hk >= killMin && !o.kills.includes(target)) {
@@ -1602,7 +1621,7 @@ function summonRawDamage(battle: Battle, stats: Combatant['stats'], skills: stri
   for (const id of skills) {
     const sk = battle.skill(id);
     if (!sk) continue;
-    const raw = sum(sk.effects.map((e) => (e.type === 'damage' ? attributePower(stats, e.scale, battle.formulas) * e.power : 0)));
+    const raw = sum(sk.effects.map((e) => (e.type === 'damage' ? attributePower(stats, e.scale, battle.formulas) * e.power + (e.flat ? e.flat * (stats.spellPowerMult ?? 1) : 0) : 0)));
     top = Math.max(top, raw);
   }
   return top;
@@ -1737,7 +1756,10 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
           const useful = ctx.usefulAt({ uid: '__summon__', skills: unit.skills, defId: unit.id }, actor.side, slot);
           const look = ctx.summonOutlook({ hp: unit.stats.hp, hpRegen: unit.stats.hpRegen, spd: unit.stats.spd }, slot, life);
           const body = useful > 0 ? (look.absorbedBlocked + look.absorbedShared) * vc.protectShare : 0;
-          return tv * look.ownTurns * useful + body;
+          // r48 (Falling Oak vb.): inişte çalışan ağaç tetikleri (iniş hasarı, Stun) bu yuvadan; bir kez olur, isabet şansı yok
+          const arr = battle.aiArrival(actor.uid, o.skill.id, slot, o.corpseUid);
+          const landing = arr ? trigEventValue(ctx, arr.owner, { on: 'arrive', unit: unit.id, target: arr.owner, subject: arr.owner }, 1, undefined, arr.triggers) : 0;
+          return tv * look.ownTurns * useful + body + landing;
         };
         // Yuva (tahta alanı): varsayılan yuva (summonSlotFor) ile başla; boş yuvalardan değeri AÇIKÇA daha yüksek olan seçilir (ör. menzilli Treant
         // arkada ne vurur ne saldırı çeker: önde hem tüm düşmanlara ulaşır hem vuruş üstlenir). Eşitlikte varsayılan yuva kalır.
@@ -1800,6 +1822,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     add('veinTree', veinTreeValue(ctx, o));
     const tr = treeTriggerValue(ctx, o);
     add('tree', tr.own);
+    add('treeRage', treeRageValue(ctx, o));
     add('retaliation', tr.retaliation);
   }
   add('instinct', -instinctCost(ctx, o));
@@ -1995,8 +2018,9 @@ function controlValue(ctx: ValueContext, o: Option): number {
         })), 0) / Math.max(1, foes.length);
         v += pm * (1 - def.healTakenMult) * healPerTurn * own * ctx.vc.contributionShare;
       }
-      // Kendi Fortify'ı yalnızca Taunt / Guard skill'inde (saf self-buff buffValue'da); taunt'ta yönlenen hasar da azalır (protectValue riski ayrıca)
-      if (def.damageTakenMult !== undefined && def.damageTakenMult < 1 && t.side === actor.side && (!se.self || o.taunt || o.guard)) {
+      // Kendi Fortify'ı: Taunt / Guard skill'inde ve (r43) saldırı skill'inin kendine verdiği korumada (Grim Calm, Charge'a eklenen Fortified);
+      // saf self-buff buffValue'da (çift sayım yok). Taunt'ta yönlenen hasar da azalır (protectValue riski ayrıca)
+      if (def.damageTakenMult !== undefined && def.damageTakenMult < 1 && t.side === actor.side && (!se.self || o.taunt || o.guard || !o.pureBuff)) {
         v += p * (1 - def.damageTakenMult) * (ctx.round.get(t.uid) ?? 0) * Math.min(turns, ctx.vc.horizon);
       }
       // Blessed (magicTakenMult, Ömer 2026-11-16): yalnız büyü hasarı; gelen hasarın büyü payıyla
@@ -2026,7 +2050,7 @@ function setRuleValue(ctx: ValueContext, o: Option): number {
     const given = (o.healBy[t.uid] ?? 0) + (o.shieldBy[t.uid] ?? 0);
     if (given > 0) v += cfg.coalCover * Math.min(ctx.battle.coalPending(t), given);
   }
-  return v + setRuleRisks(ctx, o) + setRuleGains(ctx, o);
+  return v + setRuleRisks(ctx, o) + setRuleGains(ctx, o) + conclaveWearerValue(ctx, o);
 }
 
 /**
@@ -2067,8 +2091,9 @@ function setRuleGains(ctx: ValueContext, o: Option): number {
 /**
  * Set kurallarının (2026-11-07) düşmana vuruş bedeli (can-eşdeğer; ai.json > value.setRules; taşıyan hedef yoksa 0):
  * Unseen = kaçınırsa taşıyanın sonraki saldırısı kesin kritik (iska payı x unseenGift x tur değeri), Hangman's Rope = ölümcül vuruşu Lucky Escape kurtarırsa
- * Fortified (kurtarma olasılığı x ropeFortify x tur değeri), The Conclave Answers = taşıyanı hedeflemek bedava temel saldırı karşılığı doğurur
- * (temel saldırının ham değeri x power x counterCost; karşılık hakkı ve menzil gerçek kuralla). Saf.
+ * Fortified (kurtarma olasılığı x ropeFortify x tur değeri), The Conclave Answers (Ömer 2026-11-23 r41 B) = taşıyanı hedeflemek saldıranın altına zemin
+ * çıkarır (groundUnitWorth x counterCost x taşıyanın sağ kalma payı); hücre zaten yanıyorsa ya da bu vuruş Heat Mirage zeminini bırakacaksa zemin yerine
+ * durum (statusEffectWorth x counterCost). Hak, sersemlik ve çift zemin kuralı motorla aynı (Battle.conclaveBurning). Saf.
  */
 function setRuleRisks(ctx: ValueContext, o: Option): number {
   const cfg = ctx.vc.setRules;
@@ -2076,6 +2101,7 @@ function setRuleRisks(ctx: ValueContext, o: Option): number {
   const battle = ctx.battle;
   const actor = ctx.actor;
   let v = 0;
+  let conclaveGroundAhead = false;
   const seen = new Set<string>();
   for (const t of o.targets) {
     if (t.side === actor.side || seen.has(t.uid) || (!t.itemEffects && !t.treeFx)) continue;
@@ -2094,13 +2120,63 @@ function setRuleRisks(ctx: ValueContext, o: Option): number {
       v -= cost;
       if (cost > 0 && o.notes.length < 6) o.notes.push(`${unitLabel(t)} Martyr's Bequest -> ${unitLabel(heir)}: -${r1(cost)}`);
     }
-    const ca = (cfg.counterCost ?? 0) > 0 ? effFirst(t, 'counterAttack') : undefined;
-    if (ca && (t.countersUsed ?? 0) < ca.perTurn && t.hp > 0) {
-      const basic = t.skills[0] ? battle.skill(t.skills[0], t) : undefined;
-      if (basic?.target === 'single_enemy' && battle.validTargets(t.uid, basic.id).some((c) => c.uid === actor.uid)) v -= cfg.counterCost! * ca.power * skillRawValue(battle, t.stats, basic, t);
+    const cg = (cfg.counterCost ?? 0) > 0 ? effFirst(t, 'counterGround') : undefined;
+    if (cg && (t.countersUsed ?? 0) < cg.perTurn && t.hp > 0 && !t.inert && !t.encased && !t.underground && !actor.inert && !t.statuses.some((st) => battle.statusDef(st.kind)?.skipTurn)) {
+      const live = 1 - (o.killP[t.uid] ?? 0);
+      const burning = conclaveGroundAhead || battle.conclaveBurning(actor, cg.ground) || mirageAhead(ctx, o, cg.ground);
+      const w = burning
+        ? statusEffectWorth(ctx, actor, cg.status, Math.min(cg.statusTurns, ctx.vc.horizon), { from: t.side })
+        : groundUnitWorth(ctx, actor, cg.ground, Math.round(attributePower(t.stats, cg.scale, battle.formulas) * cg.power), cg.turns, t.side);
+      conclaveGroundAhead = true; // aynı kullanımda ikinci taşıyan: hücre artık yanıyor (motor sırası: hedef listesi)
+      // r43 not: iki taşıyan aynı kullanımla hedeflenince motor ikisine de cevap verdirir (ilki zemin, ikincisi durum); iki bedel de gerçek, çift sayım değil
+      const cost = cfg.counterCost! * live * Math.min(0, w);
+      v += cost;
+      if (cost < 0 && o.notes.length < 6) o.notes.push(`${unitLabel(t)} The Conclave Answers (${burning ? cg.status : cg.ground}): ${r1(cost)}`);
     }
   }
   return v;
+}
+
+/**
+ * The Conclave Answers taşıyanının KENDİ hamle değeri (r43 madde 3, Lead; ai.json > value.setRules.conclaveWearer; taşımayan / 0 ise 0). Taşıyanın sıradaki
+ * turundan önce onu hedeflemesi tahmin edilen düşmanın (ctx.intents, odak payı) tetikleyeceği karşılığın değeri, bu seçenekten sonra ile şimdi arasındaki fark:
+ * (a) seçenek o düşmanı öldürürse karşılık kaybolur, (b) seçenek o düşmanın hücresine aynı zemini bırakırsa karşılık zemin yerine durum olur (çift zemin
+ * kuralı; motorla aynı Battle.conclaveBurning). Hak taşıyanın bu eyleminden sonra yenilenir (perTurn). Ölçüler setRuleRisks ile aynı. Saf.
+ */
+function conclaveWearerValue(ctx: ValueContext, o: Option): number {
+  const share = ctx.vc.setRules?.conclaveWearer ?? 0;
+  const actor = ctx.actor;
+  const cg = share > 0 ? effFirst(actor, 'counterGround') : undefined;
+  if (!cg) return 0;
+  const battle = ctx.battle;
+  const nowRows: number[] = [];
+  const afterRows: number[] = [];
+  for (const i of ctx.intents) {
+    if (!i.before || !i.focus.includes(actor.uid)) continue;
+    const f = battle.get(i.foe);
+    if (!f || f.hp <= 0 || f.inert) continue;
+    const amount = Math.round(attributePower(actor.stats, cg.scale, battle.formulas) * cg.power);
+    const worth = (burning: boolean) =>
+      -Math.min(0, burning ? statusEffectWorth(ctx, f, cg.status, Math.min(cg.statusTurns, ctx.vc.horizon), { from: actor.side }) : groundUnitWorth(ctx, f, cg.ground, amount, cg.turns, actor.side));
+    const burnsNow = battle.conclaveBurning(f, cg.ground);
+    const now = worth(burnsNow);
+    const after = (1 - (o.killP[f.uid] ?? 0)) * worth(burnsNow || !!o.groundOn?.[f.uid]?.includes(cg.ground));
+    nowRows.push(now / i.focus.length);
+    afterRows.push(after / i.focus.length);
+  }
+  if (!nowRows.length) return 0;
+  // Hak perTurn: karşılığı en değerli perTurn düşman alır; öncesi ve sonrası ayrı ayrı tavanlanır (biri ölünce öbürü yine tetikler)
+  const top = (xs: number[]) => sum([...xs].sort((a, b) => b - a).slice(0, cg.perTurn));
+  const v = share * (top(afterRows) - top(nowRows));
+  if (Math.abs(v) >= 0.05 && o.notes.length < 6) o.notes.push(`own The Conclave Answers outlook: ${v > 0 ? '+' : ''}${r1(v)}`);
+  return v;
+}
+
+/** Bu seçenek saldıranın hücresine Heat Mirage zemini bırakacak mı (strikeSideTerms ile aynı şart; aynı zemin türüyse Conclave çift zemin yerine durum verir). */
+function mirageAhead(ctx: ValueContext, o: Option, ground: string): boolean {
+  const t = o.primary;
+  const pe = t?.passive?.effect;
+  return !!t && t.side !== ctx.actor.side && pe?.type === 'heatMirage' && pe.ground === ground && !t.mirageUsed && o.skill.motion === 'melee' && (o.dmgBy[t.uid] ?? 0) > 0;
 }
 
 /**
@@ -3568,7 +3644,10 @@ function telegraphDodge(battle: Battle, actor: Combatant, free: number[], vNow: 
 /** Move Tile için en iyi plan: menzil açıkken ai-range.ts > bestMoveRange (konum alma), kapalıyken eski plan. */
 function bestMove(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): MovePlan | null {
   const base = !battle.rangeOn ? bestMoveLegacy(battle, actor, g, vNow) : bestMoveRange(battle, actor, g.move, vNow, { ctx: activeCtx, vc: activeCtx?.vc ?? DEFAULT_VALUE, dodgeOpportunityShare: activeTg.dodgeOpportunityShare, telegraphLoad, auraBenefit });
-  return groundMove(battle, actor, vNow, base);
+  const plan = groundMove(battle, actor, vNow, base);
+  // (e) 2026-11-23: karşı tarafın 'enemyMoved' tetikleri (yer değiştirmenin bedeli / getirisi) planın net değerine
+  const mv = plan && activeCtx && activeCtx.actor === actor ? enemyMovedValue(activeCtx, actor) : 0;
+  return plan && mv ? { ...plan, net: plan.net + mv, kind: `${plan.kind ?? 'move'}; enemyMoved ${mv >= 0 ? '+' : ''}${r2(mv)}` } : plan;
 }
 
 /**
@@ -3991,7 +4070,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
     final,
     why,
     steps,
-    winnerRule: `value scale (difficulty ${difficulty}, horizon ${vc.horizon} turns): score = damage + pressure + kill + save + heal + shield + revive + control + protect + summon + bond + curse + mitigation + cleanse + burn + silence + brand + tempo + deny + anchor + position + ground + reaction + setup + bell + dispel + manaGain + blood + vein + omenTransfer + tree (+ buff for self-buffs) + stall - overkill - mirage - rage - ward - grudge - divineLight - retaliation - instinct - futile - patience - bloodCost - cost - cooldown; ${rules.pickTop && rules.pickTop > 1 ? `picks among the best ${rules.pickTop} (deterministic, seed + turn + unit)` : 'highest wins'}`,
+    winnerRule: `value scale (difficulty ${difficulty}, horizon ${vc.horizon} turns): score = damage + pressure + kill + save + heal + shield + revive + control + protect + summon + bond + curse + mitigation + cleanse + burn + silence + brand + tempo + deny + anchor + position + ground + reaction + setup + bell + dispel + manaGain + blood + vein + omenTransfer + tree + treeRage (+ buff for self-buffs) + stall - overkill - mirage - rage - ward - grudge - divineLight - retaliation - instinct - futile - patience - bloodCost - cost - cooldown; ${rules.pickTop && rules.pickTop > 1 ? `picks among the best ${rules.pickTop} (deterministic, seed + turn + unit)` : 'highest wins'}`,
     candidates,
     rejected,
     reserves: trace.reserves.map((r) => ({ skill: r.skill, needMp: r.need, inTurns: r.turns })),
@@ -4553,6 +4632,7 @@ function groundCreationValue(battle: Battle, actor: Combatant, skill: SkillDef, 
         }
         continue;
       }
+      (o.groundOn ??= {})[u.uid] = [...(o.groundOn[u.uid] ?? []), e.ground];
       const left = Math.max(0, u.hp - (o.dmgBy[u.uid] ?? 0));
       const parts = { tick: 0 };
       const w = groundUnitWorth(ctx, u, e.ground, previewed ? 0 : amount, e.turns, actor.side, { ...(e.statuses?.length && actor.treeHooks ? { statuses: e.statuses } : {}), left, parts });
@@ -4670,13 +4750,16 @@ function trigActionWorth(ctx: ValueContext, owner: Combatant, a: TriggerAction, 
   const battle = ctx.battle;
   const f = battle.formulas;
   const cov = coverageOf(ctx.vc);
-  const base = (of?: string) => (of === 'amount' || of === 'dealt' ? (ev.amount ?? 0) : of === undefined || of === 'maxHp' ? rec.maxHp : 0);
+  // hpPaid: payHp olayında motorun tabanı olay miktarıdır (battle.ts trigBase 'hpPaid'; YZ olayı ödenecek canla verir)
+  const base = (of?: string) => (of === 'amount' || of === 'dealt' || of === 'hpPaid' ? (ev.amount ?? 0) : of === undefined || of === 'maxHp' ? rec.maxHp : 0);
   let v = 0;
   if (a.damage !== undefined) {
     const type = a.damageType ?? (a.stat === 'str' || a.stat === 'dex' ? 'physical' : 'magic');
     const element = (a.element ?? (type === 'physical' ? 'physical' : 'arcane')) as Parameters<Battle['tickDamage']>[0];
     const flat = a.of === 'amount' || a.of === 'dealt' ? (ev.amount ?? 0) : undefined;
-    const d = flat !== undefined ? Math.max(1, Math.round(flat * a.damage * s)) : a.stat ? battle.tickDamage(element, type, Math.round(attributePower(owner.stats, a.stat as Attribute, f) * a.damage * s), rec) : 0;
+    // r48: çağrının kancasında `summoner` = çağıranın statı (motor trigger eylemiyle aynı; Crashing Arrival / Falling Oak)
+    const statSrc = a.summoner && owner.owner ? (battle.get(owner.owner) ?? owner) : owner;
+    const d = flat !== undefined ? Math.max(1, Math.round(flat * a.damage * s)) : a.stat ? battle.tickDamage(element, type, Math.round(attributePower(statSrc.stats, a.stat as Attribute, f) * a.damage * s), rec) : 0;
     v -= Math.min(rec.hp, d);
   } else if (a.strike !== undefined) {
     const raw = ev.o && ev.o.skill.effects.some((e) => e.type === 'damage') && owner.uid === ctx.actor.uid ? ev.o.primaryAvg : ctx.turnValue(owner) / Math.max(0.01, ctx.vc.contributionShare);
@@ -4723,10 +4806,10 @@ function trigActionWorth(ctx: ValueContext, owner: Combatant, a: TriggerAction, 
 }
 
 /** Bir tetik olayının (sahibin ağaç kancaları) değeri bizim tarafa (artı = bizim için iyi), `weight` olay ihtimali. */
-function trigEventValue(ctx: ValueContext, owner: Combatant, ev: Parameters<Battle['aiTriggers']>[1], weight: number, o?: Option): number {
+function trigEventValue(ctx: ValueContext, owner: Combatant, ev: Parameters<Battle['aiTriggers']>[1], weight: number, o?: Option, pre?: ReturnType<Battle['aiTriggers']>): number {
   if (weight <= 0 || !owner.treeHooks) return 0;
   let v = 0;
-  for (const tr of ctx.battle.aiTriggers(owner, ev)) {
+  for (const tr of pre ?? ctx.battle.aiTriggers(owner, ev)) {
     const proc = (tr.hook.procChance ?? 1) / Math.max(1, tr.hook.every ?? 1);
     for (const a of tr.hook.do) {
       // Hexer Lasting Jinx (zincir sekme): her zar tutsa izlenecek sıra; i. sekme ihtimali proc^(i+1)
@@ -4794,6 +4877,54 @@ function streakTerms(ctx: ValueContext, o: Option, gross: number): Record<string
   const rc = battle.luckyRecastOf(actor, o.skill);
   if (rc > 0) out.luckyRepeat = gross * rc * w.recastShare;
   return out;
+}
+
+/**
+ * Ağaç Rage kancalarının (C2 `h: 'rage'`: Reckless Heat 30, War Gallop, Roaring Charge tabanı, Grim Momentum, Blood Up, Reaping Wind tallyAll) kendi
+ * hamle değeri (r43, Lead): kazanılacak Rage x rageWorth x aiCov.tree.rageShare. Rage tavanı (formulas.rage.max) motor sırasıyla doldurulur: skill'in
+ * kendi Rage bedeli düşülür, sonra isabet kancaları (x isabet olasılığı), sonra skill'in olağan vuruş Rage'i (perCastCap; yalnız boşluğu doldurur,
+ * değeri burada sayılmaz), en son kullanım kancaları ve taban; tavanı aşan Rage değersiz. Koşul / ölçek / bir kez motorla aynı (Battle.aiTreeRage). Saf.
+ */
+function treeRageValue(ctx: ValueContext, o: Option): number {
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const max = actor.maxRage;
+  if (max === undefined || !actor.treeHooks?.some((h) => h.h === 'rage')) return 0;
+  const share = coverageOf(ctx.vc).tree.rageShare;
+  const worth = share > 0 ? ctx.rageWorth(actor) : 0;
+  if (worth <= 0) return 0;
+  const R = battle.formulas.rage;
+  let rage = actor.rage ?? 0;
+  if (o.skill.cost.resource === 'rage' && !battle.freeRage) rage = Math.max(0, rage - skillCostAmount(o.skill.cost, actor));
+  let gained = 0;
+  const fill = (g: number) => {
+    const step = Math.max(0, Math.min(max - rage, g));
+    rage += step;
+    return step;
+  };
+  const tallies: number[] = [];
+  for (const [uid, d] of Object.entries(o.dmgBy)) {
+    const t = battle.get(uid);
+    if (!t || t.side === actor.side || d <= 0) continue;
+    const h = previewHitChance(o, t);
+    const hk = battle.aiTreeRage(actor, t, o.skill, 'hit');
+    gained += fill(hk.gain * h);
+    if (hk.floor > rage) gained += fill((hk.floor - rage) * h);
+    const amount = h > 0 ? d / h : d;
+    tallies.push(h * Math.min(R.perHitCap, R.hitBase + R.perHpPercent * ((amount / Math.max(1, t.maxHp)) * 100)));
+  }
+  if (tallies.length) {
+    const best = Math.max(...tallies);
+    const all = actor.treeHooks.some((h) => h.h === 'rage' && h.rule === 'tallyAll' && (!h.skill || h.skill === o.skill.id));
+    fill(Math.min(R.perCastCap, best)); // olağan vuruş Rage'i: yalnız tavana yer kaplar
+    if (all) gained += fill(Math.min(R.perCastCap, sum(tallies)) - Math.min(R.perCastCap, best));
+  }
+  const ck = battle.aiTreeRage(actor, undefined, o.skill, 'cast');
+  gained += fill(ck.gain);
+  if (ck.floor > rage) gained += fill(ck.floor - rage);
+  const v = gained * worth * share;
+  if (v > 0 && o.notes.length < 6) o.notes.push(`tree Rage +${r1(gained)} (cap ${max}): +${r1(v)}`);
+  return v;
 }
 
 function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliation: number } {
@@ -4907,7 +5038,118 @@ function treeTriggerValue(ctx: ValueContext, o: Option): { own: number; retaliat
     for (const g of battle.living(t.side)) if (g.treeHooks) ret += trigEventValue(ctx, g, { on: 'enemyMissed', target: actor, subject: t, source: actor }, miss, o);
   }
   own += missSetupValue(ctx, o);
+  const more = moreTriggerValue(ctx, o);
+  own += more.own;
+  ret += more.ret;
   return { own: own * cov.tree.triggerShare, retaliation: ret * cov.tree.retaliationShare };
+}
+
+/**
+ * (e) 2026-11-23 (güvenlik ağı, Ömer onayı n_ai): YZ'nin eskiden tartmadığı ağaç tetik olayları. Her olay motorun ateşlediği alanlarla (battle.ts trig
+ * çağrıları) ve aynı ölçüyle (trigEventValue: eylem değeri x olay ihtimali) tartılır; sahibi bizim taraftaysa 'tree', karşı taraftaysa 'retaliation'
+ * terimine. Yeni kural yok: olay ihtimalleri adayın kendi tahmininden (isabet, öldürme, şifa, bedel, tekrar / bahis şansı, Doom dalı).
+ * - allyHit: kullanıcının vurduğu her düşman için kullanıcının dostlarının kancaları (vuranın dostları); hpBelow: vurulanın tarafı, can eşiği geçişi
+ *   (önce / sonra oranı, isabet x sağ kalma); luckyEscape: öldürücü vuruşu Lucky Escape ile atlatma (öldürme ihtimali / (1 - şans) x şans).
+ * - enemyDied: ölenin karşı tarafındaki kancalar (öldürme ihtimali); summonDeath: ölen çağrının sahibi.
+ * - payHp / mpBelow: bu kullanımın can / MP bedeli (motorla aynı ödeme: skillCostPay, kan bedelinin candan kısmı).
+ * - enemyHealed: iyileşenin karşı tarafı (şifa miktarı); statusGained: durumu alanın kendi kancaları (isabet x şans; kendine / dosta durum kesin).
+ * - repeat / repeatFail: tekrar vuruşu şansı (önizlemeyle aynı: repeatChance + temel + Lucky Streak); jackpot / bust: bahis kazanma / kaybetme.
+ * - doom: Doom işleme ihtimali (curseValue); revived: diriltilen dost.
+ * enemyMoved Move planında (bestMove: enemyMovedValue). Değer gerekmeyenler (seçimden bağımsız): battleStart, turnStart, groundEnd (zemin süresi
+ * dolunca), passiveHeal (pasif tur şifası), arrive (r48: çağrının iniş tetikleri summonValue'da, yuva bazında; Battle.aiArrival).
+ */
+function moreTriggerValue(ctx: ValueContext, o: Option): { own: number; ret: number } {
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  const sid = o.skill.id;
+  const cast = o.targets;
+  let own = 0;
+  let ret = 0;
+  const hooked = (c: Combatant | undefined): c is Combatant => !!c && c.hp > 0 && !!c.treeHooks?.some((h) => h.h === 'trigger');
+  const add = (owner: Combatant, v: number): void => {
+    if (owner.side === actor.side) own += v;
+    else ret += v;
+  };
+  const other = (s: Side): Side => (s === 'party' ? 'enemy' : 'party');
+  for (const [uid, d] of Object.entries(o.dmgBy)) {
+    const t = battle.get(uid);
+    if (!t || t.side === actor.side || d <= 0) continue;
+    const h = previewHitChance(o, t);
+    const amount = h > 0 ? d / h : d;
+    for (const g of battle.living(actor.side)) if (g !== actor && hooked(g)) add(g, trigEventValue(ctx, g, { on: 'allyHit', target: t, subject: actor, source: actor, skill: sid, amount, castTargets: cast }, h, o));
+    const kp = o.killP[uid] ?? 0;
+    if (t.maxHp > 0 && kp < 1) {
+      const before = t.hp / t.maxHp;
+      const after = Math.max(0, t.hp - amount) / t.maxHp;
+      for (const g of battle.living(t.side)) if (hooked(g)) add(g, trigEventValue(ctx, g, { on: 'hpBelow', subject: t, source: actor, target: actor, before, after }, h * (1 - kp), o));
+    }
+    const lucky = battle.luckyEscapeChance(uid);
+    if (lucky > 0 && lucky < 1 && kp > 0 && hooked(t)) add(t, trigEventValue(ctx, t, { on: 'luckyEscape', target: actor, source: actor }, Math.min(1, kp / (1 - lucky)) * lucky, o));
+  }
+  for (const [uid, p] of Object.entries(o.killP)) {
+    const t = battle.get(uid);
+    if (!t || p <= 0) continue;
+    const grounds = battle.ground.filter((gr) => gr.board === t.board && gr.slots.includes(t.slot)).map((gr) => gr.ground); // motorla aynı (deathTrig)
+    for (const g of battle.living(other(t.side))) if (hooked(g)) add(g, trigEventValue(ctx, g, { on: 'enemyDied', target: t, subject: t, source: actor, statuses: t.statuses, grounds }, p, o));
+    const ow = t.summoned && t.owner ? battle.get(t.owner) : undefined;
+    if (hooked(ow)) add(ow, trigEventValue(ctx, ow, { on: 'summonDeath', unit: t.defId, target: t, subject: t }, p, o));
+  }
+  for (const [uid, amt] of Object.entries(o.healBy)) {
+    const r = battle.get(uid);
+    if (!r || amt <= 0) continue;
+    for (const g of battle.living(other(r.side))) if (hooked(g)) add(g, trigEventValue(ctx, g, { on: 'enemyHealed', target: r, subject: r, source: actor, amount: amt }, 1, o));
+  }
+  for (const e of o.skill.effects) {
+    if (e.type !== 'status') continue;
+    const recs = e.self ? [actor] : o.targets.filter((t) => t.hp > 0 && battle.effectAppliesTo(o.skill, e, t, actor));
+    for (const t of recs) {
+      if (!hooked(t) || battle.statusBlocked(t, e.status)) continue;
+      const w = (t.side === actor.side ? 1 : previewHitChance(o, t) * (1 - (o.killP[t.uid] ?? 0))) * ((e as { chance?: number }).chance ?? 1);
+      add(t, trigEventValue(ctx, t, { on: 'statusGained', target: actor, subject: t, source: actor, status: e.status, statusSource: actor.uid }, w, o));
+    }
+  }
+  if (hooked(actor)) {
+    const pay = skillCostPay(o.skill.cost, actor, undefined, battle.freeMp);
+    const hpPay = pay.resource === 'hp' ? pay.amount : (o.bloodPay?.hp ?? 0);
+    if (hpPay > 0) own += trigEventValue(ctx, actor, { on: 'payHp', skill: sid, amount: hpPay, ...(o.primary ? { target: o.primary } : {}) }, 1, o);
+    if (pay.resource === 'mp' && pay.amount > 0 && actor.maxMp > 0 && !battle.freeMp) own += trigEventValue(ctx, actor, { on: 'mpBelow', skill: sid, amount: pay.amount, before: actor.mp / actor.maxMp, after: Math.max(0, actor.mp - pay.amount) / actor.maxMp }, 1, o);
+    const dmg = o.skill.effects.find((e) => e.type === 'damage');
+    if (dmg && dmg.type === 'damage' && o.primary) {
+      const again = Math.min(1, (dmg.repeatChance ?? 0) + battle.basicRepeatOf(actor, o.skill) + battle.luckyRepeatOf(actor, o.skill));
+      if (again > 0) {
+        own += trigEventValue(ctx, actor, { on: 'repeat', target: o.primary, subject: o.primary, skill: sid, amount: 1 }, o.primaryHit * again, o);
+        if (again < 1) own += trigEventValue(ctx, actor, { on: 'repeatFail', target: o.primary, subject: o.primary, skill: sid }, o.primaryHit * (1 - again), o);
+      }
+      if (dmg.bet) {
+        const tb = battle.treeBet(actor, o.primary, o.skill, dmg.bet);
+        const bet = tb?.bet ?? dmg.bet;
+        const mpLeft = o.skill.cost.resource === 'mp' && !battle.freeMp ? actor.mp - o.skill.cost.amount : actor.mp;
+        const sp = betStakeParts(bet, actor.maxHp, actor.hp, mpLeft, tb?.stakeMul ?? 1);
+        const stake = sp.main + sp.hp;
+        const wc = Math.max(0, Math.min(1, bet.winChance));
+        const resource = bet.resource === 'hp' ? ('hp' as const) : ('mp' as const);
+        if (wc > 0) own += trigEventValue(ctx, actor, { on: 'jackpot', amount: stake, resource, skill: sid }, wc, o);
+        if (wc < 1) own += trigEventValue(ctx, actor, { on: 'bust', amount: stake, resource, skill: sid }, 1 - wc, o);
+      }
+    }
+    for (const [uid, d] of Object.entries(o.doomBy ?? {})) {
+      const t = battle.get(uid);
+      // amount = Doom hasarı: motor 'dealt' tabanını bu hasardan okur (Hexer 1. sıra hpLoss of dealt); trigActionWorth of 'dealt' / 'amount' ev.amount'tur
+      if (t) own += trigEventValue(ctx, actor, { on: 'doom', target: t, subject: t, amount: d.dealt, skill: sid }, d.p, o);
+    }
+    if (o.revive > 0) {
+      const r = o.targets.find((t) => t.hp <= 0 && t.side === actor.side);
+      if (r) own += trigEventValue(ctx, actor, { on: 'revived', target: r, subject: r, skill: sid }, 1, o);
+    }
+  }
+  return { own, ret };
+}
+
+/** (e) Move planı: kullanıcı yer değiştirince karşı tarafın 'enemyMoved' kancaları (Archer); retaliation ölçüsüyle (artı = bizim için iyi). */
+function enemyMovedValue(ctx: ValueContext, actor: Combatant): number {
+  let v = 0;
+  for (const g of ctx.battle.living(actor.side === 'party' ? 'enemy' : 'party')) if (g.treeHooks?.some((h) => h.h === 'trigger' && h.on === 'enemyMoved')) v += trigEventValue(ctx, g, { on: 'enemyMoved', target: actor, subject: actor, source: actor }, 1);
+  return v * coverageOf(ctx.vc).tree.retaliationShare;
 }
 
 /**
@@ -5025,7 +5267,7 @@ function strikeSideTerms(ctx: ValueContext, profile: AiProfile, o: Option, add: 
       if (!src || src.hp <= 0 || src.side !== actor.side || pe?.type !== 'omenTransfer' || pe.status !== st.kind || !def?.maxStacks || !def.doom) continue;
       if (!battle.living(t.side).some((c) => c !== t && c.board === t.board && !c.inert)) continue;
       const pass = Math.min(pe.maxOnArrival, def.maxStacks - 1, st.stacks ?? 0);
-      const per = attributePower(src.stats, def.doom.scale, battle.formulas) * def.doom.powerPerStack * (profile.omenValueShare ?? 0.85);
+      const per = (attributePower(src.stats, def.doom.scale, battle.formulas) * def.doom.powerPerStack + (def.doom.flatPerStack ?? 0) * (src.stats.spellPowerMult ?? 1)) * (profile.omenValueShare ?? 0.85);
       if (pass > 0) add('omenTransfer', p * pass * per * cov.omenTransferShare);
     }
   }
@@ -5239,4 +5481,4 @@ function dispelBuffValue(ctx: ValueContext, profile: AiProfile, o: Option): numb
 }
 
 /** Testler için (tests/ai-coverage.test.ts): kapsam yardımcıları; oyun kodu kullanmaz. */
-export const aiCoverageInternals = { cellWorth, cellDelta, statusEffectWorth, electroWorth, ownElementLoss, cleansedDotLoss, groundUnitWorth, stayTicks, groundMove };
+export const aiCoverageInternals = { enemyMovedValue, cellWorth, cellDelta, statusEffectWorth, electroWorth, ownElementLoss, cleansedDotLoss, groundUnitWorth, stayTicks, groundMove };

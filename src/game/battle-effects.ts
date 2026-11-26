@@ -24,7 +24,7 @@ export function enemyModsText(m: DifficultyEnemyMods | undefined): string {
   if (m.statMult !== undefined && m.statMult !== 1) out.push(`${pctUp(m.statMult)} stats`);
   if (m.powerMult !== undefined && m.powerMult !== 1) out.push(`${pctUp(m.powerMult)} damage`);
   if (m.armorAdd) out.push(`+${m.armorAdd} armor`);
-  if (m.magicArmorAdd) out.push(`+${m.magicArmorAdd} magic armor`);
+  if (m.magicArmorAdd) out.push(`+${m.magicArmorAdd} Magic Armor`);
   return out.join(', ');
 }
 

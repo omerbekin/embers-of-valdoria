@@ -1,6 +1,6 @@
 {
   "class": "gambler",
-  "version": 3,
+  "version": 4,
   "picked": {
     "rows": [
       "a",
@@ -905,7 +905,7 @@
     },
     "2.fb": {
       "name": "Penny Ante",
-      "text": "High Stakes stakes only 5% of max HP, but its Jackpot pays 2x → 1.6x.",
+      "text": "High Stakes costs only 5% of max HP, but its Jackpot pays 2x → 1.6x.",
       "src": "B:V1:2.fb",
       "fx": [
         {
@@ -1213,14 +1213,17 @@
     },
     "3.ma": {
       "name": "Double Deal",
-      "text": "Each Card Trick card deals two different statuses: your Stacked Deck pick and a random one.",
+      "text": "Card Trick deals your Stacked Deck pick plus the other card: Slow brings Wound, Wound brings Slow, Stun brings one of the two at random.",
       "src": "B:V4:3.ma*",
       "fx": [
         {
           "k": "mode",
           "needs": "3.ea",
           "secondStatus": true,
-          "title": "Pick one. A random second status joins it."
+          "secondExclude": [
+            "stun"
+          ],
+          "title": "Pick one. Slow and Wound come together; Stun adds one of them."
         }
       ]
     },

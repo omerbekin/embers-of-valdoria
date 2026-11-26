@@ -11,6 +11,7 @@ Bekleyen düzeltme listesi bu dosyadadır (eski `pending-fixes.md` buraya birle�
 - Motor kuralı / kayıt şeması / denge değeri Combat Design'a (Lead) gider; burada yapılmaz.
 
 ## Açık / bekleyen
+- Metin turu r46 (2026-11-25, dal agent/metin-r46): Amerikan yazım süpürmesi (armour/colour/grey/harbour/travel(l)ing/cancelled/Fervour vb., yalnız görünen metin), Wither adı > Withering, "Magic Armor" tek biçim, Wound/Hobbled/Red-Hot/High Stakes/tutorial düzeltmeleri, Soaked cümlesi, status notası. Mob yeniden adlandırma: yalnız Brannoc "Skullsplitter" > "Helm Cleaver" (öbür aynı adlar mob-mob). Bırakılanlar: `match-log.ts` "cancelled" (hata ayıklama günlüğü), audio ikinci kıvrık apostroflar, `harbour` kod yorumları, "Wounded" sıfatları (skill ağaçları).
 - Castle Gate: KAPANDI, görsel zaten güncel (sürüm notunda var). Yeniden üretilen görsel oyuna alınmadı (geçici klasörde).
 - Emberbrand tür/görsel uyumsuzluğu → Item Design. Çekiç/gürz ikon + isim tutarsızlığı → Item Design.
 - Ley Thread / ikinci mana yakma → Combat Design (Ley 1,5, Ömer'in son kararı).

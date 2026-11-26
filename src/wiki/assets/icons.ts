@@ -212,6 +212,8 @@ export function mountIcons(cat: Catalog): SectionApi {
   // Sefer mobu ikonları (assets/mob-icons/<skill ya da pasif id>.png; tools/import-mob-art.mjs): kim kullanıyor
   const mobUse = (id: string): string => {
     const users = Object.values(content.mobs).filter((m) => m.skills.includes(id) || m.passive?.id === id).map((m) => m.name);
+    const g = content.globalSkills[id]; // global eylemin kendi boyalı ikonu (Royal Command; globalIconName)
+    if (g) return `${g.name} (global action)`;
     const what = content.skills[id]?.name ?? Object.values(content.mobs).find((m) => m.passive?.id === id)?.passive?.name;
     return what ? `${what}${users.length ? ` (${users.join(', ')})` : ''}` : '';
   };
@@ -226,7 +228,7 @@ export function mountIcons(cat: Catalog): SectionApi {
           { class: 'card icon-card' },
           h('img', { class: 'bigicon', attrs: { src: url, alt: id, loading: 'lazy' }, title: 'Click to enlarge', on: { click: () => openLightbox(url, id, false) } }),
           h('div', { class: 'card-title mono', text: id }),
-          h('div', { class: 'tags' }, h('span', { class: label ? 'badge ok' : 'badge', text: label ? (content.skills[id] ? 'Mob skill' : 'Mob passive') : 'Unlinked' })),
+          h('div', { class: 'tags' }, h('span', { class: label ? 'badge ok' : 'badge', text: label ? (content.globalSkills[id] ? 'Global action' : content.skills[id] ? 'Mob skill' : 'Mob passive') : 'Unlinked' })),
           h('div', { class: 'small muted', text: label || 'no mob skill or passive with this id' }),
         ),
         `mob icon ${id} ${label}`,
@@ -312,7 +314,7 @@ export function mountIcons(cat: Catalog): SectionApi {
     h('p', { class: 'note', text: `Painted item icons (assets/items, cut by tools/make-item-icons.mjs from assets/source/item-icons). An item with art shows it everywhere; the rest fall back to the pixel icons above${cat.itemArt.missing.length ? ` (still pixel: ${cat.itemArt.missing.join(', ')})` : ''}.` }),
     art,
     h('h3', { class: 'sub', text: 'Rarity tints' }),
-    h('p', { class: 'note', text: 'Rarity colours only the gem, trim or band; the object keeps its own materials.' }),
+    h('p', { class: 'note', text: 'Rarity colors only the gem, trim or band; the object keeps its own materials.' }),
     tints,
     h('h3', { class: 'sub', text: `Effect sprites (${cat.fxSprites.length})` }),
     h('p', { class: 'note', text: 'Small sprites that animations draw with (not icons).' }),

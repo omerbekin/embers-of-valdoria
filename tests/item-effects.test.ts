@@ -33,7 +33,7 @@ describe('veri: Epic etkileri kaldırıldı, Legendary etkileri kalır (Ömer 20
   it('metin: kart / ipucu satırı etki adı + tek cümle (Gear, Spoils, Endless, tüccar aynı yardımcıyı kullanır)', () => {
     expect(effectLine(itemDef('emberbrand')!)).toBe('Emberbrand: Your hits set the target Burning for 2 turns (fire damage each turn).');
     expect(effectLine(itemDef('flashpowder_locket')!)).toBe('Blinding Opener: Your first damaging skill each battle Blinds up to 3 enemies it hits for 1 turn.');
-    expect(effectLine(itemDef('serrated_edge')!)).toBe('Serrated Edge: Your critical hits leave the target Wounded and Burning for 2 turns.');
+    expect(effectLine(itemDef('serrated_edge')!)).toBe('Serrated Edge: Your critical hits inflict Wound and Burning on the target for 2 turns.');
     expect(effectLine(itemDef('turnshoes')!)).toBeNull();
     expect(itemLines(itemDef('heart_of_the_forge')!).at(-1)).toMatch(/^Heart of the Forge: .*6%/);
     expect(itemStatLines(itemDef('drummers_gauntlets')!).at(-1)).toBe('Battle Rhythm: On a kill, gain Haste for 2 turns and 20% of your max MP.');

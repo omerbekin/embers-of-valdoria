@@ -22,6 +22,7 @@ import { BLOOD_COLOR } from '../ui/stat-icons';
 import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
+import { mountPassiveEvolveFx, passiveEvolveFx, type PassiveEvolveFxHandle } from './passive-evolve-fx';
 import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, ensurePoseSources, poseDisplayScale, throwItemKey } from './pose-rig';
 import { HIT_REACTION, hitReaction, type HitReaction } from './hit-reaction';
@@ -186,6 +187,12 @@ export class CombatantView {
   private readonly realSprite: boolean;
   private homeX: number;
   private readonly hpY: number;
+  /** Dünya koordinatında ad + can/mana çubuğu bölgesi (büyük ekran efektleri bu bölgeyi seyreltir ki çubuklar okunsun). */
+  barArea(): { x0: number; y0: number; x1: number; y1: number } {
+    const cx = this.container.x;
+    const cy = this.container.y;
+    return { x0: cx - hpBar.width / 2 - 12, x1: cx + hpBar.width / 2 + 12, y0: cy + this.hpY - hpBar.height - 70, y1: cy + this.hpY + hpBar.height + hpBar.mpHeight + 8 };
+  }
   /** Ad yazısı (rozet yerleşimi engel olarak okur: badgeGeometry). */
   private nameText!: Phaser.GameObjects.Text;
   private readonly shieldY: number;
@@ -381,11 +388,11 @@ export class CombatantView {
     // Sırası gelen birim: adın üstünde kor elmas (eski sarı ok) + ayaklarının altında kor / altın halka
     const my = this.hpY - hpBar.height - 62 + 14 - streakLift; // ad yukarı kaydıysa (Lucky Streak fişleri) işaret de ismin üstünde kalır
     this.marker = scene.add.graphics().setVisible(false);
-    const dpts = (r: number) => [new Phaser.Math.Vector2(0, my - r), new Phaser.Math.Vector2(r, my), new Phaser.Math.Vector2(0, my + r), new Phaser.Math.Vector2(-r, my)];
-    this.marker.fillStyle(KIT.ember, 0.25).fillPoints(dpts(17), true);
-    this.marker.fillStyle(KIT.ember, 1).fillPoints(dpts(11), true);
-    this.marker.lineStyle(1.5, KIT.ember2, 1).strokePoints(dpts(11), true);
-    this.marker.lineStyle(2, 0x1a0c04, 0.8).strokePoints(dpts(13), true);
+    // karo 3. tur (Ömer r48): sıra göstergesi = dolu kor nokta (eski karoyla aynı ağırlık: 0,8 r)
+    this.marker.fillStyle(KIT.ember, 0.25).fillCircle(0, my, 14);
+    this.marker.lineStyle(2, 0x1a0c04, 0.8).strokeCircle(0, my, 10.5);
+    this.marker.fillStyle(KIT.ember, 1).fillCircle(0, my, 8.8);
+    this.marker.lineStyle(1.5, KIT.ember2, 1).strokeCircle(0, my, 8.8);
     this.footRing = scene.add.graphics().setVisible(false);
     const rw = Math.max(110, this.w * 0.95);
     this.footRing.lineStyle(10, KIT.ember, 0.14).strokeEllipse(0, -6, rw + 8, 32);
@@ -446,7 +453,12 @@ export class CombatantView {
     this.syncTone();
     this.play('idle');
     if (combatant.empowered) this.setEmpowered(true); // beslenmiş çağrı (Raise Dead): kalıcı hafif mor aura
+    const pe = passiveEvolveFx(combatant); // pasif evrimi = karakter efekti (Ömer 2026-11-23): evrimliyse etrafında kalıcı parıltı
+    if (pe) this.passiveGlow = mountPassiveEvolveFx(scene, this.container, this.sprite, { w: this.w, h: this.h }, pe, perfLite(), new SpriteGlow(scene, this.sprite, this.container, 0xffffff, 'wide'));
   }
+
+  /** Pasif evrimi parıltısı (yalnız pasifi evrimleşmiş birimde). */
+  passiveGlow: PassiveEvolveFxHandle | null = null;
 
   /** Lucky Streak fişleri: boş çerçeve, dolu fiş (kırmızı gövde, beyaz çentik, altın halka). */
   private buildStreak(max: number, y: number): void {

@@ -21,7 +21,7 @@ export const UNIT_FX_KEYS = [
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
   'elemResist', 'thorns', 'frontRowDamage', 'backRowDamage', 'tierDamageTakenReduce', 'columnGuard', 'pierceBehind', 'steadyDamage',
   'healReceived', 'executeDamage', 'killMp', 'killHeal', 'armorShred', 'manaShield', 'cdChance', 'overkillSpill', 'bankedCoals', 'roadHound',
-  'dodgeCrit', 'escapeStatus', 'counterAttack', 'allyTurn', 'basicRepeat', 'refrain', 'deathBequest', 'healShorten',
+  'dodgeCrit', 'escapeStatus', 'counterGround', 'allyTurn', 'basicRepeat', 'refrain', 'deathBequest', 'healShorten',
 ] as const satisfies readonly (keyof ItemEffects)[];
 type MissingKey = Exclude<keyof ItemEffects, (typeof UNIT_FX_KEYS)[number]>;
 const _allKeys: [MissingKey] extends [never] ? true : MissingKey = true;
@@ -544,6 +544,14 @@ export const COND: Record<string, (x: CondCtx, arg: unknown) => boolean | undefi
   killingBlow: (x, a) => flag(x.killed, a),
   /** Hedef alanın tıklanan merkez hücresinde (alan skill'i değilse tutmaz). `false` = merkez dışı. */
   targetIsCenter: (x, a) => flag(x.hit?.center, a),
+  /**
+   * r43 (Ömer form r43, Glacial Spike): hedef bu kullanımın KENDİ hedeflerinden biri (ağaç ek vuruşunun yan hedefi değil: Glacier Crater'ın
+   * yanındaki düşmanlar). Kullanım bağlamı yoksa (hedef listesi null) tutar: önizleme / YZ ana hedefi ölçer.
+   */
+  targetInCast: (x, a) => onTarget(x, (t) => {
+    const list = x.host?.castTargets();
+    return flag(list ? list.some((c) => c.uid === t.uid) : true, a);
+  }),
   /** Merkez hücredeki kaçıncı vuruş (1 tabanlı): sayı = eşit. */
   centerHitIndex: (x, a) => (x.hit?.centerHit === undefined ? undefined : x.hit.centerHit === num(a)),
   /** Double Hit zincirindeki sıra en az N (1 = tekrar vuruşu). */
@@ -564,7 +572,8 @@ export const COND: Record<string, (x: CondCtx, arg: unknown) => boolean | undefi
   /** Bu kullanımda en az bir düşman öldü (kullanım sonu kancaları). */
   killedThisCast: (x, a) => (x.cast ? flag(x.cast.kills > 0, a) : undefined),
   /** Bu kullanımda can bedeli ödendi. */
-  hpPaidThisCast: (x, a) => (x.cast ? flag(x.cast.hpPaid > 0, a) : undefined),
+  // Gerçek kullanımda cast.hpPaid; kullanım yokken önizlemenin ödenecek canı (hpPaid; Wail of the Dead ölçeğiyle aynı yol), ikisi de yoksa tutmaz
+  hpPaidThisCast: (x, a) => (x.cast ? flag(x.cast.hpPaid > 0, a) : x.hpPaid !== undefined ? flag(x.hpPaid > 0, a) : undefined),
   /** Bahis kazanıldı / kaybedildi (bahisli skill; zar atıldıktan sonra). */
   betWon: (x, a) => (x.cast?.bet ? flag(x.cast.bet === 'won', a) : undefined),
   betLost: (x, a) => (x.cast?.bet ? flag(x.cast.bet === 'lost', a) : undefined),
@@ -1213,9 +1222,15 @@ export interface TriggerHook {
   /** Faz 4c: öldürenin kim olduğu (enemyDied): 'ally' = sahibin dostu (sahip hariç), 'self', 'team' (sahip dahil). */
   by?: 'ally' | 'self' | 'team';
   every?: number;
-  once?: true | 'perTarget' | 'perTurn' | 'perShield';
+  /** r44 (Ömer form r44 d_druid3 B, Falling Oak): 'perSummoner' = çağrının kancası savaşta ÇAĞIRAN başına bir kez (sonraki çağrılarda yok; çağıransız birimde kendisi). */
+  once?: true | 'perTarget' | 'perTurn' | 'perShield' | 'perSummoner';
   /** Faz 5a: kullanım başına en çok N ateş (Endless Knives: 2). */
   perCast?: number;
+  /**
+   * r43 (Ömer form r43, Woeful Turn): hedef başına bekleme. Bu kanca bir hedefte (olayın hedefi) ateşledikten sonra o hedef en çok N kendi turu
+   * başlatana dek (sersem geçen tur dahil) aynı hedefte yeniden ateşlemez. 2 = Stun'ın yediği tur + bir sonraki turu: art arda olmaz.
+   */
+  cdTurns?: number;
   procChance?: number;
   /**
    * Hexer Lasting Jinx (Ömer 2026-11-15 Tur 22): bu düğümlerin (`'<class>:<anahtar>'`) tetik kancalarının procChance'ı bu kancaya EKLENİR ve o kancalar

@@ -464,6 +464,7 @@ describe('Lucky Streak: All In (her şey masaya)', () => {
     const play = (seed: number, mode: BattleMode) => {
       const { initialCooldown: _ic, ...noOpen } = skill; // turns modunda ilk bekleme olmasın
       const b = duel({ seed, mode, overrides: { all_in: noOpen } });
+      for (let i = 0; i < 20 && b.currentActor?.uid !== G; i++) b.skipTurn(); // turns: sıra hız zarına bağlı; Gambler'ın sırasını bekle (aynı seed = aynı bekleyiş)
       const me = b.get(G)!;
       me.mp = me.maxMp;
       me.streak = 2;

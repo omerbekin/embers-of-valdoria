@@ -3,26 +3,27 @@
   "events": {
     "shepherds_fold": {
       "title": "The Scattered Flock",
-      "text": "Shepherds huddle around a dying fire. Their flock scattered when the ash-hounds came down from the road. \"Lord Morvane's beasts,\" the eldest mutters. \"And his gate is worse.\"\n\nYour company will make camp here whatever you choose.",
+      "text": "Shepherds huddle around a dying fire. Their flock scattered when the ash-hounds came down from the road, driven on by Morvane's outriders, who mean to herd the sheep up to his gate as rations. \"Lord Morvane's beasts,\" the eldest mutters. \"And his gate is worse.\"\n\nYour company will make camp here whatever you choose.",
       "choices": [
         {
           "id": "search",
           "label": "Search for the flock",
-          "hint": "Fight the ash-hounds. Win: gold and the shepherds' gift. Then rest.",
+          "hint": "Fight the outriders and their hounds, two waves. Win: gold, the shepherds' gift and a full-heal rest.",
           "battle": [
             "fold_flock"
           ],
+          "restHeal": 1,
           "win": {
             "gold": 30,
             "chest": true
           },
-          "result": "You drive off the hounds and bring the sheep home. The shepherds press a bundle into your hands."
+          "result": "The outriders break and the sheep come bleating home. The shepherds press a bundle into your hands."
         },
         {
           "id": "castle",
           "label": "Ask about the castle",
           "hint": "Hear what the shepherds know. Then rest.",
-          "result": "\"The gate tower never sleeps,\" the eldest says. \"Knights in black plate stand on the wall, cracks of fire in their armour. Cinder Knights, we call them. They shield the witches behind them, and the witches set the ground alight. Strike the ones in the back first, if you can reach them.\""
+          "result": "\"The gate tower never sleeps,\" the eldest says. \"Knights in black plate stand on the wall, cracks of fire in their armor. Cinder Knights, we call them. They shield the witches behind them, and the witches set the ground alight. Strike the ones in the back first, if you can reach them.\""
         },
         {
           "id": "bread",
@@ -43,7 +44,7 @@
     },
     "witchs_hut": {
       "title": "The Hedge Witch's Bargain",
-      "text": "\"Your thralls are mud again,\" the witch says, not looking up from the pot. \"No matter. Travellers always want something. So do I.\"\n\nBeside the cauldron stands an iron-bound chest.",
+      "text": "\"Your thralls are mud again,\" the witch says, not looking up from the pot. \"No matter. Travelers always want something. So do I.\"\n\nBeside the cauldron stands an iron-bound chest.",
       "choices": [
         {
           "id": "pay",
@@ -120,7 +121,7 @@
     "supply_wagons": {
       "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): item ağırlıklı = standart sandık + 1 Common hediye item, 10 altın. KORUNAN HAZİNE ÖDÜLÜ (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): hediye Common -> Uncommon, altın 10 -> 15 (x1,5).",
       "title": "Supply Wagons",
-      "text": "Morvane's quartermasters left the wagons to their guards. Crates of arms and armour wait under the tarps.",
+      "text": "Morvane's quartermasters left the wagons to their guards. Crates of arms and armor wait under the tarps.",
       "reward": "Raid the wagons: plenty of gear, little coin.",
       "loot": { "gold": 15, "gift": "uncommon" }
     }
@@ -212,7 +213,7 @@
         }
       ],
       "likeThreshold": 2,
-      "liked": "He is quiet a long moment, then steps aside. \"Listen, then. Iron chains moor it to the bridge, and they feed its armour. Break a chain and it reels and loses its swing, and a rising span dies with it.\"\n\n\"Hold something back for the end. When the bridge starts to fall, so does its guard. It strikes three times a turn, but its plate is half what it was. Rest here tonight.\"",
+      "liked": "He is quiet a long moment, then steps aside. \"Listen, then. Iron chains moor it to the bridge, and they feed its armor. Break a chain and it reels and loses its swing, and a rising span dies with it.\"\n\n\"Hold something back for the end. When the bridge starts to fall, so does its guard. It strikes three times a turn, but its plate is half what it was. Rest here tonight.\"",
       "disliked": "\"Then go, and the river can have you.\" He turns back to the wall. \"Rest here tonight, at least. You will want your strength.\"",
       "_epilogue": "Valor tanıtımı (Ömer 2026-10-13): beğenilse de beğenilmese de son sayfa; Valor burada açılır ve 5 hediye (bir mangal) verilir (data/valor.json > campaign).",
       "_valorLesson": "Sonsözden ayrı bayrak (open-questions 450): yalnız bu sonsözün Continue'su Valor dersini açar.",

@@ -1,6 +1,6 @@
 {
   "class": "warrior",
-  "version": 2,
+  "version": 3,
   "picked": {
     "rows": [
       "b",
@@ -1032,20 +1032,23 @@
     },
     "3.fb": {
       "name": "Reckless Heat",
-      "text": "Charge grants 30 Rage and its cooldown is 4 → 3, but its Stun lasts 1 turn instead of 2.",
+      "text": "Charge grants 30 Rage and Fortifies you for 2 turns (50% less damage taken), and its cooldown is 4 → 3.",
       "src": "A:V2:3.fa",
+      "_not": "r43 (Ömer form r43, seçim A): Stun geri geldi, %50 hasar kalktı, yerine kendine 2 tur Fortified. 30 Rage ve bekleme 3 aynı.",
       "fx": [
-        {
-          "k": "skill",
-          "sel": "status:stun",
-          "f": "turns",
-          "op": "set",
-          "v": 1
-        },
         {
           "k": "hook",
           "h": "rage",
           "gain": 30
+        },
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "fortify",
+            "turns": 2,
+            "self": true
+          }
         },
         {
           "k": "skill",

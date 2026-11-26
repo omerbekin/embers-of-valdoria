@@ -1,6 +1,6 @@
 {
   "class": "druid",
-  "version": 4,
+  "version": 5,
   "picked": {
     "rows": [
       "b",
@@ -389,7 +389,7 @@
     },
     "1.f1": {
       "name": "Hooked Barbs",
-      "text": "Thorn Whip deals 1.25% increased damage per rank.",
+      "text": "Thorn Whip deals 1.125% increased damage per rank.",
       "src": "B:V5:1.f1",
       "fx": [
         {
@@ -397,14 +397,14 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.0125,
+          "v": 0.01125,
           "rank": true
         }
       ]
     },
     "1.f2": {
       "name": "Nettle Sting",
-      "text": "Thorn Whip has +1% critical chance per rank.",
+      "text": "Thorn Whip has +0.9% critical chance per rank.",
       "src": "B:V5:1.f2",
       "fx": [
         {
@@ -412,14 +412,14 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.01,
+          "v": 0.009,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Charged Lash",
-      "text": "After you cast an MP skill, your next Thorn Whip deals 2% increased damage per rank.",
+      "text": "After you cast an MP skill, your next Thorn Whip deals 1.8% increased damage per rank.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -429,7 +429,7 @@
             "lastSkillCostMp": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.018
           },
           "rank": true
         }
@@ -437,7 +437,7 @@
     },
     "1.n0": {
       "name": "Whip Crack",
-      "text": "Thorn Whip deals 8.5% increased damage to a target below 30% HP.",
+      "text": "Thorn Whip deals 7.65% increased damage to a target below 30% HP.",
       "src": "B:V5:1.n0",
       "fx": [
         {
@@ -447,21 +447,21 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.085
+            "powerMul": 0.0765
           }
         }
       ]
     },
     "1.r": {
       "name": "Keen Thorns",
-      "text": "Thorn Whip's critical hits deal 1% more damage per rank.",
+      "text": "Thorn Whip's critical hits deal 0.9% more damage per rank.",
       "src": "B:V5:1.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.01
+            "critDmgMul": 0.009
           },
           "rank": true
         }
@@ -469,7 +469,7 @@
     },
     "1.ea": {
       "name": "Forked Thorn",
-      "text": "Thorn Whip chains to 1 more enemy for 3.5% damage; that enemy is Wounded too.",
+      "text": "Thorn Whip chains to 1 more enemy for 3.15% damage; that enemy is Wounded too.",
       "src": "B:V1:1.ea",
       "fx": [
         {
@@ -478,7 +478,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.035,
+              "strike": 0.0315,
               "to": "adjacentEnemy"
             },
             {
@@ -509,7 +509,7 @@
     },
     "1.ma": {
       "name": "Third Lash",
-      "text": "Every third Thorn Whip lashes another enemy at once for 3.5% damage.",
+      "text": "Every third Thorn Whip lashes another enemy at once for 3.15% damage.",
       "src": "B:V5:1.ma",
       "fx": [
         {
@@ -519,7 +519,7 @@
           "every": 3,
           "do": [
             {
-              "strike": 0.035,
+              "strike": 0.0315,
               "to": "outsideArea",
               "count": 1
             }
@@ -529,7 +529,7 @@
     },
     "1.fa": {
       "name": "Wild Thorns",
-      "text": "Thorn Whip deals 15% increased damage, but it can no longer crit.",
+      "text": "Thorn Whip deals 13.5% increased damage, but it can no longer crit.",
       "src": "B:V5:1.fa",
       "fx": [
         {
@@ -537,7 +537,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.15
+          "v": 0.135
         },
         {
           "k": "hook",
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Grasping Earth",
-      "text": "Tidal Wrath has a 1.75% chance per rank to Hobble each enemy hit for 2 turns.",
+      "text": "Tidal Wrath has a 1.575% chance per rank to Hobble each enemy hit for 2 turns.",
       "src": "B:V4:2.f2",
       "fx": [
         {
@@ -640,19 +640,19 @@
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.0175
+              "chance": 0.01575
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.035
+              "chance": 0.0315
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.0525
+              "chance": 0.04725
             }
           ]
         }
@@ -660,7 +660,7 @@
     },
     "2.f2": {
       "name": "Tangleroot",
-      "text": "Tidal Wrath has a 1% chance per rank to Stun each enemy hit for 1 turn.",
+      "text": "Tidal Wrath has a 0.9% chance per rank to Stun each enemy hit for 1 turn.",
       "src": "B:V4:2.f1",
       "fx": [
         {
@@ -671,31 +671,31 @@
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.01
+              "chance": 0.009
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.02
+              "chance": 0.018
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.03
+              "chance": 0.027
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.04
+              "chance": 0.036
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.05
+              "chance": 0.045
             }
           ]
         }
@@ -703,7 +703,7 @@
     },
     "2.f3": {
       "name": "Pollen Drift",
-      "text": "Enemies hit by Tidal Wrath deal 1% less physical damage per rank on their next turn.",
+      "text": "Enemies hit by Tidal Wrath deal 0.9% less physical damage per rank on their next turn.",
       "src": "B:V3:2.f2",
       "fx": [
         {
@@ -732,7 +732,7 @@
           "rank": true,
           "mod": {
             "statusPotency": {
-              "physicalDealtMult": -0.01
+              "physicalDealtMult": -0.009
             }
           }
         }
@@ -757,14 +757,14 @@
     },
     "2.r": {
       "name": "Deep Tangle",
-      "text": "Stuns from Tidal Wrath have a 1.75% chance per rank to last 1 turn longer.",
+      "text": "Stuns from Tidal Wrath have a 1.575% chance per rank to last 1 turn longer.",
       "src": "B:V4:2.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:stun",
-          "procChance": 0.0175,
+          "procChance": 0.01575,
           "mod": {
             "turns": 1
           },
@@ -805,7 +805,7 @@
     },
     "2.ma": {
       "name": "Overgrown Field",
-      "text": "The root field lasts 1 turn longer and deals 2.75% INT nature damage each turn.",
+      "text": "The root field lasts 1 turn longer and deals 2.475% INT nature damage each turn.",
       "src": "B:V4:2.mb",
       "fx": [
         {
@@ -821,14 +821,14 @@
           "sel": "ground:root_field",
           "f": "power",
           "op": "add",
-          "v": 0.0275,
+          "v": 0.02475,
           "needs": "2.n0"
         }
       ]
     },
     "2.fa": {
       "name": "Mire",
-      "text": "The root field lasts 4 turns and Tidal Wrath deals 2.75% increased damage to enemies standing in it, but its cooldown is 3 → 6.",
+      "text": "The root field lasts 4 turns and Tidal Wrath deals 2.475% increased damage to enemies standing in it, but its cooldown is 3 → 6.",
       "src": "B:V4:2.fb",
       "fx": [
         {
@@ -838,7 +838,7 @@
             "targetOnGround": "root_field"
           },
           "mod": {
-            "powerMul": 0.0275
+            "powerMul": 0.02475
           },
           "needs": "2.n0"
         },
@@ -905,7 +905,7 @@
     },
     "2.v": {
       "name": "Thicket Wave",
-      "text": "Tidal Wrath strikes the same cells again at the start of your next turn: 8.5% damage and a 1-turn Stun (Rooted).",
+      "text": "Tidal Wrath strikes the same cells again at the start of your next turn: 8.5% damage and a 1-turn Stun.",
       "src": "B:V4:2.v",
       "new": true,
       "approved": true,
@@ -1208,7 +1208,7 @@
     },
     "4.u3": {
       "name": "Falling Oak",
-      "text": "The arrival damage +100%, and the enemy facing the Treant is Stunned for 1 turn.",
+      "text": "The arrival damage +100%. The first Treant of each battle also Stuns the enemy facing it for 1 turn.",
       "src": "A:V5:4.u3",
       "fx": [
         {
@@ -1226,7 +1226,16 @@
               "summoner": true,
               "to": "enemyFront",
               "rows": 2
-            },
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "arrive",
+          "summon": "treant",
+          "once": "perSummoner",
+          "do": [
             {
               "status": "stun",
               "turns": 1,

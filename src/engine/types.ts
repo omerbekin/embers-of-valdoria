@@ -149,8 +149,10 @@ export type PassiveEffect =
    * Kullanıcının hasarı, eksik can oranıyla artar: x(1 + maxBonus * eksikCanOranı).
    * rageOnHurt (Berserker, Ömer 2026-10-17): Rage'li taşıyıcı CAN kaybettikçe Rage kazanır: kaybedilen can maks canının %1'i başına
    * perHpPercent Rage (vuruş başına en fazla perHitCap; kalkanın emdiği, Lucky Escape ile yok sayılan ve kendi verdiği hasar sayılmaz).
+   * fullAt (Ashguard Vigil 3 parça Warrior, Ömer 2026-11-23): bonus can oranı fullAt'e inince tam maxBonus olur; eğri
+   * min(1, eksikCanOranı / (1 - fullAt)). Yoksa (0) eski doğrusal eğri. Tek formül: stats.ts > rageMissFrac.
    */
-  | { type: 'rage'; maxBonus: number; rageOnHurt?: { perHpPercent: number; perHitCap?: number } }
+  | { type: 'rage'; maxBonus: number; fullAt?: number; rageOnHurt?: { perHpPercent: number; perHitCap?: number } }
   /** Kendi turunun başında en yaralı dostu (varsa) scale gücünün power katı iyileştirir. */
   | { type: 'divineLight'; power: number; scale: Attribute; /** Faz 5a (C5 smite): tur başı kutsal hasar. */ smite?: SmiteSpec; /** Faz 5a (Fervent Oath): şifa sahibini seçemez. */ noSelf?: boolean }
   /** Cooldown'lu bir hasar skill'i kullanınca `chance` ihtimalle o skill'in cooldown'u sıfırlanır. */
@@ -671,10 +673,11 @@ export interface ItemEffects {
   /** Hangman's Rope (Gallows Pact 4 parça; H-E): Lucky Escape ölümü engelleyince taşıyana `status` (`turns` tur). */
   escapeStatus?: { status: string; turns: number };
   /**
-   * The Conclave Answers (Conclave of Embers 4 parça; C-Y): düşman taşıyanı hedefleyen bir skill kullanınca taşıyan, temel saldırısıyla (ilk skill'i) bedava
-   * karşılık verir; hasarı x`power` (ayrı çarpan, "less"). Taşıyanın turları arasında en çok `perTurn` kez; temel saldırı o düşmana normal kurallarla ulaşmalı.
+   * The Conclave Answers (Conclave of Embers 4 parça; Ömer 2026-11-23 form r41 Seçenek B): düşman taşıyanı hedefleyen bir skill kullanınca (alan / tümü
+   * dahil) o düşmanın hücresine `turns` tur `ground` zemini çıkar (Heat Mirage kalıbı: tik gücü taşıyanın `scale` statı x `power`, ömür ve tik saldıranın
+   * turunda). O hücrede aynı zemin zaten varsa ikinci zemin çıkmaz, düşmana `status` (`statusTurns` tur) verilir. Taşıyanın turları arasında en çok `perTurn` kez.
    */
-  counterAttack?: { power: number; perTurn: number };
+  counterGround?: { ground: string; scale: Attribute; power: number; turns: number; perTurn: number; status: string; statusTurns: number };
   /** Royal Command (Kingsfall Regalia 3 parça; R-Y): savaşta bir kez taşıyan turunu harcayıp bir dosta hemen ek tur verir (global 'command'). */
   allyTurn?: boolean;
   /** Refrain (Stormhall Saga 4 parça; Ömer 2026-11-16 Tur 28-29): taşıyanın şimşeği bir düşmanı Shocked yapınca o düşmana sonra vuran İLK dost (taşıyan hariç) `status` alır (`turns` tur); Shocked örneği başına bir kez, Shocked tüketilmez. */
@@ -994,7 +997,7 @@ export interface SkillModeSet {
   keepBase: boolean;
   /** keepBase iken skill'in kendi kartının açıklaması. */
   baseText?: string;
-  /** Kartların üstündeki kısa satır (yoksa yok; ör. Double Deal: "A random second status joins it."). */
+  /** Kartların üstündeki kısa satır (yoksa yok; ör. Double Deal: "Pick one. Slow and Wound come together; Stun adds one of them."). */
   title?: string;
   list: SkillModeDef[];
 }
@@ -1048,6 +1051,8 @@ export interface PassivePatch {
   passive: string;
   field: string;
   delta: number;
+  /** Aynı pasifte ek alanlar (Ashguard Warrior: rageOnHurt.perHpPercent + fullAt). Ek alan pasifte yoksa 0 sayılır. */
+  also?: Array<{ field: string; delta: number }>;
 }
 
 /** Banked Coals'ta bir vuruşun ertelenen kısmı: `left` tik kaldı, her tik `per`, son tik kalanın tamamı (toplam tam çıkar). */
@@ -1275,6 +1280,13 @@ export type SkillEffectKind =
        * aynı çarpanları alır (skill gücü, etiket/element bonusu, alan falloff'u, pasif çarpanı); zırhtan önce eklenir. Ör. Tremor Slam [{stat:'armor', pct:0.25}].
        */
       bonusScale?: BonusScale[];
+      /**
+       * Düz taban + ölçek (Ömer 2026-11-25, form r46; docs/design/combat.md): stat x power'a EKLENEN düz miktar (eksi olabilir). bonusScale
+       * ekiyle aynı kanaldan geçer (spec.ts > damageBonusRaw): skill gücü çarpanı, etiket / element / zayıflık, alan kademesi, split payı,
+       * hasar havuzu ve pasif çarpanları uygular; zırhtan önce eklenir. Ağaçtaki çarpımsal "+% power" yamaları flat'i de aynı oranda çarpar.
+       * Yoksa 0 (ifade birebir eski).
+       */
+      flat?: number;
       /** Çan vuruşu (Vesper): sahibin `pealingBells` pasifi varsa hasar x(1 + perBell x bu savaşta çalınan çan). */
       bell?: boolean;
       /** Great Bell of Valdoria: bu savaşta çalınan her çan için güce eklenen pay (güç = power + powerPerBell x çan; powerPerRage kalıbı). */
@@ -1658,6 +1670,8 @@ export interface SkillDef {
    * Motor okumaz.
    */
   artOf?: string;
+  /** Skill ağacının bu skill'e bağladığı düz kullanım Rage'i (Reckless Heat: 30). Yalnız tooltip için; asıl kazanç RageHook'tadır (derleyici ikisini birlikte yazar). */
+  treeRage?: number;
   /** Tooltip'e eklenen serbest not satırı (ör. Pose Tester: hangi pozu oynattığı). Kural değildir. */
   note?: string;
   /** target 'random_enemies': kaç (farklı) rastgele düşmana gider. */
@@ -1953,7 +1967,7 @@ export type BattleWinner = Side | 'draw';
 export type ReachRule = { kind: 'status'; statuses: string[]; ground?: string } | { kind: 'dark' } | { kind: 'backRows' } | { kind: 'laneFirst' } | { kind: 'heaviest' };
 export type StatusKind = 'banked_coals' | 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound' | 'ash_surge' | 'branded' | 'chilled' | 'soaked' | 'poisoned' | 'searing' | 'bleeding' | 'hallowed' | 'shredded' | 'ley_thread' | 'blood_brand' | 'shaken' | 'frozen' | 'overreached' | 'cooling' | 'unhallowed' | 'empowered' | 'focused';
 
-/** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
+/** Yığılan durumun patlaması (Hexer Doom): hasar = (scale statı x powerPerStack + flatPerStack) x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
   scale: Attribute;
   powerPerStack: number;
@@ -1966,6 +1980,11 @@ export interface DoomDef {
    * +%25; Status.extraTurns sayacı). Bu Omen'in her Doom'una işler (süre bitimi, 3 yığında anında, Doom Mark). Kısaltmalar aynen (ceza yok).
    */
   bonusPerExtraTurn?: number;
+  /**
+   * Ömer 2026-11-26 (r49): yığın başı sabit taban (skill'deki damage.flat gibi; yoksa 0). Doom = (scale statı x powerPerStack + flatPerStack) x yığın x
+   * çarpan (Doom Mark, expireMult, bonusPerExtraTurn) x zayıflık; taban da skill gücü çarpanıyla (spellPowerMult) çarpılır, zırh / kritik aynı.
+   */
+  flatPerStack?: number;
 }
 
 /** data/statuses.json girişi: veriyle tanımlı buff/debuff. */
@@ -2287,6 +2306,8 @@ export interface Status {
   snapStat?: number;
   snapCrit?: number;
   snapCritMult?: number;
+  /** Doom sabit tabanının (doom.flatPerStack) snapshot skill gücü çarpanı (spellPowerMult); yalnız taban varken ve çarpan 1 değilken yazılır. */
+  snapSpm?: number;
   /** Skill ağacı (Faz 2a+): süresiz (süre azalmaz; katalog 14.16). */
   permanent?: boolean;
   /** Faz 2c (Blood Oath): guard, kaynağın Dark Bond'una bağlı (bağ bitince / kopunca kalkar). */

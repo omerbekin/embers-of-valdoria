@@ -8,7 +8,7 @@
       {
         "bg": "border-road",
         "lines": [
-          { "speaker": "narrator", "text": "For a year now, grey ash has fallen over Valdoria." },
+          { "speaker": "narrator", "text": "For a year now, gray ash has fallen over Valdoria." },
           { "speaker": "narrator", "text": "It drifts south from Castle Morvane in the north, and each day the Ash Curse swallows a little more of the land." },
           { "speaker": "narrator", "text": "Fields wither, the dead stir in their graves, and men in ash masks sing praise to the Ash Lord." },
           { "speaker": "narrator", "text": "Your road begins on Mill Road, on the western coast. It ends at Morvane's gate." }
@@ -85,7 +85,7 @@
       {
         "bg": "cin_plain",
         "lines": [
-          { "speaker": "narrator", "text": "Across Valdoria the grey ash stops falling. For the first time in a year, the wind smells of rain." }
+          { "speaker": "narrator", "text": "Across Valdoria the gray ash stops falling. For the first time in a year, the wind smells of rain." }
         ]
       }
     ],

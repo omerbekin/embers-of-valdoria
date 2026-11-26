@@ -12,7 +12,7 @@
 .crd-page.title .crd-l { font: 600 max(26px, calc(72 * var(--u))) Cinzel, Georgia, serif; letter-spacing: 0.08em; color: #e8c47e; }
 .crd-page.closing .crd-l { font-size: max(20px, calc(46 * var(--u))); }
 .crd-dots { position: absolute; bottom: max(16px, calc(48 * var(--u))); display: flex; gap: 10px; }
-.crd-dots i { width: 7px; height: 7px; transform: rotate(45deg); background: rgba(217, 178, 106, 0.3); }
+.crd-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(217, 178, 106, 0.3); }
 .crd-dots i.on { background: #e0702a; box-shadow: 0 0 6px rgba(224, 112, 42, 0.7); }
 @keyframes crd-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 .crd.still .crd-page.in, html.reduced-motion .crd-page.in { animation: none; }

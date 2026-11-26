@@ -10,7 +10,7 @@ import { evasionOf } from '../src/engine/stats';
 import { describeEvent } from '../src/engine/match-log';
 import { statusPercent } from '../src/game/status-pct';
 import { Rng } from '../src/engine/rng';
-import { ITEMS, emptyEquipment, itemDef, makeItem, type Equipment } from '../src/progression/items';
+import { ITEMS, emptyEquipment, itemDef, makeItem, validateItems, type Equipment } from '../src/progression/items';
 import { SETS, setBonusScore, setContribution, setPieces, setTip } from '../src/progression/sets';
 import { bestMoves } from '../src/progression/equip';
 
@@ -232,8 +232,9 @@ describe('5. yeni setler: veri', () => {
   it('düz stat bonusları: 2 parça = veri 2 eşiği; tam set = eşiklerin toplamı (Tur 28-29 sayıları)', () => {
     const want: Record<string, Record<string, number>> = {
       stormhall_saga: { hpAdd: 8, critAdd: 0.02 },
-      relics_of_saint_odran: { mpRegenAdd: 1, critAdd: 0.02 },
-      almoners_vestments: { magicArmorAdd: 2, mpRegenAdd: 1 },
+      // Ömer r50 (Odran C "kutsal ateş"): MP yenilenme gitti, kritik + Potency; sayı veriden (balance-tester ayarlar)
+      relics_of_saint_odran: { critAdd: 0.05, potencyAdd: SETS.find((x) => x.id === 'relics_of_saint_odran')!.bonuses['2']!.mods!.potencyAdd! },
+      almoners_vestments: { magicArmorAdd: 5, mpRegenAdd: 2 }, // r48 Ömer: 2 -> 5, 1 -> 2
     };
     const cls: Record<string, string> = { stormhall_saga: 'skald', relics_of_saint_odran: 'mage', almoners_vestments: 'druid' };
     for (const [id, two] of Object.entries(want)) {
@@ -247,7 +248,7 @@ describe('5. yeni setler: veri', () => {
       for (const k of Object.keys(full)) full[k] = Math.round(full[k]! * 1000) / 1000;
       expect(full, id).toEqual(sum);
     }
-    expect(SETS.find((x) => x.id === 'stormhall_saga')!.bonuses['4']!.mods).toEqual({ spdAdd: 0.5, armorAdd: -2 });
+    expect(SETS.find((x) => x.id === 'stormhall_saga')!.bonuses['4']!.mods).toEqual({ spdAdd: 0.5 }); // r48 Ömer: zırh cezası -2 -> 0
   });
 
   it('item kimlikleri tekil (set parçası eski bir item\'i ezmez; Drummer\'s Gauntlets Legendary kalır)', () => {
@@ -255,6 +256,16 @@ describe('5. yeni setler: veri', () => {
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
     expect(itemDef('drummers_gauntlets')!.rarity).toBe('legendary');
     expect(itemDef('stormhall_gauntlets')!.set).toBe('stormhall_saga');
+  });
+
+  it('Odran C (Ömer r50): Ring = MP yen. + MP bedeli + Elemental damage (A; set şablonunun tek istisnası), Reliquary DoT damage; doğrulayıcı istisnayı yalnız Ring için açar', () => {
+    expect(itemDef('odrans_ring')!.affixes).toEqual(['c_mpregen', 'b_mpcost', 'a_allelem']);
+    expect(itemDef('odrans_reliquary')!.affixes).toEqual(['c_dot', 'c_shield', 'b_startshield']);
+    expect(itemDef('odrans_censer')!.affixes).toEqual(['c_hpregen', 'c_res_holy', 'b_marmor']);
+    expect(validateItems()).toEqual([]);
+    // Başka bir set parçasına A affix konursa doğrulayıcı reddeder
+    const bad = { ...ITEMS, setItems: ITEMS.setItems!.map((d) => (d.id === 'kingsfall_signet' ? { ...d, affixes: ['c_hpregen', 'b_speed', 'a_allelem'] } : d)) };
+    expect(validateItems(bad).some((e) => e.includes('kingsfall_signet') && e.includes('C, C, B'))).toBe(true);
   });
 
   it('Stormhall yalnız Skald; Odran Censer Focus Orb ailesi (kalkan değil)', () => {

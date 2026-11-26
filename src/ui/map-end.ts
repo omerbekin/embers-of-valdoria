@@ -59,13 +59,18 @@ export function openMapEnd(root: HTMLElement, o: MapEndOpts): MapEndHandle {
     <div class="me-foot">${tease}<div class="me-acts"></div></div></div>`;
   const acts = wrap.querySelector<HTMLElement>('.me-acts')!;
   let done = false;
+  let busy = false; // çift basış: geçiş bir kez başlar (kart yükleme ekranının altında kalır, düğmeler pasif)
   for (const b of o.buttons) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `el-btn${b.primary ? ' primary ready' : ''}`;
     btn.textContent = b.label;
     btn.addEventListener('click', () => {
-      if (!done) b.run();
+      if (done || busy) return;
+      busy = true;
+      wrap.classList.add('me-busy');
+      for (const x of acts.querySelectorAll('button')) x.disabled = true;
+      b.run();
     });
     acts.append(btn);
   }

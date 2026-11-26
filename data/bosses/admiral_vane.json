@@ -29,7 +29,7 @@
   ],
   "boss": {
     "where": "holds Gallows Cove with the crew of the Black Caravel",
-    "firstBanner": "Strike your colours.",
+    "firstBanner": "Strike your colors.",
     "phases": [
       {
         "at": 0.66,
@@ -79,7 +79,7 @@
         "id": "harpoon_ballista",
         "name": "Harpoon Ballista",
         "icon": "anchored",
-        "text": "The standing Ballista gives Vane +10 armor and +10 magic armor and fires on its own every turn: it marks the cell of your weakest hero and the harpoon lands a turn later. Breaking it staggers Vane (he loses his next action)."
+        "text": "The standing Ballista gives Vane +10 armor and +10 Magic Armor and fires on its own every turn: it marks the cell of your weakest hero and the harpoon lands a turn later. Breaking it staggers Vane (he loses his next action)."
       },
       {
         "id": "broadside_phase",

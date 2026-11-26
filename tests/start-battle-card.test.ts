@@ -6,7 +6,7 @@ describe('Start battle? kartı: düşman grupları + tek bilgi satırı', () => 
     const r = foeGroups('ravenwood_pack');
     expect(r.groups[0]).toMatchObject({ cls: 'grey_wolf', n: 3 });
     expect(r.groups.length).toBe(3);
-    expect(r.info?.who).toBe('Grey Wolf');
+    expect(r.info?.who).toBe('Gray Wolf');
     expect(r.info?.text).toMatch(/Pack|damage/i);
   });
   it('elit önder rütbeli işaretlenir', () => {

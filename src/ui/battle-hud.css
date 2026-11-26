@@ -68,14 +68,14 @@
   flex: none;
   width: 10px;
   height: 10px;
-  transform: rotate(45deg);
+  border-radius: 50%; /* karo 3. tur (Ömer r48): sıra / sayaç işareti = dolu nokta (tur etiketi, alt bant) */
   background: var(--ember);
   box-shadow: 0 0 0 1px var(--ember2), 0 0 10px rgba(240, 140, 40, 0.6);
 }
 
 .bh-dia.h {
-  background: rgba(8, 6, 4, 0.6);
-  box-shadow: 0 0 0 1px rgba(var(--gold), 0.55);
+  background: rgba(var(--gold), 0.55);
+  box-shadow: none;
 }
 
 .bh-dia.s {
@@ -425,7 +425,7 @@
 .bh-wave .bh-pips i {
   width: 11px;
   height: 11px;
-  transform: rotate(45deg);
+  border-radius: 50%; /* karo 3. tur: dalga sayacı = nokta (açık / kapalı farkı renkte kalır) */
   border: 1px solid rgba(217, 178, 106, 0.6);
   background: rgba(8, 6, 4, 0.7);
 }
@@ -826,8 +826,8 @@
   content: '';
   width: 6px;
   height: 6px;
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 1px rgba(var(--gold), 0.7);
+  border-radius: 50%; /* karo 3. tur: "All stats" önündeki işaret = dolu nokta */
+  background: rgba(var(--gold), 0.9);
   transition: background 0.18s, box-shadow 0.18s;
 }
 
@@ -1304,7 +1304,7 @@
   top: 8px;
   width: 5px;
   height: 5px;
-  transform: rotate(45deg);
+  border-radius: 50%; /* karo 3. tur: madde imi = dolu nokta */
   background: rgba(var(--gold), 0.6);
 }
 
@@ -2009,7 +2009,7 @@ html.short .bh-ctip.at-top:not(.at-many) .bt-title {
   justify-self: center;
   width: 9px;
   height: 9px;
-  transform: rotate(45deg);
+  border-radius: 50%;
   background: var(--c);
   box-shadow: 0 0 6px var(--c);
 }

@@ -2,7 +2,7 @@
 // aynı fonksiyonu kullanır (items.md 4.4, 5.4). Puan = affix IP'lerinin toplamı, sınıfa uymayan affix'ler (başka element, Rage'li sınıfta MP,
 // çağrısı olmayan sınıfta Summon mastery...) düşük ağırlıklı; primary bonusunu kapatacak item seçilmez.
 import { affixFit } from './affix-fit';
-import { ITEMS, affixIP, baseIP, canEquip, canEquipIn, effectIP, equipInto, fitsSlot, instanceIlvl, itemDef, itemIP, legendaryConflict, meetsLevel, offhandCompatible, offhandOnlyFor, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId, type SlotLocks } from './items';
+import { ITEMS, affixBoost, affixIP, baseIP, canEquip, canEquipIn, effectIP, equipInto, fitsSlot, instanceIlvl, itemDef, itemIP, legendaryConflict, meetsLevel, offhandCompatible, offhandOnlyFor, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId, type SlotLocks } from './items';
 import { inactivePenalty } from './loadout';
 import { SETS, setBonusScore } from './sets';
 import { primaryCheck } from './primary';
@@ -16,6 +16,18 @@ export const FALLEN_GEAR_MSG = "Fallen heroes can't equip items.";
 export const FALLEN_GEAR_SHORT = "Fallen: can't equip";
 
 /**
+ * Set parçasının boost'lu affix'inde boost fazlasının puana giren payı (items.json > setValue.boostWeight; yoksa 1 = eski davranış).
+ * r49 (2026-11-26): boost set parçasının IP'sini savaş değerinden hızlı artırıyor; Equip best seti savaşta Epic'ten kötüyken seçiyordu.
+ * Çarpan = (1 + (boost - 1) x w) / boost: w = 1 tam boost'lu IP, w = 0 boost'suz IP. Yalnız set parçası; Legendary boost'u ve setsiz item değişmez.
+ */
+export function setBoostShare(d: Pick<ItemDef, 'rarity' | 'boost' | 'set'>, affixId: string): number {
+  if (!d.set) return 1;
+  const m = affixBoost(d, affixId);
+  const w = ITEMS.setValue?.boostWeight ?? 1;
+  return m > 0 && m !== 1 ? (1 + (m - 1) * w) / m : 1;
+}
+
+/**
  * Örneğin (zarlarıyla) sınıfa değeri: affix IP'si x uyum + Legendary etkisi + taban değeri (silah gücü, örtük stat; Item Güçlendirme 2026-10-17).
  * `slot` ikinci else silah gücünün yalnızca `offhandShare` kadarı sayılır.
  */
@@ -23,7 +35,7 @@ export function instanceScore(classId: string, inst: Pick<ItemInstance, 'id'> & 
   const d = itemDef(inst.id);
   if (!d) return 0;
   let score = effectIP(d) + baseIP(d, instanceIlvl(inst), slot === 'offhand' && d.slot === 'weapon' ? (ITEMS.weaponPower?.offhandShare ?? 0) : 1);
-  for (const a of rolledAffixes(inst, classId)) score += affixIP(a.id, a.values) * affixFit(classId, a);
+  for (const a of rolledAffixes(inst, classId)) score += affixIP(a.id, a.values) * affixFit(classId, a) * setBoostShare(d, a.id);
   return Math.round(score * 1000) / 1000;
 }
 

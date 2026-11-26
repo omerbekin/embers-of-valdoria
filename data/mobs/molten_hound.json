@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Ash Hound; palet YOK, ash_hound çizimi.",
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Ash Hound; kendi çizimi (spriteId = id, r49).",
   "id": "molten_hound",
   "name": "Molten Hound",
   "family": "beasts",
-  "spriteId": "ash_hound",
+  "spriteId": "molten_hound",
   "spriteScale": 1.3,
   "color": "#c8562a",
   "logo": "roar",

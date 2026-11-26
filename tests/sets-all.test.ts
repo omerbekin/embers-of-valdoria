@@ -51,13 +51,20 @@ describe('altı set: veri', () => {
         const at = (p: typeof passive) => row.field.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], p!.effect as unknown);
         expect(at(passive), `${s.id} ${cls}: from`).toBeCloseTo(row.from, 6);
         expect(at(patched), `${s.id} ${cls}: to`).toBeCloseTo(row.to, 6);
+        // ek alanlar (also): pasifte yoksa from 0; gerçek yama (setContribution) hepsini birlikte uygular
+        const full = patchedPassive(passive!, setContribution(wearing(setPieces(s.id).map((d) => d.id)), cls).passivePatch);
+        for (const x of row.also ?? []) {
+          const atX = (p: typeof passive) => x.field.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], p!.effect as unknown);
+          expect((atX(passive) as number | undefined) ?? 0, `${s.id} ${cls} ${x.field}: from`).toBeCloseTo(x.from, 6);
+          expect(atX(full), `${s.id} ${cls} ${x.field}: to`).toBeCloseTo(x.to, 6);
+        }
         for (const d of setPieces(s.id)) expect(canEquip(cls, d), `${d.id} ${cls}`).toBe(true);
       }
       if (s.kind === 'class') for (const d of setPieces(s.id)) for (const c of d.usableBy ?? []) expect(Object.keys(s.bonuses['3']?.byClass ?? {}), `${s.id} ${c} has a 3-piece row`).toContain(c);
     }
   });
 
-  it('bonus statları: yalnızca bilinen anahtarlar ve ipucunda yazı; her 4. parça / üst eşik bir ödünleşme taşır', () => {
+  it('bonus statları: yalnızca bilinen anahtarlar ve ipucunda yazı', () => {
     for (const s of SETS.filter((x) => NEW_IDS.includes(x.id))) {
       for (const t of s.thresholds) {
         const b = s.bonuses[String(t)]!;
@@ -65,8 +72,7 @@ describe('altı set: veri', () => {
           expect(modIP(k, v), `${s.id} ${t} ${k}`).not.toBe(0);
         }
       }
-      const top = s.bonuses[String(s.thresholds.at(-1))]!;
-      if (s.id !== 'kingsfall_regalia' || true) expect(Object.values(top.mods ?? {}).some((v) => v < 0), `${s.id} top bonus has a downside`).toBe(true);
+      // "Üst eşik bir ödünleşme (eksi stat) taşır" kuralı KALDIRILDI (Ömer 2026-11-26, form r49); üst bonusun bedeli zorunlu değil.
       const tip = setTip({ set: s.id }, undefined, undefined);
       expect(tip?.rows.length, s.id).toBeGreaterThan(0);
       for (const r of tip!.rows) expect(r.text, s.id).not.toMatch(/undefined|NaN|\[object/);

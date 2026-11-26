@@ -55,7 +55,7 @@ describe('mob ikonları (assets/mob-icons)', () => {
   });
 
   itSource('her dosya bir mob skill\'ine ya da pasifine bağlı; ikonu olmayan skill verideki ikonu korur; aslı assets/source/mob-icons', () => {
-    for (const id of Object.keys(MOB_IMAGE_FILES)) expect(mobSkillIds.has(id) || mobPassiveIds.has(id), `${id} bağlantısız`).toBe(true);
+    for (const id of Object.keys(MOB_IMAGE_FILES)) expect(mobSkillIds.has(id) || mobPassiveIds.has(id) || id in content.globalSkills, `${id} bağlantısız`).toBe(true);
     expect(skillIconName(content.skills['melee_attack']!)).toBe(content.skills['melee_attack']!.icon);
     expect(passiveIconName({ id: 'nope', icon: 'eye' })).toBe('eye');
     expect(existsSync('assets/source/mob-icons')).toBe(true);

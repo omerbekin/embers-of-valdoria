@@ -333,6 +333,7 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
     const b = mk({ 0: 'warrior', 1: 'undead' }, { 0: 'defender' });
     const [w, u] = [at(b, 'party', 0), at(b, 'party', 1)];
     act(b, u.uid, 'dark_bond', w.uid);
+    u.mp = u.maxMp; // r45 (Undead): Dark Bond 22 + Raise Dead 35 bedeli tek L1 havuzuna sığmaz; sahne bağ kuralını ölçer, manayı değil
     const sk = ofType(act(b, u.uid, 'raise_dead', undefined, 2), 'summon')[0]!.combatant.uid;
     Object.assign(b.get(sk)!.stats, { accuracy: 10, evasion: 0, critChance: 0 });
     w.hp -= 50;
@@ -349,6 +350,7 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
     const b = giveManaBarrier(mk({ 0: 'warrior', 1: 'undead', 2: 'mage' }, { 0: 'defender' }));
     const [w, u, m] = [at(b, 'party', 0), at(b, 'party', 1), at(b, 'party', 2)];
     act(b, u.uid, 'dark_bond', w.uid);
+    u.mp = u.maxMp; // r45: iki Dark Bond (22 + 22) tek L1 havuzuna sığmaz
     const ev = act(b, u.uid, 'dark_bond', m.uid);
     expect(ofType(ev, 'statusEnd').map((e) => [e.target, e.status, e.cause])).toEqual([
       [u.uid, 'dark_bond', 'bond_broken'],

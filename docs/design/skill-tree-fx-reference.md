@@ -132,6 +132,7 @@ Her satır: motor adı, anlamı ve gerekiyorsa örnek.
 - `targetMissedMeSinceTurn`: son turundan beri sana skill ıskaladı ya da vuruşu bloklandı.
 - `targetIsMyLastTarget`: önceki skill kullanımının düşman hedeflerinden biri.
 - `firstHitOnTarget`: bu düşmana savaştaki ilk isabetin.
+- `targetInCast: true/false`: hedef bu kullanımın kendi hedeflerinden biri (ağaç ek vuruşunun yan hedefi değil; bağlam yoksa tutar). r43 Glacial Spike.
 - `targetDiedSinceMyTurn`: ölü dost hedef, son turundan beri öldü.
 
 **Kendin**
@@ -350,6 +351,7 @@ Ağaçsız savaş birebir aynı kalır:
   - `once: "perTurn"`: sahibin turu başına bir kez.
   - `once: "perShield"`: kalkan katmanı başına bir kez; yalnızca `shieldAbsorb`.
   - `every: N`: her N. olayda bir.
+  - `cdTurns: N`: hedef başına bekleme; kanca bir hedefte ateşleyince o hedef en çok N kendi turu başlatana dek (sersem tur dahil; test modunda eylem sayılır) yeniden ateşlemez. r43 Woeful Turn `2` (Stun'ın yediği tur + sonraki tur: art arda olmaz).
   - `procChance`: tohumlu (seed'li) zar.
   - `hpBelow` bir alt eşiği birim başına bir kez geçer (yeniden yukarı çıkıp inse de).
   - `mpBelow` savaşta bir kez.
@@ -389,7 +391,7 @@ Olay listesinin kodu: `tree-hooks.ts > TRIGGER_EVENTS` (47 olay). `enemyMissed`:
 | `hitTaken` | sahip skill vuruşu yiyince | vuran | — | — |
 | `allyHit` | bir dost bir düşmana skill ile vurunca | vurulan düşman (`source` = vuran dost) | — | Shared Spoils: `when targetStatus overextended`, `mp 4 to source` |
 | `dodge` | sahip bir saldırıdan kaçınınca | saldıran | — | Light Step: `mp 2` |
-| `enemyMissed` | düşman sahibin tarafına ıskalayınca / kaçırılınca | saldıran (`subject` = hedeflenen dost) | `who` self / ally / any | Woeful Turn: `when targetStatus jinxed`, `staggered to target` |
+| `enemyMissed` | düşman sahibin tarafına ıskalayınca / kaçırılınca | saldıran (`subject` = hedeflenen dost) | `who` self / ally / any | Woeful Turn: `when targetStatus jinxed`, `cdTurns 2`, `stun 1 to target` |
 | `shieldAbsorb` / `shieldBreak` S | sahibin attığı kalkan bir vuruşu emince / kırılınca | saldıran (`subject` = kalkanlı) | `once perShield` | Ice Mirror: `once perShield`, `slow 2 to target` |
 | `doom` S | sahibin Doom'u patlayınca | Doom yiyen | `amount` = Omen sayısı | Hour of Ruin: `once`, `cooldown -2, cd doom_mark` |
 | `dotTick` | sahibin uyguladığı DoT bir tik vurunca (r36: ek tikler de: Blood Brand, Bleeding yer değiştirme; `at: dot` kancaları ve tik sayacı da; `at: dot` kancasının skill kapsamı durumu veren skill'dir) | konak | `status`; `amount` = tik hasarı | Bitter Balm: `heal 0.2, of amount, to lowestHpAlly` |
@@ -556,7 +558,7 @@ Pasif alanları:
 Derleyici: `self` seçicisine `cost.hpFallback`, `bet` seçicisine `hpStake` (ikisi de varsayılan 0, MP dışı / oran dışı = derleme hatası); strike'a `rollStatus`; `RULE_KINDS` + `turnedHand` (alansız).
 
 ### Adlı skill biçimi (`mode`)
-- Veri: `{ "k": "mode", ... }` (`skill-tree-data.ts > ModeFx`): `mode`, `name`, `text`, `baseText`, `target`, `removeEffects`, `powerMul`; ek düğüm `needs` + `text` / `addEffect` / `splash`. Durum seçimi: `statusPick` (+`firstOnly`), `secondStatus`. Derleyici (`buildModes`) biçimleri, diğer düğümlerin yamaları uygulanmış son skill tanımından kurar (`TreeSetup.modes` -> `Combatant.skillModes`).
+- Veri: `{ "k": "mode", ... }` (`skill-tree-data.ts > ModeFx`): `mode`, `name`, `text`, `baseText`, `target`, `removeEffects`, `powerMul`; ek düğüm `needs` + `text` / `addEffect` / `splash`. Durum seçimi: `statusPick` (+`firstOnly`), `secondStatus` (+`secondExclude`: rastgele ikinci durum bu listeden olamaz; r43 Double Deal `["stun"]`). Derleyici (`buildModes`) biçimleri, diğer düğümlerin yamaları uygulanmış son skill tanımından kurar (`TreeSetup.modes` -> `Combatant.skillModes`).
 - Eylem biçimi taşır (`BattleAction.mode`, `useSkill(..., mode)`); bilinmeyen biçim `Unknown mode` ile reddedilir. Endless replay `use` eylemi `m` alanı taşır. Multiplayer'da ağaç kapalı; protokole biçim eklenmedi.
 - Arayüz paneli ve YZ kuralları: `skill-tree-implementation.md` (Biçimli skill).
 

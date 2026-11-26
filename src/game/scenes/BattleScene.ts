@@ -11,7 +11,7 @@ import { PHONE_PCT_PX, pctTextWidth, statusPercentText, statusTipText } from '..
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
 import { planGroundBadges, groundTurnsText, groundCardText, type GroundBadgeIn } from '../ground-badges';
-import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describeBlood, describePassive, describeRage, describeSkill, TREE_SECTION, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
+import { Battle, MatchLog, chooseAction, rageMissFrac, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describeBlood, describePassive, describeRage, describeSkill, TREE_SECTION, describeStat, groundReactionHint, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
 import type { AreaStage, BattleEvent, BattleMode, Combatant, PushDir, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
@@ -754,6 +754,7 @@ export class BattleScene extends Phaser.Scene {
       foes: [...this.views.values()].filter((v) => v.combatant.side !== actor.combatant.side && v.combatant.hp > 0),
       ...(o.usage ? { usage: o.usage } : {}),
       viewOf: (uid) => this.views.get(uid),
+      allViews: () => [...this.views.values()],
       event: o.event,
     };
     try {
@@ -3107,7 +3108,7 @@ export class BattleScene extends Phaser.Scene {
     if (!e) return null;
     const p = (v: number): string => `${Math.round(v * 1000) / 10}%`;
     if (e.type === 'pealingBells') return `Bells rung: ${c.bells ?? 0}, +${p(e.perBell * (c.bells ?? 0))} damage so far`;
-    if (e.type === 'rage') return `Right now: +${p(e.maxBonus * (c.maxHp > 0 ? 1 - c.hp / c.maxHp : 0))} damage (max +${p(e.maxBonus)})`;
+    if (e.type === 'rage') return `Right now: +${p(e.maxBonus * rageMissFrac(e, c.hp, c.maxHp))} damage (max +${p(e.maxBonus)})`;
     if (e.type === 'stonePatience') return `Patience: +${c.patience ?? 0} armor (max ${e.max})`;
     return null;
   }
@@ -3500,7 +3501,7 @@ export class BattleScene extends Phaser.Scene {
         const actor = this.battle.get(e.actor);
         const skill = content.skills[e.skill];
         if (actor && skill) {
-          this.announce(`${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)} uses ${skill.name}`, ensureSkillIcon(this, skill));
+          this.announce(`${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)} uses ${this.skillName(actor, skill)}`, ensureSkillIcon(this, skill));
           this.ultHitBy = actor.skills.indexOf(skill.id) === 3 ? actor.uid : null; // ultimate: ilk vuruşta ekran titremesi + zemin çatlağı (A1)
         }
         this.currentUsage = this.usageRec.usageOf(e); // efekt bu kullanımda gerçekte ne olduğunu bilsin (VfxCtx.usage)
@@ -3882,6 +3883,7 @@ export class BattleScene extends Phaser.Scene {
           return;
         }
         view?.floatText(e.name, colors.targetHighlight, 34);
+        view?.passiveGlow?.burst(); // pasif evrimi parıltısı kısa süre güçlenir
         // v2 pasif efekti (passive_<id>, sahibin dosyasında varsa; Heat Mirage, Spellbreaker's Instinct) halkanın yerine oynar
         if (!(view && (await this.runEventFx(this.ownerOfView(view), EVENT_FX.passive(e.passive), { actor: view, targets: [view], event: e })))) view?.ring(colors.targetHighlight, 0.9);
         await this.wait(120);
@@ -4087,7 +4089,7 @@ export class BattleScene extends Phaser.Scene {
         return;
       case 'telegraphCancel':
         this.clearTelegraph(e.id);
-        if (e.cause === 'anchor' || e.cause === 'dispel') this.announce(`${content.skills[e.skill]?.name ?? e.skill} is cancelled`);
+        if (e.cause === 'anchor' || e.cause === 'dispel') this.announce(`${content.skills[e.skill]?.name ?? e.skill} is canceled`);
         return;
       case 'telegraphDelay':
         return;
@@ -4628,6 +4630,7 @@ export class BattleScene extends Phaser.Scene {
         foes: [...this.views.values()].filter((v) => v.combatant.side !== actor.combatant.side && v.combatant.hp > 0),
         ...(this.currentUsage && this.currentUsage.used.actor === actorUid && this.currentUsage.used.skill === skillId ? { usage: this.currentUsage } : {}),
         viewOf: (uid) => this.views.get(uid),
+      allViews: () => [...this.views.values()],
         lunge: (_x, off) => meleeApproach(this, actor, targets, area ? this.cellPos(board, center!) : undefined, off),
         windUp: (hex, anim = 'cast') => actor.windUp(hex, anim),
         sfx: skillSfx,
@@ -4945,6 +4948,7 @@ export class BattleScene extends Phaser.Scene {
       gate: () => undefined,
       foes: [...this.views.values()].filter((v) => v.combatant.side !== actor.combatant.side && v.combatant.hp > 0),
       viewOf: (uid) => this.views.get(uid),
+      allViews: () => [...this.views.values()],
       event: o.event,
     };
     try {
@@ -5407,7 +5411,7 @@ export class BattleScene extends Phaser.Scene {
           const c = this.battle.get(uid);
           return c ? { name: unitName(c), side: c.side } : undefined;
         },
-        skill: (id) => content.skills[id]?.name ?? content.globalSkills[id]?.name ?? id,
+        skill: (id, actorUid) => { const a = actorUid ? this.battle.get(actorUid) : undefined; const sk = content.skills[id]; return sk && a ? this.skillName(a, sk) : (sk?.name ?? content.globalSkills[id]?.name ?? id); },
         status: (id) => content.statuses[id]?.name ?? id,
         ground: (id) => content.grounds[id]?.name ?? id,
         globalKind: (id) => this.battle.globalDef(id)?.kind ?? id,

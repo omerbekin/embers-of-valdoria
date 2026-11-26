@@ -176,7 +176,7 @@
     },
     "item_leather": {
       "label": "Item: leather",
-      "desc": "Leather armour, gloves or boots: a stiff leather creak and a strap settling against the body.",
+      "desc": "Leather armor, gloves or boots: a stiff leather creak and a strap settling against the body.",
       "bus": "ui",
       "gain": 0.8,
       "layers": [

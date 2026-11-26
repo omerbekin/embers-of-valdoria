@@ -11,7 +11,7 @@ const hasBg = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`ass
 const hasTown = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`assets/towns/${id}.${e}`));
 const trackIds = new Set([...Object.keys(musicTracks.tracks), ...Object.keys(bossTracks as Record<string, unknown>)]);
 
-const KNOWN_HIDDEN = new Set(['shepherds_fold/search']);
+const KNOWN_HIDDEN = new Set<string>(); // fold_flock yazıldı (2026-11-23): bilinen gizli seçenek kalmadı
 
 /** İleri yönde (kenar yönünde) başlangıçtan ulaşılanlar; cep ve Kharduin kolları da kenarla bağlı. */
 function forwardReach(map: CampaignMap): Set<string> {
@@ -65,7 +65,7 @@ describe.each(CONFIG.maps)('harita %s: bütünlük ve bağlar', (mapId) => {
       const ev = n.event ? EVENTS[n.event] : undefined;
       if (!ev) continue;
       for (const c of ev.choices ?? []) {
-        // Savaş listesi: sırayla ilk VAR OLAN oynanır; hiçbiri yoksa seçenek gizlenir (bilinen boşluk: shepherds_fold/search > fold_flock, campaign.md açık iş).
+        // Savaş listesi: sırayla ilk VAR OLAN oynanır; hiçbiri yoksa seçenek gizlenir.
         if (c.battle?.length && !KNOWN_HIDDEN.has(`${n.event}/${c.id}`)) expect(c.battle.some((b) => ENCOUNTERS[b]), `${n.event}/${c.id}: ${c.battle}`).toBe(true);
         if (c.relic) expect(itemDef(c.relic), `${n.event}/${c.id} relic ${c.relic}`).toBeDefined();
         if (c.join) expect(content.classes[c.join], `${n.event}/${c.id} join ${c.join}`).toBeDefined();

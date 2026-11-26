@@ -5,8 +5,8 @@
     "name": "Road Thugs",
     "partyUndying": true,
     "units": [
-      { "class": "road_thug", "slot": 1, "mods": { "spdAdd": -2, "hpMult": 0.55, "statMult": 0.66, "powerMult": 0.8 }, "lockSkills": ["hamstring"] },
-      { "class": "cutpurse", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.55, "statMult": 0.66, "powerMult": 0.9 }, "lockSkills": ["sand_in_the_eyes"] }
+      { "class": "road_thug", "slot": 1, "mods": { "spdAdd": -0.95, "hpMult": 0.55, "statMult": 0.66, "powerMult": 0.8 }, "lockSkills": ["hamstring"] },
+      { "class": "cutpurse", "slot": 0, "mods": { "spdAdd": -2.5, "hpMult": 0.55, "statMult": 0.66, "powerMult": 0.9 }, "lockSkills": ["sand_in_the_eyes"] }
     ],
     "fallback": "mill_road_thug_solo"
   },
@@ -15,7 +15,7 @@
     "partyUndying": true,
     "fallbackOnly": true,
     "units": [
-      { "class": "road_thug", "slot": 1, "mods": { "spdAdd": -2 } }
+      { "class": "road_thug", "slot": 1, "mods": { "spdAdd": -1.4 } }
     ]
   },
   "ravenwood_pack": {
@@ -25,7 +25,7 @@
       { "class": "grey_wolf", "slot": 0, "mods": { "spdAdd": -3, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.40 }, "initialCooldownBonus": 1 },
       { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.40 }, "initialCooldownBonus": 1 },
       { "class": "grey_wolf", "slot": 2, "mods": { "spdAdd": -3, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.40 }, "initialCooldownBonus": 1 },
-      { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.38 }, "initialCooldownBonus": 1 },
+      { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -3.25, "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.38 }, "initialCooldownBonus": 1 },
       { "class": "raven_seer", "slot": 8, "mods": { "hpMult": 0.48, "statMult": 0.72, "powerMult": 0.38 }, "initialCooldownBonus": 1 }
     ],
     "fallback": "ravenwood_pack_lite"
@@ -42,7 +42,7 @@
       {
         "units": [
           { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.22 }, "initialCooldownBonus": 1 },
-          { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.21 }, "initialCooldownBonus": 1 },
+          { "class": "ravenwood_poacher", "slot": 7, "mods": { "spdAdd": -3.25, "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.21 }, "initialCooldownBonus": 1 },
           { "class": "raven_seer", "slot": 8, "mods": { "hpMult": 0.26, "statMult": 0.72, "powerMult": 0.21 }, "initialCooldownBonus": 1 }
         ]
       }
@@ -54,7 +54,7 @@
     "name": "The Bandit Chief",
     "units": [
       { "class": "bandit_chief", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.32 }, "initialCooldownBonus": 1 },
-      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -4, "hpMult": 0.26, "statMult": 0.68, "powerMult": 0.22 } },
+      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -2.5, "hpMult": 0.26, "statMult": 0.68, "powerMult": 0.22 } },
       { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.26, "statMult": 0.68, "powerMult": 0.22 } }
     ],
     "fallback": "watchtower_chief_lite"
@@ -82,7 +82,7 @@
     "name": "The Bandit Chief",
     "units": [
       { "class": "bandit_chief", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 1.0, "statMult": 0.95, "powerMult": 0.56 }, "initialCooldownBonus": 1 },
-      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -4, "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.39 } },
+      { "class": "ravenwood_poacher", "slot": 6, "mods": { "spdAdd": -2.5, "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.39 } },
       { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.45, "statMult": 0.68, "powerMult": 0.39 } }
     ],
     "fallback": "watchtower_chief_lite"
@@ -99,14 +99,14 @@
     "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,808 (düğümler aynı zorluğa çekildi).",
     "name": "Bog Lurkers",
     "units": [
-      { "class": "drowned", "slot": 1, "mods": { "spdAdd": -2, "hpMult": 1.332, "powerMult": 1.124 } },
+      { "class": "drowned", "slot": 1, "mods": { "spdAdd": -1.25, "hpMult": 1.332, "powerMult": 1.124 } },
       { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.332, "powerMult": 1.124 } },
       { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.332, "powerMult": 1.124 } }
     ],
     "waves": [
       { "units": [
-        { "class": "drowned", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 1.355, "powerMult": 1.237 } },
-        { "class": "drowned", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 1.355, "powerMult": 1.237 } }
+        { "class": "drowned", "slot": 0, "mods": { "spdAdd": -1.25, "hpMult": 1.355, "powerMult": 1.237 } },
+        { "class": "drowned", "slot": 2, "mods": { "spdAdd": -1.25, "hpMult": 1.355, "powerMult": 1.237 } }
       ] }
     ]
   },
@@ -115,15 +115,15 @@
     "name": "Iron Pass Ambush",
     "units": [
       { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.774, "powerMult": 0.774 } },
-      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "spdAdd": -8, "hpMult": 0.774, "powerMult": 0.774 } },
+      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "spdAdd": -5, "hpMult": 0.774, "powerMult": 0.774 } },
       { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 0.774, "powerMult": 0.774 } }
     ],
     "waves": [
       { "units": [
         { "class": "deep_runecaller", "slot": 3, "mods": { "hpMult": 0.72, "powerMult": 0.72 } },
         { "class": "deep_runecaller", "slot": 5, "mods": { "hpMult": 0.72, "powerMult": 0.72 } },
-        { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "spdAdd": -8, "hpMult": 0.72, "powerMult": 0.72 } },
-        { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "spdAdd": -8, "hpMult": 0.72, "powerMult": 0.72 } }
+        { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "spdAdd": -5, "hpMult": 0.72, "powerMult": 0.72 } },
+        { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "spdAdd": -5, "hpMult": 0.72, "powerMult": 0.72 } }
       ] }
     ]
   },
@@ -132,8 +132,8 @@
     "name": "Mine Wardens",
     "units": [
       { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.413, "powerMult": 1.413 } },
-      { "class": "deep_runecaller", "slot": 6, "mods": { "spdAdd": -1, "hpMult": 1.413, "powerMult": 1.313 } },
-      { "class": "deep_runecaller", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.413, "powerMult": 1.313 } }
+      { "class": "deep_runecaller", "slot": 6, "mods": { "spdAdd": -0.75, "hpMult": 1.413, "powerMult": 1.313 } },
+      { "class": "deep_runecaller", "slot": 8, "mods": { "spdAdd": -0.75, "hpMult": 1.413, "powerMult": 1.313 } }
     ],
     "waves": [
       { "units": [
@@ -145,15 +145,15 @@
     "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,308 (düğümler aynı zorluğa çekildi). KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Vault Keepers",
     "units": [
-      { "class": "oathsworn_brother", "slot": 0, "mods": { "spdAdd": -1, "hpMult": 1.455, "powerMult": 1.455 } },
-      { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.455, "powerMult": 1.455 } },
-      { "class": "censer_monk", "slot": 7, "mods": { "spdAdd": -1, "hpMult": 1.455, "powerMult": 1.455 } }
+      { "class": "oathsworn_brother", "slot": 0, "mods": { "spdAdd": -0.75, "hpMult": 1.455, "powerMult": 1.455 } },
+      { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -0.75, "hpMult": 1.455, "powerMult": 1.455 } },
+      { "class": "censer_monk", "slot": 7, "mods": { "spdAdd": -0.75, "hpMult": 1.455, "powerMult": 1.455 } }
     ],
     "waves": [
       { "units": [
-        { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.533, "powerMult": 1.533 } },
-        { "class": "censer_monk", "slot": 6, "mods": { "spdAdd": -1, "hpMult": 1.533, "powerMult": 1.533 } },
-        { "class": "censer_monk", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.533, "powerMult": 1.533 } }
+        { "class": "oathsworn_brother", "slot": 1, "mods": { "spdAdd": -0.75, "hpMult": 1.533, "powerMult": 1.533 } },
+        { "class": "censer_monk", "slot": 6, "mods": { "spdAdd": -0.75, "hpMult": 1.533, "powerMult": 1.533 } },
+        { "class": "censer_monk", "slot": 8, "mods": { "spdAdd": -0.75, "hpMult": 1.533, "powerMult": 1.533 } }
       ] }
     ]
   },
@@ -171,14 +171,14 @@
     "units": [
       { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.177, "powerMult": 1.177 } },
       { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 1.177, "powerMult": 1.177 } },
-      { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.177, "powerMult": 1.177 } },
-      { "class": "grave_chanter", "slot": 8, "mods": { "spdAdd": -2, "hpMult": 1.177, "powerMult": 1.177 } }
+      { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -1.25, "hpMult": 1.177, "powerMult": 1.177 } },
+      { "class": "grave_chanter", "slot": 8, "mods": { "spdAdd": -1.25, "hpMult": 1.177, "powerMult": 1.177 } }
     ],
     "waves": [
       { "units": [
         { "class": "high_priest_of_the_undying", "slot": 7, "tier": "elite", "mods": { "powerMult": 1.06, "hpMult": 1.696, "statMult": 1.25 } },
-        { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.166, "powerMult": 1.166 } },
-        { "class": "fen_witchling", "slot": 8, "mods": { "spdAdd": -1, "hpMult": 1.166, "powerMult": 1.166 } },
+        { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -1.25, "hpMult": 1.166, "powerMult": 1.166 } },
+        { "class": "fen_witchling", "slot": 8, "mods": { "spdAdd": -0.75, "hpMult": 1.166, "powerMult": 1.166 } },
         { "class": "ghoul", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.166, "powerMult": 1.166 } }
       ] }
     ]
@@ -263,14 +263,14 @@
     "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,85 (düğümler aynı zorluğa çekildi). ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için can/güç 0,782 -> 0,6, 2. dalga 0,622 -> 0,5 ve 4 -> 3 düşman (orta Moor Raider gitti).",
     "name": "Moor Raiders",
     "units": [
-      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.6, "powerMult": 0.6 } },
-      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.6, "powerMult": 0.6 } },
+      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -2.5, "hpMult": 0.6, "powerMult": 0.6 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -2.5, "hpMult": 0.6, "powerMult": 0.6 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.6, "powerMult": 0.6 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 0.5, "powerMult": 0.5 } },
-        { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 0.5, "powerMult": 0.5 } },
+        { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -2.5, "hpMult": 0.5, "powerMult": 0.5 } },
+        { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -2.5, "hpMult": 0.5, "powerMult": 0.5 } },
         { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.5, "powerMult": 0.5 } }
       ] }
     ]
@@ -279,13 +279,13 @@
     "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,015 (düğümler aynı zorluğa çekildi). ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için rampanın son adımı, can/güç x~0,9 (0,863 -> 0,78; 2. dalga 1,066/1,043 -> 0,963/0,942). Iron Pass, Charcoal Camp ve sonrası değişmedi.",
     "name": "Cairn Raiders",
     "units": [
-      { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.78, "powerMult": 0.78 } },
+      { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -2.5, "hpMult": 0.78, "powerMult": 0.78 } },
       { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.78, "powerMult": 0.78 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.78, "powerMult": 0.78 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.963, "powerMult": 0.942 } },
+        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -2.5, "hpMult": 0.963, "powerMult": 0.942 } },
         { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.963, "powerMult": 0.942 } }
       ] }
     ]
@@ -316,7 +316,7 @@
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 0.80, "powerMult": 0.80 } },
+        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -2.65, "hpMult": 0.80, "powerMult": 0.80 } },
         { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.80, "powerMult": 0.80 } }
       ] }
     ]
@@ -328,15 +328,15 @@
       { "class": "ghoul", "slot": 1, "mods": { "spdAdd": -1, "hpMult": 1.14, "powerMult": 1.091 } },
       { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.85, "powerMult": 1.091 } },
       { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.85, "powerMult": 1.091 } },
-      { "class": "grave_chanter", "slot": 7, "mods": { "spdAdd": -2, "hpMult": 1.14, "powerMult": 1.091 } }
+      { "class": "grave_chanter", "slot": 7, "mods": { "spdAdd": -1.25, "hpMult": 1.14, "powerMult": 1.091 } }
     ],
     "waves": [
       { "units": [
         { "class": "risen_skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.8, "powerMult": 1.018 } },
         { "class": "risen_skeleton", "slot": 1, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.8, "powerMult": 1.018 } },
         { "class": "risen_skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "spdAdd": -1, "hpMult": 0.8, "powerMult": 1.018 } },
-        { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.018, "powerMult": 1.018 } },
-        { "class": "grave_chanter", "slot": 8, "mods": { "spdAdd": -2, "hpMult": 1.018, "powerMult": 1.018 } }
+        { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -1.25, "hpMult": 1.018, "powerMult": 1.018 } },
+        { "class": "grave_chanter", "slot": 8, "mods": { "spdAdd": -1.25, "hpMult": 1.018, "powerMult": 1.018 } }
       ] }
     ]
   },
@@ -346,15 +346,15 @@
     "company": { "name": "The Silver Stag Company", "line": "Sellswords hunting St. Brann's relic", "cause": "They want the abbey's relic first, and they see your company as a rival. They will not let you pass." },
     "units": [
       { "class": "warrior", "slot": 0, "name": "Stag Sellsword", "mods": { "spdAdd": -1, "hpMult": 0.59, "powerMult": 0.752 } },
-      { "class": "cutthroat", "slot": 2, "name": "Stag Knife", "mods": { "spdAdd": -8, "hpMult": 0.59, "powerMult": 0.752 } },
-      { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "spdAdd": -9, "hpMult": 0.59, "powerMult": 0.752 } },
+      { "class": "cutthroat", "slot": 2, "name": "Stag Knife", "mods": { "spdAdd": -4.85, "hpMult": 0.59, "powerMult": 0.752 } },
+      { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "spdAdd": -5.75, "hpMult": 0.59, "powerMult": 0.752 } },
       { "class": "mage", "slot": 8, "name": "Stag Magus", "mods": { "hpMult": 0.59, "powerMult": 0.752 } }
     ],
     "waves": [
       { "units": [
         { "class": "warrior", "slot": 1, "name": "Stag Captain", "mods": { "spdAdd": -1, "hpMult": 0.768, "powerMult": 0.916 } },
-        { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "spdAdd": -9, "hpMult": 0.768, "powerMult": 0.916 } },
-        { "class": "archer", "slot": 8, "name": "Stag Bowman", "mods": { "spdAdd": -9, "hpMult": 0.768, "powerMult": 0.916 } }
+        { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "spdAdd": -5.75, "hpMult": 0.768, "powerMult": 0.916 } },
+        { "class": "archer", "slot": 8, "name": "Stag Bowman", "mods": { "spdAdd": -5.75, "hpMult": 0.768, "powerMult": 0.916 } }
       ] }
     ]
   },
@@ -372,6 +372,23 @@
         { "class": "moor_raider", "slot": 1, "name": "Ember Outrider", "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
         { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
         { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
+        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.028, "powerMult": 0.925 } }
+      ] }
+    ]
+  },
+  "fold_flock": {
+    "_not": "Shepherd's Fold olay savaşı (Ömer 2026-11-23, form r41 ÖNERİ 2 Seçenek B). PROVİZYON: çarpanlar komşu Ember Road ile aynı (1. dalga can 0,99 / güç 0,891; 2. dalga 1,028 / 0,925), sefer simi olay savaşlarını oynamaz; balance-tester ölçümü bekliyor. Yalnız var olan düşmanlar.",
+    "name": "The Outriders' Drive",
+    "units": [
+      { "class": "ash_hound", "slot": 0, "mods": { "hpMult": 0.99, "powerMult": 0.891 } },
+      { "class": "moor_raider", "slot": 1, "name": "Ember Outrider", "mods": { "hpMult": 0.99, "powerMult": 0.891 } },
+      { "class": "ash_hound", "slot": 2, "mods": { "hpMult": 0.99, "powerMult": 0.891 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.99, "powerMult": 0.891 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "moor_raider", "slot": 1, "name": "Ember Outrider", "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
+        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.028, "powerMult": 0.925 } },
         { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.028, "powerMult": 0.925 } }
       ] }
     ]
@@ -443,14 +460,14 @@
     "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Windy Moor ile aynı (0,782). Denge balance-tester'ın. ERKEN RAMPA (Ömer 2026-10-27, balance-tester; open-questions 436, PROVİZYON): Inn softlock'u (2 kahramanla hiçbir düğüm kazanılamıyordu) için can/güç 0,782 -> 0,62 (iki dalga).",
     "name": "Hill Bandits",
     "units": [
-      { "class": "road_thug", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 0.62, "powerMult": 0.62 } },
-      { "class": "road_thug", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 0.62, "powerMult": 0.62 } },
-      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 0.62, "powerMult": 0.62 } }
+      { "class": "road_thug", "slot": 0, "mods": { "spdAdd": -1.4, "hpMult": 0.62, "powerMult": 0.62 } },
+      { "class": "road_thug", "slot": 2, "mods": { "spdAdd": -1.4, "hpMult": 0.62, "powerMult": 0.62 } },
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 0.62, "powerMult": 0.62 } }
     ],
     "waves": [
       { "units": [
-        { "class": "cutpurse", "slot": 0, "mods": { "spdAdd": -7, "hpMult": 0.62, "powerMult": 0.62 } },
-        { "class": "cutpurse", "slot": 2, "mods": { "spdAdd": -7, "hpMult": 0.62, "powerMult": 0.62 } },
+        { "class": "cutpurse", "slot": 0, "mods": { "spdAdd": -4.3, "hpMult": 0.62, "powerMult": 0.62 } },
+        { "class": "cutpurse", "slot": 2, "mods": { "spdAdd": -4.3, "hpMult": 0.62, "powerMult": 0.62 } },
         { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.62, "powerMult": 0.62 } }
       ] }
     ]
@@ -459,14 +476,14 @@
     "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Cairn Hill + %10 (0,863 x 1,1 = 0,949). Raiders' Hoard korunan hazinesi (cep). Denge balance-tester'ın. KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Hoard Guards",
     "units": [
-      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -4, "hpMult": 1.02, "powerMult": 1.02 } },
-      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -4, "hpMult": 1.02, "powerMult": 1.02 } },
+      { "class": "moor_raider", "slot": 0, "mods": { "spdAdd": -2.5, "hpMult": 1.02, "powerMult": 1.02 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "spdAdd": -2.5, "hpMult": 1.02, "powerMult": 1.02 } },
       { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 1.02, "powerMult": 1.02 } },
-      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -8, "hpMult": 1.02, "powerMult": 1.02 } }
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "spdAdd": -5, "hpMult": 1.02, "powerMult": 1.02 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -4, "hpMult": 1.02, "powerMult": 1.02 } },
+        { "class": "moor_raider", "slot": 1, "mods": { "spdAdd": -2.5, "hpMult": 1.02, "powerMult": 1.02 } },
         { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.02, "powerMult": 1.02 } },
         { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 1.02, "powerMult": 1.02 } }
       ] }
@@ -476,9 +493,9 @@
     "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Misty Marsh ile aynı (can 1,293, güç 1,091). Sunken Shrine korunan hazinesi (cep). Denge balance-tester'ın. KORUNAN HAZİNE (Ömer 2026-10-25, PROVİZYON, sim yok; open-questions 417): koruma savaşı zorlaştı, tüm birimlerin can ve güç çarpanı x1,12 (önce x1,07 denendi, Ömer: biraz daha zor; can x güç ~ x1,25).",
     "name": "Shrine Drowned",
     "units": [
-      { "class": "drowned", "slot": 0, "mods": { "spdAdd": -2, "hpMult": 1.492, "powerMult": 1.259 } },
-      { "class": "drowned", "slot": 2, "mods": { "spdAdd": -2, "hpMult": 1.492, "powerMult": 1.259 } },
-      { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -2, "hpMult": 1.492, "powerMult": 1.259 } },
+      { "class": "drowned", "slot": 0, "mods": { "spdAdd": -1.25, "hpMult": 1.492, "powerMult": 1.259 } },
+      { "class": "drowned", "slot": 2, "mods": { "spdAdd": -1.25, "hpMult": 1.492, "powerMult": 1.259 } },
+      { "class": "grave_chanter", "slot": 6, "mods": { "spdAdd": -1.25, "hpMult": 1.492, "powerMult": 1.259 } },
       { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.492, "powerMult": 1.259 } }
     ],
     "waves": [

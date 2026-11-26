@@ -82,5 +82,30 @@ export function registerMultiplayerDebug(game: Phaser.Game, debug: DebugMenu): v
     hint: 'Change this side of the multiplayer battle by 1 HP: the next move check finds the desync and the match stops on both sides',
     run: () => void mp.simulateDesync(),
   });
+  // Owner tests (Ömer 2026-11-24): iki cihazda deneme için tek tuş: lobi kur + davet linkini panoya kopyala (lobi ekranındaki Copy invite link ile aynı link)
+  debug.register({
+    id: 'owner.mp-host-copy',
+    tab: TAB,
+    section: 'Owner tests',
+    icon: 'team',
+    label: 'MP host lobby and copy invite link',
+    hint: 'Opens a real multiplayer lobby on this device and copies the invite link (same as Copy invite link in the lobby) to the clipboard; open it on the second device. On a localhost page it copies only the code (a localhost link does not open elsewhere). If a lobby is already open, only copies. Both devices must run the SAME build (the game refuses to pair different versions) and a phone on a LAN address is refused by the server, so test on the live site.',
+    run: () => {
+      const copyWhenReady = async (): Promise<void> => {
+        const o = await import('./mp-overlay');
+        for (let i = 0; i < 50 && mp.state !== 'lobby' && mp.state !== 'error'; i++) await new Promise((r) => setTimeout(r, 100));
+        if (mp.state !== 'lobby' || mp.fake) return o.toast(mp.error || 'No real lobby (server not reachable?)', 4500);
+        // localhost adresi başka cihazda açılmaz: orada yalnız KOD kopyalanır (live sitede Join'e yazılır)
+        const local = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+        const ok = await o.copyText(local ? mp.code : mp.inviteLink());
+        o.toast(ok ? (local ? `Lobby code ${mp.code} copied (type it into Join on the other device)` : `Invite link copied (code ${mp.code})`) : `Copy failed; code ${mp.code}`, 5000);
+      };
+      if (mp.state === 'idle' || mp.state === 'error' || mp.fake) {
+        mp.host();
+        openLobby(game);
+      }
+      void copyWhenReady();
+    },
+  });
   debug.registerInfo('multiplayer', () => mp.info());
 }

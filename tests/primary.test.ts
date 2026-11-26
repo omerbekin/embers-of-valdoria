@@ -631,12 +631,15 @@ describe('skill temasına uygun stat (class verisi)', () => {
   });
 
   it('Bone Throw (Ömer onayı 2026-10-10, skill-scaling-review): büyü hasarı, element dark, INT ölçekli', () => {
-    const dmg = content.skills.bone_throw!.effects.find((e) => e.type === 'damage') as { damageType: string; element?: string; scale: string; power: number };
+    const dmg = content.skills.bone_throw!.effects.find((e) => e.type === 'damage') as { damageType: string; element?: string; scale: string; power: number; flat?: number };
     expect(dmg.damageType).toBe('magic');
     expect(dmg.element).toBe('dark');
     expect(dmg.scale).toBe('int');
-    expect(dmg.power).toBeGreaterThan(0.4);
-    expect(dmg.power).toBeLessThan(0.6); // Ömer 2026-10-17 classtune: 0,45 -> 0,55
+    // Etkin oran (düz taban + ölçek, Ömer 2026-11-25): Undead'in başlangıç INT'inde (L1) hasar / INT; flat yoksa power'ın kendisi
+    const int0 = content.classes.undead!.attributes.int;
+    const eff = dmg.power + (dmg.flat ?? 0) / int0;
+    expect(eff).toBeGreaterThan(0.4);
+    expect(eff).toBeLessThan(0.6); // Ömer 2026-10-17 classtune: 0,45 -> 0,55
     // motor: zırh değil büyü zırhı azaltır; olay elementi dark (yüzen yazıda kuru kafa ikonu)
     const cells = (m: Record<number, string>) => Array.from({ length: 12 }, (_, i) => m[i] ?? '');
     const b = new Battle(content.battleSetup('random-battle', 3, 'test', { party: cells({ 0: 'undead' }), enemies: cells({ 0: 'warrior' }) }, false));

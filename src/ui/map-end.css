@@ -47,7 +47,8 @@ html.reduced-motion .me-panel { animation: none; }
 .me-tease .tx { flex: 1; min-width: 0; }
 .me-tease .nm { font: 600 var(--f2) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-gold); }
 .me-tease p { margin: 0; font: var(--f1) var(--g-body); color: var(--g-dim); line-height: 1.25; }
-.me-acts { flex: none; display: flex; gap: calc(16 * var(--u)); align-items: center; }
+.me-acts { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: calc(16 * var(--u)); align-items: center; }
+html.short .me-acts { gap: 8px; }
 
 /* telefon yatay (html.short): her şey bir ekrana sığar; hikâye iki satır, teaser resmi ve portre adları gizli */
 html.short .me-panel { padding: 8px 16px; gap: 4px; width: 96%; }

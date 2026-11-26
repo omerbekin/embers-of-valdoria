@@ -103,7 +103,7 @@ export function rulesTestBattleData(seed: number, mode: BattleMode, kind: RulesT
     rules = {};
     Object.assign(enemyAt, { 0: 'temper_tester', 2: 'temper_tester' });
   }
-  else if (kind.startsWith('mob_')) {
+  else if (kind.startsWith('mob_') || kind.startsWith('kit_')) {
     // Harita 3 4. dilim: mob başına tek deneme (ön sıra iki tane; arkada var olan kadro)
     const SET: Record<string, { id: string; rules: NonNullable<Teams['rules']>; back?: Record<number, string> }> = {
       mob_vaulter: { id: 'clan_vaulter', rules: {} },
@@ -198,9 +198,9 @@ export const TOUCH_TESTS: ReadonlyArray<{ kind: TouchTestKind; label: string; hi
   { kind: 'matriarch', label: 'Greater Kindling', hint: 'The Pyre Matriarch: Stoke marks 2x2 cells that burn, Spread the Flame widens them. She deals 5% more damage for each Burning cell on the field' },
   { kind: 'warden', label: 'Cinder Warden', hint: 'The Cinder Warden: Tempering swaps stance each turn. Hold the Gate draws attacks. Slag Wall marks a lane that burns' },
   { kind: 'hearthwarden', label: 'Forge-Heat + Quench', hint: 'The Hearthwarden: a row is marked each Round and burns the next. Quench puts out every Burning cell and heals her for each. Temper the Crown burns your whole side' },
-  { kind: 'brannoc', label: 'Clan Chief Brannoc', hint: 'Clan Chief Brannoc with a Skald and 2 Axemen: his row gains Haste each turn, Rally the Clan hastes a row, Skullsplitter gives Sunder. He cannot be Chilled or Frozen' },
+  { kind: 'brannoc', label: 'Clan Chief Brannoc', hint: 'Clan Chief Brannoc with a Skald and 2 Axemen: his row gains Haste each turn, Rally the Clan hastes a row, Helm Cleaver gives Sunder. He cannot be Chilled or Frozen' },
   { kind: 'bearer', label: 'Frozen Ranks', hint: 'The Frozen Standard-Bearer: while he stands, his allies cannot be Chilled and take less damage in a full row. He can be Chilled and Frozen himself. Kill him and the rest lose it' },
-  { kind: 'oathkeeper', label: 'Stone Oath', hint: 'The Oathkeeper: each ally that dies gives him +6 armor and +6 magic armor for the rest of the battle. Verdict gives Sunder' },
+  { kind: 'oathkeeper', label: 'Stone Oath', hint: 'The Oathkeeper: each ally that dies gives him +6 armor and +6 Magic Armor for the rest of the battle. Verdict gives Sunder' },
   { kind: 'king', label: 'The King Hears', hint: 'The Hollow King with Noise on: each fill raises a Warden and the King calls one more for free. Units tab has Noise +5' },
 ];
 

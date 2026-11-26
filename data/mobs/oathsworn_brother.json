@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL: YER TUTUCU spriteId 'shieldwarden' (kendi ChatGPT çizimi gelince spriteId 'oathsworn_brother' olur; liste mob-plan.md 6 > Yer tutucular). Pasif ikonu yer tutucu 'guardian'.",
+  "_not": "Sefer mobu (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL: kendi sprite'ı var (spriteId 'oathsworn_brother', 2026-11 itibarıyla yer tutucu değil). Pasif ikonu yer tutucu 'guardian'.",
   "id": "oathsworn_brother",
   "name": "Oathsworn Brother",
   "family": "branns_order",

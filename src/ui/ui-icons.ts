@@ -1,6 +1,7 @@
 import { iconUrl } from './dom-icons';
 import type { IconKind } from './icon-kinds';
-import { uiImage } from '../game/icon-image-files';
+import { mobImage, uiImage } from '../game/icon-image-files';
+import { MOB_ICON_PREFIX } from './mob-icons';
 
 /**
  * ARAYÜZ İKONLARI (boyalı PNG, Ömer 2026-10-10): assets/ui-icons/<ad>.png (128, DOM) + small/<ad>.png (64, Phaser). Asıl sayfa
@@ -73,7 +74,8 @@ export const canShowUiIcon = (kind: UiIconKind): boolean => hasUiImage(kind) || 
 
 /** Global eylemin (Rest / Skip Turn / Move) arayüz ikonu: türüne göre boyalı görsel; görsel de yedeği de yoksa verideki ikon adı. */
 const GLOBAL_UI: Record<string, UiIconKind> = { rest: 'rest', skip: 'skip', move: 'move' };
-export function globalIconName(def: { kind: string; icon?: string }): string {
+export function globalIconName(def: { id?: string; kind: string; icon?: string }): string {
+  if (def.id && mobImage(def.id)) return `${MOB_ICON_PREFIX}${def.id}`; // kendi boyalı ikonu (assets/mob-icons/<global id>.png; Royal Command)
   const k = GLOBAL_UI[def.kind];
   if (k && hasUiImage(k)) return uiIconName(k);
   return def.icon ?? (k ? uiIconName(k) : '');

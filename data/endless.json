@@ -41,7 +41,7 @@
       { "id": "whetstone_of_ashford", "name": "Whetstone of Ashford", "icon": "burst", "color": "#e8c47e", "text": "Every hero has +5% critical chance.", "effect": { "critAdd": 0.05 } },
       { "id": "banner_of_the_bridge", "name": "Banner of the Bridge", "icon": "warcry", "color": "#e0643c", "text": "Each hero deals 15% more damage with their first action of every wave.", "effect": { "openingDamageMult": 1.15 } },
       { "id": "last_rites", "name": "Last Rites", "icon": "ankh", "color": "#cfd8e8", "text": "When a hero falls, the remaining heroes recover 15% of their max health.", "effect": { "fallAllyHealRatio": 0.15 } },
-      { "id": "iron_oath", "name": "Iron Oath", "icon": "shield", "color": "#9cbde6", "text": "Every hero has +4 armor and +4 magic armor.", "effect": { "armorAdd": 4, "magicArmorAdd": 4 } }
+      { "id": "iron_oath", "name": "Iron Oath", "icon": "shield", "color": "#9cbde6", "text": "Every hero has +4 armor and +4 Magic Armor.", "effect": { "armorAdd": 4, "magicArmorAdd": 4 } }
     ]
   },
   "_levels": "Level / XP (Ömer 2026-10-17, docs/design/progression/levels.md): her koşu L1, kahramanlar dalgayla level atlar. Dalga seviyesi = 1 + (dalga - 1) x levelPerWave (tavan L50). Dalganın tüm düşmanları kahraman başına xpPerWave x (dalga seviyesinin level eşiği) XP verir, düşman başına eşit pay; elit 2x / boss 4x (levels.json > nodeMult); düştükten sonraki öldürmeler %50; geride kalana yakalama bonusu. Endless'te level farkı cezası YOK (farm yok, dalga hep ileri). Kahraman dalga seviyesinin önüne geçince eşiği büyüdüğü için kendiliğinden yavaşlar. Sayılar PROVİZYON (balance-tester).",

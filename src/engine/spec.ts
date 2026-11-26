@@ -1,6 +1,6 @@
 import type { DamageSpec } from './formulas';
 import { statusCounts, statusCountsAny } from './status-count';
-import { outgoingDamageMult, statDamageAdd } from './stats';
+import { outgoingDamageMult, rageMissFrac, statDamageAdd } from './stats';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { effNum } from './tree-hooks';
 import type { BonusScale, Combatant, Formulas, SkillEffect, Stats } from './types';
@@ -49,7 +49,7 @@ export function damageSpecFor(
   // Pasifler: rage (eksik cana göre) ve openingShot (canı dolu hedefe)
   let passiveMult = 1;
   const pe = actor.passive?.effect;
-  if (pe?.type === 'rage') passiveMult *= 1 + pe.maxBonus * (1 - actor.hp / actor.maxHp);
+  if (pe?.type === 'rage') passiveMult *= 1 + pe.maxBonus * rageMissFrac(pe, actor.hp, actor.maxHp);
   if (pe?.type === 'longshot') {
     const lanes = formulas.formation.lanes;
     passiveMult *= 1 + pe.perRow * (Math.floor(actor.slot / lanes) + Math.floor(target.slot / lanes) + (pe.extraRows ?? 0));
@@ -74,7 +74,7 @@ export function damageSpecFor(
   const pen = effNum(actor, phys ? 'armorPen' : 'magicPen'); // item + ağaç kanalı (tree-hooks.ts)
   const penCap = phys ? ITEM_HOOK_CAPS.armorPen : ITEM_HOOK_CAPS.magicPen;
   const ignore = pen > 0 ? 1 - (1 - (effect.ignoreDefense ?? 0)) * (1 - Math.min(penCap, pen)) : effect.ignoreDefense;
-  const bonus = effect.bonusScale ? bonusScaleRaw(effect.bonusScale, attackerStats ?? actor.stats) * mult : 0;
+  const bonus = effect.bonusScale || effect.flat ? damageBonusRaw(effect, attackerStats ?? actor.stats) * mult : 0;
   return {
     damageType: effect.damageType,
     scale: effect.scale,
@@ -103,6 +103,14 @@ export function splitParts(effect: DamageEffect): Array<{ effect: DamageEffect; 
     { effect: base, share: 1 - s },
     { effect: second, share: s },
   ];
+}
+
+/**
+ * Hasar etkisinin stat x power DIŞINDAKİ ham eki: hibrit ölçek (bonusScale) + düz taban (flat, Ömer 2026-11-25; eksi olabilir).
+ * Çarpansız; motor (damageSpecFor), skill yazısı ve YZ ham değeri aynı fonksiyonu kullanır. İkisi de yoksa 0.
+ */
+export function damageBonusRaw(effect: Pick<DamageEffect, 'bonusScale' | 'flat'>, stats: Stats): number {
+  return bonusScaleRaw(effect.bonusScale, stats) + (effect.flat ?? 0);
 }
 
 /** Hibrit ölçek eki (damage.bonusScale): girişlerin toplamı = değer x pct (zırh / büyü zırhı / temel stat; çarpansız ham miktar). */

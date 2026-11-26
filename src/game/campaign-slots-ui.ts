@@ -7,7 +7,7 @@ import { H, W } from './campaign-ui';
 import { classAvatar } from './menu-ui';
 import { campaignArtKey, hasCampaignArt } from './campaign-art';
 import { cardArt } from './card-art';
-import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elDiamond, elGlow, elPanel, elText, fitW, hGradient, vGradient } from './elegant-ui';
+import { EL, elDot, elBack, elBody, elButton, elConfirm, elDiamond, elGlow, elPanel, elText, fitW, hGradient, vGradient } from './elegant-ui';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
 import { onStageResize } from './stage';
 import { stageView } from './stage-view';
@@ -317,7 +317,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
       let ty = 74;
       made[k]!.forEach((tx) => {
         const dot = scene.add.graphics();
-        dot.fillStyle(EL.GOLD, 0.7).fillPoints(diamondPts(30, ty + 14, 4), true);
+        elDot(dot, 30, ty + 14, 4, EL.GOLD, 0.7);
         tx.setPosition(48, ty);
         c.add([dot, tx]);
         ty += tx.height + 6;

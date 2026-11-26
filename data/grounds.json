@@ -142,7 +142,7 @@
     "liquid": true,
     "_not": "Zemin tepkimesi (Ömer 2026-10-27): su + Holy Fire. Şifa zemini (heal): hasar vermez; içindeki, tepkimeyi tetikleyenin tarafındaki birim Hallowed alır ve tur başında tik kadar iyileşir. Islatmaz.",
     "name": "Holy Water",
-    "text": "Allies of whoever made it, standing here, are Hallowed: they heal at the start of their turn. Harms no one and does not soak.",
+    "text": "Allies of whoever made it, standing here, are Hallowed: they heal at the start of their turn. Harms no one and does not make units Soaked.",
     "color": "#bfe3ff",
     "element": "holy",
     "icon": "radiance",
@@ -181,7 +181,7 @@
   "blood_curse": {
     "_not": "Zemin tepkimesi (Ömer onaylı 2026-11-09, element formu): kan + lanetli zemin (reactions.blood_curse). T2: sıvı değil, ıslatmaz. İçindeki düşman (tetiği bırakanın düşmanı) Blood Cursed: alınan şifa -%70. Hasar vermez. Ömer 2026-11-16 (form Tur 23): Blood Cursed Wound ile birleşti; zemin Wound'u statusStrength 1,4 ile verir (0,5 taban -> %70 az şifa).",
     "name": "Blood Curse",
-    "text": "Enemies standing here are Wounded: they receive 70% less healing. Made by blood and a curse merging. Deals no damage.",
+    "text": "Enemies standing here suffer Wound: they receive 70% less healing. Made by blood and a curse merging. Deals no damage.",
     "color": "#5a1030",
     "element": "dark",
     "icon": "drop",

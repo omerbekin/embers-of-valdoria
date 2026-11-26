@@ -88,11 +88,11 @@ describe('Faz 8: veri ve derleme', () => {
     expect(set.list.find((m) => m.id === 'stun')!.note).toBe('First target only');
   });
 
-  it('Double Deal: seçilen durum + kalanlardan rastgele ikinci durum (seçilen hariç; Stun ilk karta özel)', () => {
+  it('Double Deal: seçilen durum + kalanlardan rastgele ikinci durum (seçilen hariç; r43: ikinci durum Stun olamaz)', () => {
     const set = only('gambler', GAM_DOUBLE)!.modes!['card_trick']!;
     for (const m of set.list) {
       const rs = m.skill.effects.find((e) => e.type === 'randomStatus') as { options: { status: string; firstOnly?: boolean }[] };
-      expect(rs.options.map((o) => o.status).sort()).toEqual(['slow', 'stun', 'wound'].filter((s) => s !== m.id).sort());
+      expect(rs.options.map((o) => o.status).sort()).toEqual(['slow', 'wound'].filter((s) => s !== m.id).sort());
       for (const o of rs.options) expect(!!o.firstOnly).toBe(o.status === 'stun');
     }
   });
@@ -249,6 +249,29 @@ describe('Faz 8: yapay zeka', () => {
     expect(ch?.skillId).toBe('card_trick');
     expect(ch?.mode).toBe('slow');
     expect(b.applyChoice(me.uid, ch).ok).toBe(true);
+  });
+
+  it('r44: Double Deal ile YZ ikinci durumun belli olduğunu bilir (kart Slow + Wound değerlenir, rastgele Stun payı yok)', () => {
+    const best = (ranks: Record<string, number>): { score: number; statuses: string[] } => {
+      const b = make({ 0: 'gambler' }, { 0: 'warrior', 1: 'archer' }, withTree(0, only('gambler', ranks)));
+      const me = P(b);
+      me.skills = ['card_trick'];
+      ready(me, 'card_trick');
+      const trace = { options: [], reserves: [], steps: [] } as unknown as Parameters<typeof chooseAction>[3] & { options: Array<{ skill: { id: string; effects: Array<{ type: string; status?: string; options?: Array<{ status: string }> }> }; score: number; mode?: string }> };
+      const ch = chooseAction(b, me.uid, content.aiConfig, trace);
+      expect(ch?.mode).toBe('slow');
+      const os = trace.options.filter((o) => o.skill.id === 'card_trick');
+      const top = os.reduce((a, o) => (o.score > a.score ? o : a), os[0]!);
+      const statuses = top.skill.effects.flatMap((e) => (e.type === 'status' ? [e.status!] : e.type === 'randomStatus' ? e.options!.map((x) => x.status) : []));
+      return { score: top.score, statuses };
+    };
+    const pick = best(GAM_PICK);
+    const dbl = best(GAM_DOUBLE);
+    expect(pick.statuses.sort()).toEqual(['slow', 'stun', 'wound']); // yalnız Stacked Deck: değer skill'in kendi rastgele tanımıyla (eskisi gibi)
+    expect(dbl.statuses.sort()).toEqual(['slow', 'wound']); // Double Deal: Slow kartı = Slow + Wound
+    // Eski değer (kendi rastgele tanımı) Slow kartına %20 Stun payı sayıyordu; Slow kartı Stun veremez, gerçek değer onsuz (daha düşük)
+    expect(dbl.score).toBeLessThan(pick.score);
+    expect(dbl.score).toBeGreaterThan(0);
   });
 
   it('tek düşman kaldıysa YZ Radiance yerine Focused Beam seçer', () => {

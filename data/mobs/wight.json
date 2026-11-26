@@ -1,9 +1,9 @@
 {
-  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Ghoul; palet YOK, ghoul çizimi. Tek pasif yuvası: Corpse Hunger yerine Grave Cold.",
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Ghoul; kendi çizimi (spriteId = id, r49). Tek pasif yuvası: Corpse Hunger yerine Grave Cold.",
   "id": "wight",
   "name": "Wight",
   "family": "undead",
-  "spriteId": "ghoul",
+  "spriteId": "wight",
   "color": "#9fb4c0",
   "logo": "skull",
   "frontPriority": 2,

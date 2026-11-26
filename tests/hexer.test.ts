@@ -71,7 +71,9 @@ describe('Hexer class verisi', () => {
     expect(hx.stats.spd).toBe(roundSpeed(f.spdBase + f.spdPerDex * a.dex, content.formulas)); // 16
     expect(hx.stats.accuracy).toBeCloseTo(f.accuracyBase + f.accuracyPerLuck * a.luck); // %94
     expect(hx.stats.critChance).toBeCloseTo(f.critChanceBase + f.critChancePerLuck * a.luck); // %12
-    expect([hx.stats.hp, hx.stats.mp, hx.stats.spd]).toEqual([84, 32, 16.4]); // levels.md 2026-10-17: str 18 (can 84; önce 78); MP round(30 + 0,2 x 10) = 32 (Ömer 2026-11-07 / 0.9.11, önce 40); ondalık hız (Ömer 2026-10-31): 14 + 0,4 x 6 = 16,4
+    expect([hx.stats.hp, hx.stats.mp]).toEqual([84, 32]); // levels.md 2026-10-17: str 18 (can 84; önce 78); MP round(30 + 0,2 x 10) = 32 (Ömer 2026-11-07 / 0.9.11, önce 40)
+    // ondalık hız (Ömer 2026-10-31): spdBase + spdPerDex x 6, veriden (r41 akşam: spdPerDex 0,4 -> 0,25; 16,4 -> 15,5)
+    expect(hx.stats.spd).toBe(roundSpeed(f.spdBase + f.spdPerDex * 6, content.formulas));
     expect(hx.stats.armor).toBe(8); // x2 ölçek (eski 4)
     expect(hx.stats.magicArmor).toBe(0);
     expect(hx.spriteId).toBe('hexer');

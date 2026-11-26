@@ -116,7 +116,8 @@
   top: 0.64em;
   width: 0.34em;
   height: 0.34em;
-  transform: translate(-50%, -50%) rotate(45deg);
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur: madde imi = dolu nokta */
   background: var(--acl);
   box-shadow: 0 0 5px color-mix(in srgb, var(--ac) 70%, transparent);
 }
@@ -301,9 +302,9 @@
   top: 50%;
   width: 0.37em;
   height: 0.37em;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: #130d07;
-  border: 1px solid var(--acl);
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur (Ömer r48): bölücü ortası = dolu nokta */
+  background: var(--acl);
 }
 
 /* gövde satırları: elmas madde işareti, anahtar kelime vurgu renginde, rakamlar altın */
@@ -349,7 +350,8 @@
   top: 52%;
   width: 0.32em;
   height: 0.32em;
-  transform: translate(-50%, -50%) rotate(45deg);
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur: madde imi = dolu nokta */
   background: var(--acl);
   box-shadow: 0 0 5px color-mix(in srgb, var(--ac) 70%, transparent);
 }
@@ -429,7 +431,7 @@
 .bt-foot .dia {
   width: 0.5em;
   height: 0.5em;
-  transform: rotate(45deg);
+  border-radius: 50%;
   background: var(--acl);
   flex: none;
 }

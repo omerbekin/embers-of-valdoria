@@ -132,9 +132,10 @@ describe('parça sayımı ve eşikler', () => {
     const def = content.classes.defender!.passive!;
     const patched = patchedPassive(def, setContribution(wearing(ashPieces(3)), 'defender').passivePatch);
     const text = describePassive(patched, content.classes.defender!.stats, content.formulas);
-    expect(text).toContain('50%');
+    const rows = (SETS.find((s) => s.id === 'ashguard_vigil')!.bonuses['3'] as { byClass: Record<string, { to: number }> }).byClass;
+    expect(text).toContain(`${+(rows.defender!.to * 100).toFixed(3)}%`);
     const zerk = duel('warrior', loadoutSetup({ class: 'warrior', equipment: wearing(ashPieces(3)) })).hero;
-    expect((zerk.passive!.effect as { rageOnHurt: { perHpPercent: number } }).rageOnHurt.perHpPercent).toBe(0.5);
+    expect((zerk.passive!.effect as { rageOnHurt: { perHpPercent: number } }).rageOnHurt.perHpPercent).toBe(rows.warrior!.to);
   });
 
   it('başka sınıfta (veri satırı yok) pasif yaması yok', () => {
@@ -342,7 +343,7 @@ describe('Road Hound', () => {
     expect(content.setSummons.road_hound!.summonerScale!.from).toBe('primary');
   });
 
-  it('statlar veriye eşit: can 2 x primary, hasar 0,5 x primary, hız 17, aggressive, item sayılmaz', () => {
+  it('statlar veriye eşit: can / hasar x primary (summonerScale), hız 17, aggressive, item sayılmaz', () => {
     const scale = content.setSummons.road_hound!.summonerScale!;
     expect(scale.hp).toBe(HOUND.hpPerPrimary);
     expect(scale.damage).toBe(HOUND.damagePerPrimary);
@@ -351,20 +352,20 @@ describe('Road Hound', () => {
     const { b } = duel('warrior', setup('warrior'));
     const h = houndOf(b)[0]!;
     const primary = content.classes.warrior!.attributes.str;
-    expect(h.maxHp).toBe(primary * 2);
-    expect(h.stats.str).toBeCloseTo(primary * 0.5, 3);
+    expect(h.maxHp).toBe(primary * scale.hp);
+    expect(h.stats.str).toBeCloseTo(primary * scale.damage!, 3);
     expect(Math.abs(h.stats.spd - 17)).toBeLessThanOrEqual(17 * 0.1);
     // INT sınıfı: kaynak INT, köpek yine STR ile vurur
     const m = houndOf(duel('mage', setup('mage')).b)[0]!;
-    expect(m.maxHp).toBe(content.classes.mage!.attributes.int * 2);
-    expect(m.stats.str).toBeCloseTo(content.classes.mage!.attributes.int * 0.5, 3);
+    expect(m.maxHp).toBe(content.classes.mage!.attributes.int * scale.hp);
+    expect(m.stats.str).toBeCloseTo(content.classes.mage!.attributes.int * scale.damage!, 3);
   });
 
   it('item temel statı değiştirince köpek değişmez (primaryExcludesItems)', () => {
     const with3 = loadoutSetup({ class: 'warrior', equipment: wearing(wayPieces(3)) });
     const buffed: UnitSetup = { ...with3, summonBase: { ...content.classes.warrior!.attributes }, modifiers: { ...with3.modifiers, attrAdd: { str: 50 } } };
     const h = houndOf(duel('warrior', buffed).b)[0]!;
-    expect(h.maxHp).toBe(content.classes.warrior!.attributes.str * 2);
+    expect(h.maxHp).toBe(content.classes.warrior!.attributes.str * content.setSummons.road_hound!.summonerScale!.hp);
   });
 
   it('ölünce savaşta yeniden gelmez; x2 hasar kuralı çağrı olarak geçerli', () => {
@@ -447,7 +448,8 @@ describe('ipucu ve Codex', () => {
     const eq = wearing(ashPieces(3));
     const tip = setTip(itemDef('ashguard_helm'), 'defender', eq)!;
     expect(tip.title).toBe('Ashguard Vigil (3/4)');
-    expect(tip.rows.find((r) => r.text.includes('+3 Armor'))!.on).toBe(true);
+    const armor2 = (SETS.find((s) => s.id === 'ashguard_vigil')!.bonuses['2'] as { mods: { armorAdd: number } }).mods.armorAdd;
+    expect(tip.rows.find((r) => r.text.includes(`+${armor2} Armor`))!.on).toBe(true);
     expect(tip.rows.find((r) => r.text.includes('Bulwark Aura'))!.on).toBe(true);
     expect(tip.rows.find((r) => r.text.includes('Berserker'))!.on).toBe(false);
     expect(tip.rows.find((r) => r.text.includes('Banked Coals'))!.on).toBe(false);

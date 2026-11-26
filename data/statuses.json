@@ -120,7 +120,8 @@
     "critDeltaPerStack": -0.03,
     "doom": {
       "scale": "luck",
-      "powerPerStack": 0.38,
+      "flatPerStack": 2.704,
+      "powerPerStack": 0.276,
       "damageType": "magic",
       "element": "dark",
       "expireMult": 1,
@@ -227,7 +228,7 @@
     "color": "#8a4a25",
     "dispellable": false,
     "untilResolved": true,
-    "text": "Each standing Iron Mooring gives +10 armor and +10 magic armor"
+    "text": "Each standing Iron Mooring gives +10 armor and +10 Magic Armor"
   },
   "burning": {
     "name": "Burning",
@@ -397,7 +398,7 @@
   },
   "tempered_red_hot": {
     "_not": "Harita 3 C6 Tempering (maps-2-3.md): duruş rozeti; pasif çevirir (süre işlemez). İkon YER TUTUCU. Ek su çarpanı pasifte (waterTaken).",
-    "name": "Red-hot",
+    "name": "Red-Hot",
     "type": "buff",
     "icon": "flame",
     "color": "#ff7a3a",
@@ -418,7 +419,7 @@
     "untilResolved": true,
     "dispellable": false,
     "armorMult": 0.5,
-    "text": "50% less Armor. Fire damage makes it Red-hot again. Changes stance on its turn"
+    "text": "50% less Armor. Fire damage makes it Red-Hot again. Changes stance on its turn"
   },
   "cooling": {
     "_not": "Slagcart Golem: koşudan sonra soğuma. skipTurn + armorMult 0; cc değil (bağışıklık ya da sersemletme sayılmaz). Silinmez. İkon yer tutucu (flame).",

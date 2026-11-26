@@ -314,6 +314,24 @@ describe('Faz 5a: çağrı düğümleri (4c kalanları)', () => {
     expect(u2.t.treeHooks!.filter((h) => h.h === 'trigger')).toHaveLength(1);
     const u3 = land({ '4.u1': 1, '4.u2': 1, '4.u3': 1 });
     expect(u3.b.combatants.some((c) => c.side === 'enemy' && has(c, 'stun'))).toBe(true);
+    // r44 (Ömer form r44 d_druid3 B): Stun savaşta yalnız İLK Treant inişinde; sonraki Treant'ın inişi hasar verir, Stun vermez
+    const stunEvs = (evs: BattleEvent[]) => evs.filter((e) => e.type === 'status' && (e as { status?: string }).status === 'stun').length;
+    expect(stunEvs(u3.evs)).toBeGreaterThan(0);
+    for (const c of u3.b.combatants) if (c.side === 'enemy') c.statuses = c.statuses.filter((s) => s.kind !== 'stun');
+    u3.t.hp = 0;
+    const d = P(u3.b, 3);
+    const again = cast(u3.b, d, 'summon_treant');
+    const t2 = summonOf(u3.b, d)!;
+    expect(t2.uid).not.toBe(u3.t.uid);
+    expect(hitUids(again, t2).size).toBeGreaterThan(0); // iniş hasarı her çağrıda
+    expect(stunEvs(again)).toBe(0);
+    expect(u3.b.combatants.some((c) => c.side === 'enemy' && has(c, 'stun'))).toBe(false);
+    // YZ okuması (aiTriggers) da hakkın bittiğini görür: sonraki Treant'ta Stun kancası yok (değer 0)
+    const stunHooks = (t: Combatant) => u3.b.aiTriggers(t, { on: 'arrive', unit: 'treant', target: t, subject: t }).filter((x) => x.hook.do.some((a) => (a as { status?: string }).status === 'stun'));
+    expect(stunHooks(t2)).toHaveLength(0);
+    // Başka bir Druid'in ilk Treant'ı kendi hakkını kullanır (hak çağıran başına)
+    const fresh = land({ '4.u1': 1, '4.u2': 1, '4.u3': 1 });
+    expect(stunEvs(fresh.evs)).toBeGreaterThan(0);
   });
 
   it('Wrathful Oak: Treant tur başına iki eylem, 2 tur yaşar; Living Bomb: Treant dururken yeniden çağrı eskisini patlatır', () => {
@@ -355,8 +373,10 @@ describe('Faz 5a: çağrı düğümleri (4c kalanları)', () => {
     expect((h[0] as { do: Array<{ wide?: string }> }).do[0]!.wide).toBe('beside');
     const b = make({ 0: 'undead' }, { 0: 'warrior' }, withTree(0, only('undead', { '4.d2': 1 })));
     const me = P(b);
-    me.mp = 15;
-    expect(b.summonPreview(me.uid, 'raise_dead').empowered).toBe(false); // 8 + 8 MP yetmiyor
+    const need = content.skills.raise_dead!.cost.amount + 8; // r45: bedel veriden (Raise Dead + 8 L1 havuzunu aşar; havuz sahnede bedele göre)
+    me.maxMp = need;
+    me.mp = need - 1;
+    expect(b.summonPreview(me.uid, 'raise_dead').empowered).toBe(false); // bedel + 8 MP yetmiyor
     me.mp = me.maxMp;
     expect(b.summonPreview(me.uid, 'raise_dead').empowered).toBe(true);
     const mp0 = me.mp;
@@ -393,14 +413,21 @@ describe('Faz 5a: ek sözlük (hitsEach, merkez kritikleri, tekrar sırası, ta�
       for (const s of [0, 2, 6, 8]) expect(acts(evs, me, E(b, s)), `tree ${tree} slot ${s}`).toBe(tree ? 2 : 1);
       expect(acts(evs, me, E(b, 4))).toBe(2);
     }
-    // önizleme aynı yoldan: köşe hasarı ağaçta (power 0.35 x 2) ağaçsızdan (0.45 x 1) büyük
+    // önizleme aynı yoldan: köşe hasarı ağaçta (2.v gücü x 2) ağaçsızdan (temel güç x 1) büyük. Düz taban (r48 Ömer, Saltire Cut
+    // 2,5 + %35,4 DEX): 2.v yalnız ölçeği ezer (op set), flat kalır; beklenen oran veriden.
+    let dex = 0;
     const corner = (tree: boolean): number => {
       const b = make({ 0: 'cutthroat' }, xFoes, tree ? withTree(0, only('cutthroat', { '2.v': 1 })) : {});
       tank(b);
       P(b).stats.dex *= 4; // vuruş başı tam sayı yuvarlaması oranı bozmasın (2026-11-08 Warrior zırhı 18 -> 15 sonrası 1,45 / 1,56)
+      dex = P(b).stats.dex;
       return previewSkill(b, P(b).uid, 'x_cut', undefined, 4, 'enemy').find((p) => p.uid === E(b, 0).uid)!.damage!.avg;
     };
-    expect(corner(true) / corner(false)).toBeCloseTo((0.35 * 2) / 0.45, 1);
+    const ratio = corner(true) / corner(false);
+    const base = content.skills.x_cut!.effects.find((x) => x.type === 'damage') as { power: number; flat?: number };
+    const node = treeOf('cutthroat')?.nodes['2.v'] as unknown as { fx: Array<{ f?: string; v?: number }> };
+    const v = node.fx.find((x) => x.f === 'power')!.v!;
+    expect(ratio).toBeCloseTo((2 * (v * dex + (base.flat ?? 0))) / (base.power * dex + (base.flat ?? 0)), 1);
   });
 
   it('X Marks the Throat: iki merkez vuruşu da kritikse merkeze zırh delen üçüncü vuruş (kullanım başına bir)', () => {

@@ -20,6 +20,7 @@ import { accountApi, accountShown, isOnline } from '../cloud/ui/api';
 import { ACCOUNT_SOON_LINE, accountLine } from '../cloud/ui/account-text';
 import { mergeRecord } from './cursor-theme';
 import { mountCursorPanel } from './cursor-settings';
+import { drawFuseCanvas, fusePrims } from './menu-fuse';
 import { pushClose } from './close-stack';
 
 /**
@@ -97,6 +98,11 @@ export class SettingsScreen {
   private readonly cats = new Map<SettingsPageKey, HTMLElement>();
   /** Sol sütundaki kor elmas (a20): yeni bölüme 160 ms kayar. */
   private flame: HTMLElement | null = null;
+  private fuseCv: HTMLCanvasElement | null = null;
+  private fuseRaf = 0;
+  /** Seçili ayar satırının fitili (karo 3. tur, Ömer 2026-11-26 r48 ayar = fitil): sağ sayfanın üstünde, seçili satıra oturur. */
+  private rowFlame: HTMLElement | null = null;
+  private rowCv: HTMLCanvasElement | null = null;
   /** Sayfanın altındaki kısa not (Replay onayı, iPhone tam ekran ipucu, Copy log / Error reports onayı). */
   private readonly notes = new Map<SettingsPageKey, HTMLElement>();
   private page: SettingsPageKey = settingsPage();
@@ -125,9 +131,17 @@ export class SettingsScreen {
     const nav = el('div', 'st-cats');
     nav.classList.add('flame');
     this.flame = el('i', 'st-flame');
+    // seçili kategori işareti = yanan fitil (Ömer 2026-11-25 r47, ana menüyle aynı: src/ui/menu-fuse.ts)
+    this.fuseCv = document.createElement('canvas');
+    this.flame.append(this.fuseCv);
     nav.append(this.flame);
     nav.setAttribute('role', 'tablist');
     const pagesBox = el('div', 'st-pages');
+    this.rowFlame = el('i', 'st-flame st-flame-row');
+    this.rowFlame.hidden = true;
+    this.rowCv = document.createElement('canvas');
+    this.rowFlame.append(this.rowCv);
+    pagesBox.append(this.rowFlame);
     body.append(nav, pagesBox);
     col.append(body);
     for (const pg of SETTINGS_PAGES) {
@@ -469,7 +483,70 @@ export class SettingsScreen {
     if (!f || !cat) return;
     f.style.transition = animate && !reducedMotion() ? '' : 'none';
     f.style.top = `${cat.offsetTop + cat.offsetHeight / 2}px`;
+    f.style.height = `${cat.offsetHeight}px`;
     f.hidden = cat.offsetHeight === 0 && !this.open;
+    if (this.fuseRaf) cancelAnimationFrame(this.fuseRaf);
+    this.drawFuse();
+  }
+
+  /** Yanan fitilleri çizer (etkin kategori + seçili ayar satırı); açıkken ve hareket azaltılmamışsa her karede (kor titrer, kıvılcım ilerler). */
+  private drawFuse = (): void => {
+    this.fuseRaf = 0;
+    const cat = this.cats.get(this.page);
+    this.paintFuse(this.flame, this.fuseCv, cat);
+    const row = this.rows[this.page]?.[this.sel]?.root;
+    this.paintFuse(this.rowFlame, this.rowCv, row);
+    if (!reducedMotion() && this.open) this.fuseRaf = requestAnimationFrame(this.drawFuse);
+  };
+
+  /** Tek bir fitil tuvalini `item` (kategori düğmesi ya da ayar satırı) üzerine çizer. */
+  private paintFuse(f: HTMLElement | null, cv: HTMLCanvasElement | null, item: HTMLElement | undefined): void {
+    if (!f || !cv || !item || !f.isConnected || f.hidden || item.offsetHeight === 0) return;
+    const nav = f.parentElement as HTMLElement;
+    const nr = nav.getBoundingClientRect();
+    const k = nav.offsetWidth ? nr.width / nav.offsetWidth : 1; // ekran px / yerleşim px
+    const W = nav.clientWidth;
+    const H = item.offsetHeight;
+    const dpr = Math.min(2, (window.devicePixelRatio || 1) * k);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      cv.style.width = `${W}px`;
+      cv.style.height = `${H}px`;
+    }
+    const ctx = cv.getContext('2d');
+    if (!ctx) return;
+    const rel = (e: Element | null): DOMRect | null => (e ? e.getBoundingClientRect() : null);
+    const dia = rel(item.querySelector('.st-diamond'));
+    const lab = rel(item.querySelector('.st-cat-label, .st-label'));
+    const u = Math.max(0.45, (H / 112) * 1.2);
+    const hx = dia ? (dia.left - nr.left) / k + Math.min((dia.width / k) * 0.35, 12 * u) : 10 * u;
+    const xEnd = lab ? (lab.right - nr.left) / k + 30 * u : W * 0.6;
+    const still = reducedMotion();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawFuseCanvas(ctx, fusePrims({ hx, hy: H / 2, lineY: H / 2 + H * 0.3, xEnd: Math.min(W - 2, xEnd), u, lite: document.documentElement.classList.contains('short') }, still ? 0.6 : performance.now() / 1000));
+  }
+
+  /** Fitili seçili ayar satırına taşır (satır yoksa gizler). */
+  private moveRowFlame(): void {
+    const f = this.rowFlame;
+    if (!f) return;
+    const row = this.rows[this.page]?.[this.sel]?.root;
+    if (!row || !this.open || row.offsetHeight === 0) {
+      f.hidden = true;
+      return;
+    }
+    const box = f.parentElement as HTMLElement;
+    const br = box.getBoundingClientRect();
+    const k = box.offsetWidth ? br.width / box.offsetWidth : 1;
+    const rr = row.getBoundingClientRect();
+    f.hidden = false;
+    f.style.transition = 'none';
+    f.style.top = `${(rr.top - br.top + rr.height / 2) / k}px`;
+    f.style.height = `${row.offsetHeight}px`;
+    if (this.fuseRaf) cancelAnimationFrame(this.fuseRaf);
+    this.drawFuse();
   }
 
   /** Tam hesap sayfası (ayrı kod parçası, tembel yüklenir); sayfa / ekran kapanınca kalkar. */
@@ -554,6 +631,7 @@ export class SettingsScreen {
   private select(i: number): void {
     this.sel = i;
     for (const [k, list] of Object.entries(this.rows) as Array<[SettingsPageKey, SettingsRow[]]>) list.forEach((r, n) => r.root.classList.toggle('on', k === this.page && n === i));
+    this.moveRowFlame();
   }
 
   /** Açar (isteğe bağlı: kapanınca çağrılacak geri dönüş) ya da kapatır. */

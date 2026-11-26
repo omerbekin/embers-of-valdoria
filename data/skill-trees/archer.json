@@ -1,6 +1,6 @@
 {
   "class": "archer",
-  "version": 2,
+  "version": 3,
   "picked": {
     "rows": [
       "a",
@@ -1013,7 +1013,7 @@
     },
     "3.ea": {
       "name": "Spent Arrows",
-      "text": "Arrow Rain leaves its area thick with shafts for 2 turns: enemies there are Hobbled.",
+      "text": "Arrow Rain leaves its area thick with shafts for 1 turn: enemies there are Hobbled.",
       "src": "A:V3:3.ea",
       "fx": [
         {
@@ -1021,7 +1021,7 @@
           "effect": {
             "type": "ground",
             "ground": "field_of_shafts",
-            "turns": 2,
+            "turns": 1,
             "scale": "dex",
             "power": 0
           }
@@ -1047,7 +1047,7 @@
     },
     "3.ma": {
       "name": "Killing Field",
-      "text": "Enemies in your field of shafts are Blinded while inside and take 4.5% DEX at the start of their turns.",
+      "text": "Enemies in your field of shafts are Blinded while inside and take 3.6% DEX at the start of their turns.",
       "src": "A:V3:3.ma",
       "fx": [
         {
@@ -1055,7 +1055,7 @@
           "sel": "ground:field_of_shafts",
           "f": "power",
           "op": "add",
-          "v": 0.045,
+          "v": 0.036,
           "needs": "3.ea"
         },
         {
@@ -1069,7 +1069,7 @@
     },
     "3.fa": {
       "name": "Choking Rain",
-      "text": "Your field of shafts lasts 4 turns, but Arrow Rain deals 40% less damage on impact.",
+      "text": "Your field of shafts lasts 3 turns, but Arrow Rain deals 40% less damage on impact.",
       "src": "A:V3:3.fa",
       "fx": [
         {
@@ -1077,7 +1077,7 @@
           "sel": "ground:field_of_shafts",
           "f": "turns",
           "op": "set",
-          "v": 4,
+          "v": 3,
           "needs": "3.ea"
         },
         {

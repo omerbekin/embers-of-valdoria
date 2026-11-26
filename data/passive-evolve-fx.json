@@ -1,0 +1,17 @@
+{
+  "_not": "Pasif evrimi = KARAKTER EFEKTİ (Ömer 2026-11-23); 2026-11-24: sürekli parıltı/nabız kalktı, parıltı YALNIZ pasif tetiklenince kısa süre görünür, gücü eskisinin ~%20'si. Sınıf başına: pasifin id'si ve renk/biçim. Yalnızca sunum; src/game/passive-evolve-fx.ts. width/height = gövde boyuna oran; burstAlpha = tetikte yumuşak hale tepe gücü (eski 0.85), rimBurst = silüet kenar parıltısı tepe gücü (eski 0.75); burstMs = tetik süresi; moteCount = tetikte çıkan kıvılcım sayısı, moteAlpha = kıvılcım gücü.",
+  "mage": {
+    "passive": "heat_mirage",
+    "core": "#fff3d0",
+    "mid": "#ffb050",
+    "edge": "#e0601c",
+    "width": 1.75,
+    "height": 1.25,
+    "burstAlpha": 0.17,
+    "rimBurst": 0.15,
+    "burstMs": 750,
+    "moteCount": 3,
+    "moteAlpha": 0.5,
+    "moteColors": ["#ffb25a", "#ff8a3a", "#ffe2b0"]
+  }
+}

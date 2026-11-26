@@ -151,33 +151,15 @@ function skillValues(cls: string): Map<string, string | null> {
 const KNOWN_STATUS: Record<string, string> = {};
 const KNOWN_GROUND: Record<string, string> = {};
 /**
- * Ağaç tetikleri: YZ eylem değerinde bu olayı hiç trigEventValue / aiTriggers'a vermiyor (ai.ts'de `on: '<olay>'` yok; Battle.aiTriggers kancayı `h.on === ev.on` ile birebir eşler, başka olaya eşlemez). Tetik savaşta çalışır, ama YZ
- * bir eylemin onu tetikleyeceğini (ya da düşmanın tetiğini besleyeceğini) puana katmaz. Seçimden bağımsız olanlar (savaş başı, tur başı) için
- * değer gerekmeyebilir; listede ayrıca belirtildi.
+ * Ağaç tetikleri: YZ eylem değerinde bu olayı hiç trigEventValue / aiTriggers'a vermiyor (ai.ts'de `on: '<olay>'` yok; Battle.aiTriggers kancayı
+ * `h.on === ev.on` ile birebir eşler). 2026-11-23 (e, Ömer onayı n_ai): seçime bağlı 16 olay artık tartılıyor (ai.ts moreTriggerValue /
+ * enemyMovedValue; davranış testleri tests/ai-trigger-events.test.ts). Kalanlar BİLEREK değersiz: adayın seçimi olayı doğurmaz ya da değiştirmez.
  */
-const NO_AI = 'YZ eylem değerinde yok';
 const KNOWN_TRIGGER: Record<string, string> = {
-  battleStart: 'seçimden bağımsız (savaş başında bir kez); YZ kaydı yok',
-  turnStart: 'seçimden bağımsız (tur başı); YZ kaydı yok',
-  allyHit: NO_AI, // Anti-Mage: dostu vurulunca
-  arrive: NO_AI, // Druid / Undead: çağrı sahaya inince
-  bust: NO_AI, // Gambler: zar patladı
-  doom: NO_AI, // Hexer: Doom işledi
-  enemyDied: NO_AI, // Paladin / Druid / Anti-Mage / Hexer: düşman öldü (kill'den ayrı: öldüren fark etmez)
-  enemyHealed: NO_AI, // Undead: düşman iyileşti
-  enemyMoved: NO_AI, // Archer: düşman yer değiştirdi
-  groundEnd: NO_AI, // Paladin: zemin bitti
-  hpBelow: NO_AI, // Warrior / Paladin / Mage / Undead / Druid / Defender: can eşik altına indi
-  jackpot: NO_AI, // Gambler: büyük kazanç
-  luckyEscape: NO_AI, // Gambler: Lucky Escape işledi
-  mpBelow: NO_AI, // Mage: MP eşik altına indi
-  passiveHeal: NO_AI, // Paladin: pasif şifa
-  payHp: NO_AI, // Undead: can bedeli ödendi (Blood Hymn / Bitter Gift)
-  repeat: NO_AI, // Gambler: tekrar vuruşu tuttu
-  repeatFail: NO_AI, // Gambler: tekrar vuruşu tutmadı
-  revived: NO_AI, // Paladin: dost dirildi
-  statusGained: NO_AI, // Warrior / Defender: sahibine durum geldi (YZ yalnız statusApplied'ı sayar)
-  summonDeath: NO_AI, // Druid / Undead: çağrı öldü
+  battleStart: 'değer gerekmez: savaş başında bir kez, hiçbir eylem seçimi doğurmaz',
+  turnStart: 'değer gerekmez: tur başında her tur kendiliğinden, eylem seçimi doğurmaz',
+  groundEnd: 'değer gerekmez: zemin süresi dolunca tur sonunda biter (battle.ts zemin tiki); bu turun eylemi bitişi öne almaz',
+  passiveHeal: 'değer gerekmez: Paladin pasif şifası tur başında kendiliğinden; eylem seçimi doğurmaz',
 };
 const KNOWN_SKILL: Record<string, string> = {};
 

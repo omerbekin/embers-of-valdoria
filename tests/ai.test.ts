@@ -148,7 +148,7 @@ describe('yapay zeka: şifa, kalkan, çağrı', () => {
   it('Mage, sıradaki vuruşla ölecek ve kalkanla kurtulacak dostuna Mana Barrier verir', () => {
     const b = giveManaBarrier(sturdy(new Battle(oldLayoutSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['mage', 'archer'] }))));
     const ally = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'archer')!;
-    ally.hp = 8;
+    ally.hp = 12; // r43 Archer x1,05: 8 canda okçunun sıradaki vuruşu kalkan + canı aşıyordu (kurtulamaz); 12 canda kalkansız ölür, kalkanla kurtulur
     const mage = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'mage')!;
     expect(chooseAction(b, mage.uid, ai)).toMatchObject({ skillId: 'mana_barrier', targetUid: ally.uid, reason: 'shield' });
   });

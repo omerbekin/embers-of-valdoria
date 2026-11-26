@@ -7,7 +7,7 @@
 // Değişmezler ham stat yerine OYUNA ETKİSİNİ kaydeder: zırh azaltma oranı, hız / eşik, kritik şansı, MP, skill gücü (stat x güç + hibrit ek) vb.
 // Dönüşümde bu fonksiyon motorun yeni katsayılarıyla aynı sayıları vermelidir.
 import { Battle, chooseAction, content, attributePower, armorReduction, type BattleEvent, type Combatant } from '../../src/engine';
-import { bonusScaleRaw } from '../../src/engine/spec';
+import { damageBonusRaw } from '../../src/engine/spec';
 import { simulateCampaign } from '../../src/sim/campaign';
 import { simulateEndless } from '../../src/sim/endless';
 import { loadoutSetup } from '../../src/progression/loadout';
@@ -53,7 +53,7 @@ function skillPowers(b: Battle, c: Combatant): string {
       const scale = (e as { scale?: string }).scale as Parameters<typeof attributePower>[1] | undefined;
       if (!scale) continue;
       const pw = (e as { power?: number }).power ?? 0;
-      parts.push(r6(attributePower(c.stats, scale, f) * pw + (e.type === 'damage' ? bonusScaleRaw(e.bonusScale, b.effectiveStats(c)) * (c.stats.spellPowerMult ?? 1) : 0)));
+      parts.push(r6(attributePower(c.stats, scale, f) * pw + (e.type === 'damage' ? damageBonusRaw(e, b.effectiveStats(c)) * (c.stats.spellPowerMult ?? 1) : 0)));
     }
     out.push(`${id}=${parts.join('/')}`);
   }

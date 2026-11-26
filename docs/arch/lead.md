@@ -45,3 +45,6 @@ Her Lead açılışında (Ömer 2026-11-18, disk): `node <game>/tools/push-queue
 
 ## Alanlar
 Alan listesi (alan -> dosya -> kapsam) tek sahipte: `docs/arch/docs-map.md` > Alan belgeleri. İş alana göre agente verilir; agent `docs/arch/areas/<dosya>` okuyarak başlar. Eski sohbet adları (Character Design, Campaign, Character vfx, Item Design, Minor Fixes, Combat Design, UI-UX Design, Gönderim) bu alanları kastediyor.
+
+## Eski varsayımlar sorulmaz (Ömer 2026-11-24)
+"Eski varsayım sorularını formdan çıkar ve bir daha sorma. Yüzyıllık konular onlar." Oyunda uygulanmış, Ömer'e hiç sorulmamış eski varsayımlar (open-questions ve arşivdeki onaysız maddeler; liste `eov-forms-archive/uiform-live/r45/varsayim-listesi.md`) bugünkü hâliyle KABUL sayılır; forma konmaz, yeniden sorulmaz. Yalnız yeni iş sırasında doğan yeni varsayım sorulur.

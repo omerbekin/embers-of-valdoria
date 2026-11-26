@@ -153,6 +153,14 @@ HEADS = {
     'inquisitor_captain_vell': (400, 40, 275),  # 2026-10-27 kendi çizimi (önceden Oathsworn Brother)
     'hex_totem': (313, 290, 240),
     'harpoon_ballista': (760, 60, 640),  # Harita 2 yardımcı nesnesi (Admiral Vane'in Harpoon Ballista'sı)
+    # Ödünç sprite'tan ayrılan Harita 3 birimleri (r49, 2026-11-26; Codex çizimi, siyah zemin kenardan taşma dolgusuyla saydam, sağa bakar)
+    'molten_hound': (1280, 170, 440),
+    'rime_hound': (1190, 160, 400),
+    'rime_witch': (505, 40, 340),
+    'wight': (370, 0, 290),
+    'hollow_warden': (556, 0, 400),
+    # Road Hound (r50, 2026-11-26; Wayfarer's Oath çağrı köpeği, önceden Grey Wolf sprite'ı; siyah zemin kenardan dolguyla saydam, sağa bakar)
+    'road_hound': (1235, 0, 400),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).

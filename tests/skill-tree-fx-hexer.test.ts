@@ -111,7 +111,8 @@ describe('Hexer ağacı (Faz 2b)', () => {
   const hitOn = (evs: BattleEvent[], uid: string) => evs.filter((e) => e.type === 'damage' && e.target === uid).reduce((n, e) => n + (e as { amount: number }).amount, 0);
 
   it('Lasting Jinx veri: %50 şans, Rumour Mill ekli, sekme to adjacentEnemy + bounce + vuruş, ağaçsız Jinx süresi; Jinx beklemesi değişmez', () => {
-    expect(EA[0].procChance).toBe(0.5);
+    // r41 gece: 3a kesimi %50 -> %40; şans veriden, metinle aynı
+    expect(H.nodes['3.ea']!.text).toContain(`(${+(EA[0].procChance * 100).toFixed(3)}%`);
     expect(EA[0].addChanceOf).toEqual(['3.r']);
     expect(EA[0].do[0]).toMatchObject({ to: 'adjacentEnemy', bounce: true });
     const base = (content.skills.jinx!.effects.find((e) => e.type === 'status') as { turns: number }).turns;

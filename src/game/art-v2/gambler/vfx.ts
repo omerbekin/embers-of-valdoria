@@ -17,6 +17,7 @@
  *                                               zar çatlayıp parçalanır, Gambler kararıp sendeler, mana söner, paralar kül olur.
  */
 import { diceRollsOf, diceTier, faceOf, type DiceRoll } from '../../dice-feel';
+import { phoneFxK } from '../../vfx-phone';
 import { FULL_W } from '../../../ui/viewport'; // geniş ekran: tam ekran karartma görünen alanın tamamını kaplar
 import type Phaser from 'phaser';
 import type { V2Vfx } from '../types';
@@ -113,6 +114,7 @@ const loadeddice: V2Vfx = async (c, k) => {
   const d = facing(c);
   const rolls = diceRollsOf(c.usage?.events, c.actor.combatant.uid);
   let n = 0;
+  const pk = phoneFxK(); // telefonda zarlar büyür (okunur nokta); masaüstünde 1
   const throwDice = async (second: boolean) => {
     const roll: DiceRoll = rolls[n++] ?? { values: [4, 3], double: false };
     const vals = [faceOf(roll.values[0] ?? 1), faceOf(roll.values[1] ?? roll.values[0] ?? 1)];
@@ -123,7 +125,7 @@ const loadeddice: V2Vfx = async (c, k) => {
     const h = diceHand(c, d);
     c.actor.play('attack');
     c.sfx('diceShake');
-    const dice = [0, 1].map((i) => k.v2Sprite(c, gold ? 'gdie_a' : 'die_a', tint, h.x + (i ? 12 : -12), h.y - (i ? 8 : 0), 40, k.DEPTH + 30 + i));
+    const dice = [0, 1].map((i) => k.v2Sprite(c, gold ? 'gdie_a' : 'die_a', tint, h.x + (i ? 12 : -12), h.y - (i ? 8 : 0), 40 * pk, k.DEPTH + 30 + i));
     // elde sallama: küçük titreşimli yay
     await k.counter(c.scene, k.slow(second ? 120 : 220), (u) => {
       dice.forEach((s, i) => s.setPosition(h.x + (i ? 12 : -12) + Math.sin(u * 40 + i * 2) * 5, h.y - (i ? 8 : 0) - Math.abs(Math.sin(u * 22 + i)) * 10).setRotation(Math.sin(u * 30 + i) * 0.5));
@@ -147,8 +149,8 @@ const loadeddice: V2Vfx = async (c, k) => {
       const shadows: Phaser.GameObjects.Ellipse[] = [];
       dice.forEach((s, i) => {
         swap(c, k, s, (gold ? 'gdv' : 'dv') + vals[i], tint);
-        s.setRotation(0).setDisplaySize(78, 78).setDepth(k.DEPTH + 60 + i); // 3B küp, geniş parlak üst yüz: telefonda da nokta sayılır
-        shadows.push(c.scene.add.ellipse(s.x, s.y + 22, 62, 16, 0x000000, 0.34).setDepth(k.DEPTH + 58)); // yumuşak yer gölgesi
+        s.setRotation(0).setDisplaySize(78 * pk, 78 * pk).setDepth(k.DEPTH + 60 + i); // 3B küp, geniş parlak üst yüz: telefonda da nokta sayılır
+        shadows.push(c.scene.add.ellipse(s.x, s.y + 22 * pk, 62 * pk, 16 * pk, 0x000000, 0.34).setDepth(k.DEPTH + 58)); // yumuşak yer gölgesi
       });
       c.scene.tweens.add({ targets: [...dice, ...shadows], alpha: 0, delay: k.slow(1000), duration: k.slow(260), onComplete: () => [...dice, ...shadows].forEach((o) => o.destroy()) });
     })();

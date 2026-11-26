@@ -1,7 +1,7 @@
 // Set item kuralları (Ömer 2026-11-03, docs/design/progression/item-design-plan.md "Set kuralları"; pilot: Ashguard Vigil + Wayfarer's Oath). Saf.
 // Tüm sayılar data/items.json > sets. Bonuslar parçayı taşıyan herkeste çalışır; setsEnabled yalnızca düşüşü ve Codex'i açar (parçalar bugün yalnızca debug'dan gelir).
-import { classes, skills, statuses } from '../engine/content';
-import type { ItemEffects, PassivePatch } from '../engine/types';
+import { classes, grounds, skills, statuses } from '../engine/content';
+import type { Attribute, ItemEffects, PassivePatch } from '../engine/types';
 import { ITEMS, SLOT_IDS, canEquip, itemDef, type Equipment, type ItemDef } from './items';
 
 /** 3 parça sınıf satırı: pasifin bir alanı `from` -> `to` (Ağaç üstüne farkı eklenir: PassivePatch). */
@@ -10,6 +10,8 @@ export interface SetClassRow {
   field: string;
   from: number;
   to: number;
+  /** Aynı pasifte ek alanlar (Ashguard Warrior, Ömer 2026-11-23: Rage + fullAt). Pasifte olmayan alanın `from`u 0. */
+  also?: Array<{ field: string; from: number; to: number }>;
 }
 
 export interface SetBonus {
@@ -28,9 +30,15 @@ export interface SetBonus {
   turns?: number;
   /** Martyr's Bequest (Tur 28-29): taşıyan ölünce en yakın dosta verilen durumlar (`turns` tur). */
   statuses?: string[];
-  /** The Conclave Answers: karşılığın hasar çarpanı ve taşıyanın turları arası sınırı. */
+  /**
+   * The Conclave Answers (Ömer 2026-11-23 r41 Seçenek B): saldıranın altına çıkan zemin (`ground`, `turns` tur, tik = taşıyanın `scale` statı x `power`),
+   * taşıyanın turları arası sınır (`perTurn`); hücre zaten yanıyorsa zemin yerine `status` (`statusTurns` tur).
+   */
   power?: number;
   perTurn?: number;
+  ground?: string;
+  scale?: Attribute;
+  statusTurns?: number;
 }
 
 export interface SetDef {
@@ -79,7 +87,7 @@ export function activeSetBonuses(equipment: Partial<Equipment> | undefined): Arr
 }
 
 /** Güç katmanına giden set katkısı: düz stat ekleri + motor kuralları + sınıfın pasif yaması. */
-export type SetEffects = Pick<ItemEffects, 'bankedCoals' | 'roadHound' | 'dodgeCrit' | 'escapeStatus' | 'counterAttack' | 'allyTurn' | 'refrain' | 'deathBequest' | 'healShorten'>;
+export type SetEffects = Pick<ItemEffects, 'bankedCoals' | 'roadHound' | 'dodgeCrit' | 'escapeStatus' | 'counterGround' | 'allyTurn' | 'refrain' | 'deathBequest' | 'healShorten'>;
 export function setContribution(equipment: Partial<Equipment> | undefined, classId: string): { mods: Record<string, number>; effects: SetEffects; passivePatch?: PassivePatch } {
   const mods: Record<string, number> = {};
   const effects: SetEffects = {};
@@ -87,12 +95,14 @@ export function setContribution(equipment: Partial<Equipment> | undefined, class
   for (const { bonus } of activeSetBonuses(equipment)) {
     for (const [k, v] of Object.entries(bonus.mods ?? {})) mods[k] = (mods[k] ?? 0) + v;
     const row = bonus.byClass?.[classId];
-    if (row) passivePatch = { passive: row.passive, field: row.field, delta: Math.round((row.to - row.from) * 1000) / 1000 };
+    const d = (x: { from: number; to: number }) => Math.round((x.to - x.from) * 1000) / 1000;
+    if (row) passivePatch = { passive: row.passive, field: row.field, delta: d(row), ...(row.also?.length ? { also: row.also.map((x) => ({ field: x.field, delta: d(x) })) } : {}) };
     if (bonus.rule === 'banked_coals') effects.bankedCoals = { share: bonus.bankShare ?? 0, ticks: bonus.ticks ?? 1 };
     if (bonus.rule === 'road_hound') effects.roadHound = { unit: 'road_hound' };
     if (bonus.rule === 'unseen') effects.dodgeCrit = true;
     if (bonus.rule === 'hangmans_rope' && bonus.status) effects.escapeStatus = { status: bonus.status, turns: bonus.turns ?? 1 };
-    if (bonus.rule === 'conclave_answers') effects.counterAttack = { power: bonus.power ?? 1, perTurn: bonus.perTurn ?? 1 };
+    if (bonus.rule === 'conclave_answers' && bonus.ground && bonus.status)
+      effects.counterGround = { ground: bonus.ground, scale: bonus.scale ?? 'int', power: bonus.power ?? 0, turns: bonus.turns ?? 1, perTurn: bonus.perTurn ?? 1, status: bonus.status, statusTurns: bonus.statusTurns ?? 1 };
     if (bonus.rule === 'royal_command') effects.allyTurn = true;
     if (bonus.rule === 'refrain' && bonus.status) effects.refrain = { status: bonus.status, turns: bonus.turns ?? 1 };
     if (bonus.rule === 'martyrs_bequest' && bonus.statuses?.length) effects.deathBequest = { statuses: [...bonus.statuses], turns: bonus.turns ?? 1 };
@@ -140,14 +150,21 @@ function classRowText(classId: string, row: SetClassRow): string {
   const def = classes[classId];
   const head = `${def?.name ?? classId}, ${def?.passive?.name ?? row.passive}`;
   const key = `${row.passive}.${row.field}`;
+  // Ashguard Warrior (Ömer 2026-11-23): Rage katı + tam bonusun geldiği can oranı tek cümlede (sayılar veriden)
+  const fullAt = row.also?.find((x) => x.field === 'fullAt');
+  if (row.field === 'rageOnHurt.perHpPercent' && fullAt) {
+    const k = Math.round((row.to / row.from) * 1000) / 1000;
+    const times = k === 2 ? 'doubled' : k === 3 ? 'tripled' : `x${k}`;
+    return `${head}: Rage from losing HP is ${times}, and the damage bonus reaches its maximum at ${pctText(fullAt.to)} HP`;
+  }
   if (row.field === 'rageOnHurt.perHpPercent') return `${head}: ${row.from} → ${row.to} Rage per 1% HP lost`;
   if (row.field === 'pct') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} of your armor`;
   if (key === 'divine_light.power') return `${head}: heals ${pctText(row.from)} → ${pctText(row.to)} of INT`;
   if (key === 'heat_mirage.power') return `${head}: the ground it leaves burns for ${pctText(row.from)} → ${pctText(row.to)} of INT`;
-  if (key === 'natures_grudge.power') return `${head}: the Wither it spreads hits for ${pctText(row.from)} → ${pctText(row.to)} of INT`;
+  if (key === 'natures_grudge.power') return `${head}: the Withering it spreads hits for ${pctText(row.from)} → ${pctText(row.to)} of INT`;
   if (key === 'vampiric_bite.ratio') return `${head}: drains ${pctText(row.from)} → ${pctText(row.to)}`;
   if (key === 'pealing_bells.perBell') return `${head}: each bell adds ${pctText(row.from)} → ${pctText(row.to)}`;
-  if (key === 'opportunist.bonus') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} more damage against Wounded, Hobbled, Stunned or Withered targets`;
+  if (key === 'opportunist.bonus') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} more damage against Wounded, Hobbled, Stunned or Withering targets`;
   if (key === 'sharpshooter.perRow') return `${head}: ${pctText(row.from)} → ${pctText(row.to)} more damage per row of distance`;
   // Blood Tithe (Ömer 2026-11-18): bloodAdvance tabandır, üstüne DEX payı gelir (DEX payı değişmez)
   if (key === 'spellbreaker_instinct.bloodAdvance') return `${head}: +${pctText(row.to - row.from)} turn bar jump at a full blood bar (base ${pctText(row.from)} → ${pctText(row.to)}, plus the DEX part)`;
@@ -178,10 +195,15 @@ export function hangmansRopeText(b: SetBonus, statusName = 'Fortified'): string 
   return `${b.name}: When Lucky Escape saves you from death, you become ${statusName} for ${b.turns ?? 1} turn${(b.turns ?? 1) === 1 ? '' : 's'}.`;
 }
 
-/** The Conclave Answers metni (ipucu + Codex). */
+const turnsText = (n: number) => `${n} turn${n === 1 ? '' : 's'}`;
+
+/** The Conclave Answers metni (ipucu + Codex; zemin ve durum adları veriden). */
 export function conclaveAnswersText(b: SetBonus): string {
   const n = b.perTurn ?? 1;
-  return `${b.name}: When an enemy uses a skill on you, you strike back with your basic attack for free, dealing ${pctText(1 - (b.power ?? 1))} less damage. ${n === 1 ? 'Once' : `${n} times`} between your turns, and only if your basic attack can reach them.`;
+  const ground = grounds[b.ground ?? '']?.name ?? b.ground ?? 'ground';
+  const st = statuses[b.status ?? ''];
+  const more = st?.damageTakenMult !== undefined && st.damageTakenMult > 1 ? ` (takes ${pctText(st.damageTakenMult - 1)} more damage)` : '';
+  return `${b.name}: When an enemy uses a skill on you, ${ground} appears under it for ${turnsText(b.turns ?? 1)}, burning for ${pctText(b.power ?? 0)} of your ${(b.scale ?? 'int').toUpperCase()}. If its cell is already burning, it becomes ${st?.name ?? b.status}${more} for ${turnsText(b.statusTurns ?? 1)} instead. ${n === 1 ? 'At most once' : `At most ${n} times`} between your turns.`;
 }
 
 /** Royal Command metni (ipucu + Codex). */

@@ -164,9 +164,9 @@
       "text": "Gulls scream over the stalls. Fishwives shout prices, sailors shout back, and everyone talks about the sea.",
       "choices": [
         {
-          "id": "rumours",
-          "label": "Listen to the rumours",
-          "hint": "Hear what the harbour is saying.",
+          "id": "rumors",
+          "label": "Listen to the rumors",
+          "hint": "Hear what the harbor is saying.",
           "result": "\"Black sails off the isles again,\" a sailor mutters. \"And the bells of the sunken court rang last night. My grandmother says they ring when a queen is crowned.\""
         },
         {
@@ -190,20 +190,20 @@
     "dr_guild_hall": {
       "_not": "M-L Faction (maps-2-3.md 3.4): tek seçim, geri alınmaz (CampaignState.faction). Sonuçları: Harbor Fort eliti (Order -> Guild Enforcer Bastion, Guild -> Inquisitor-Captain Vell), Monk's Isle içeriği, tüccar stoğu ağırlığı, Ferry Office bedeli. again faction: 'Not yet' seçilirse meydana dönünce yeniden sorulur.",
       "title": "Guild Hall and Inquisition House",
-      "text": "On one side of the square stands the Guild Hall, its doors open, its clerks busy with the harbour's trade. On the other stands the Inquisition House of the Order of St. Brann, its doors shut, its windows barred.\n\nThe Harbor-Master's people watch you from one door, the Brother-Provost's from the other. Saltmere is a city of two masters, and every newcomer is asked which one they serve. Whatever you answer, the city will remember it.",
+      "text": "On one side of the square stands the Guild Hall, its doors open, its clerks busy with the harbor's trade. On the other stands the Inquisition House of the Order of St. Brann, its doors shut, its windows barred.\n\nThe Harbor-Master's people watch you from one door, the Brother-Provost's from the other. Saltmere is a city of two masters, and every newcomer is asked which one they serve. Whatever you answer, the city will remember it.",
       "again": "faction",
       "choices": [
         {
           "id": "order",
           "label": "Stand with the Order",
-          "hint": "Final. The Guild's enforcer holds Harbor Fort against you. The monks of Monk's Isle open their doors to you. Merchants favour armour and relics. A ship to the isles costs gold.",
+          "hint": "Final. The Guild's enforcer holds Harbor Fort against you. The monks of Monk's Isle open their doors to you. Merchants favor armor and relics. A ship to the isles costs gold.",
           "faction": "order",
           "result": "The Brother-Provost unbars the door himself and presses the Order's seal into your hand. Across the square, the Guild Hall's doors swing shut."
         },
         {
           "id": "guild",
           "label": "Stand with the Guild",
-          "hint": "Final. The Inquisitor-Captain holds Harbor Fort against you. The monks of Monk's Isle will bar their gate. Merchants favour weapons and trinkets. The Ferry Office charters you a ship as a favour.",
+          "hint": "Final. The Inquisitor-Captain holds Harbor Fort against you. The monks of Monk's Isle will bar their gate. Merchants favor weapons and trinkets. The Ferry Office charters you a ship as a favor.",
           "faction": "guild",
           "result": "Harbor-Master Rook shakes your hand in front of the whole square and writes your name in the Guild's ledger. Behind you, the Inquisition House stays shut."
         },
@@ -233,7 +233,7 @@
         },
         {
           "id": "charter_favor",
-          "label": "Call in the Guild's favour",
+          "label": "Call in the Guild's favor",
           "hint": "Free, for friends of the Guild. The sea lanes from Fisher's Landing to the isles open for the rest of this map.",
           "needFaction": "guild",
           "charter": true,
@@ -244,14 +244,14 @@
           "closer": true,
           "label": "Not now",
           "hint": "Leave the office. You can come back to charter a ship later.",
-          "result": "The clerk does not look up as you leave. Ships come and go; so do travellers."
+          "result": "The clerk does not look up as you leave. Ships come and go; so do travelers."
         }
       ]
     },
     "dr_lantern_rock": {
       "_not": "M-M Lighthouse (maps-2-3.md 3.2 #45): feneri yakmak bu haritada görüşü artırır (reach.lighthouse.visibility; CampaignState.lit).",
       "title": "Lantern Rock",
-      "text": "The old lighthouse is dark, its great lamp cracked and dry. Gulls nest in the lamp room. From the gallery you can see the whole coast: the cliffs, the wrecks, and far out in the grey, the drowned isles.\n\nThere is still oil in the cellar, and the wick can be trimmed. With a little work, the light could burn again.",
+      "text": "The old lighthouse is dark, its great lamp cracked and dry. Gulls nest in the lamp room. From the gallery you can see the whole coast: the cliffs, the wrecks, and far out in the gray, the drowned isles.\n\nThere is still oil in the cellar, and the wick can be trimmed. With a little work, the light could burn again.",
       "choices": [
         {
           "id": "light",
@@ -348,7 +348,7 @@
             "dr_56_bell"
           ],
           "quest": "paladin_bell",
-          "result": "Dawn comes grey over the water, and the drowned slip back beneath it. Brother Aldo takes the bell-rope from your Paladin's hands and bows: \"Brann kept this vigil once. Now you have kept it too.\""
+          "result": "Dawn comes gray over the water, and the drowned slip back beneath it. Brother Aldo takes the bell-rope from your Paladin's hands and bows: \"Brann kept this vigil once. Now you have kept it too.\""
         },
         {
           "id": "leave",
@@ -476,7 +476,7 @@
       "disliked": "\"Suit yourselves. The river doesn't care either way, and nor do I.\" He spits into the reeds and goes back to his rope.",
       "epilogue": {
         "title": "The Ferryman's Warning",
-        "text": "He walks you down to the water and holds the boat steady against the reeds while you climb in. The crown's warmth bleeds through the cloth between you, and he watches it the way a man watches a fire he doesn't trust. \"That burn it leaves. Ash in the blood; the monks call it the Ashen Taint. It doesn't fade when you sleep. It settles in, and it waits.\"\n\n\"So when it sits heavy on you, climb to the Cliff Chapel before you climb anywhere else. The keeper there washes it out and asks nothing for it. Tell her the ferryman sent you.\" He pushes off into the grey water. \"And don't let the river keep you.\""
+        "text": "He walks you down to the water and holds the boat steady against the reeds while you climb in. The crown's warmth bleeds through the cloth between you, and he watches it the way a man watches a fire he doesn't trust. \"That burn it leaves. Ash in the blood; the monks call it the Ashen Taint. It doesn't fade when you sleep. It settles in, and it waits.\"\n\n\"So when it sits heavy on you, climb to the Cliff Chapel before you climb anywhere else. The keeper there washes it out and asks nothing for it. Tell her the ferryman sent you.\" He pushes off into the gray water. \"And don't let the river keep you.\""
       }
     },
     "dr_weir_warden": {
@@ -530,7 +530,7 @@
           ]
         },
         {
-          "text": "\"The Tide. Hah. The Brother-Provost calls it a judgement, and he'd burn half the docks to prove it. The Guild calls it bad for trade, and we'd sooner drain the harbour than drown in it. Meanwhile the cathedral sinks a little further every week. Will you hear what the city has to offer, before you choose a side?\"",
+          "text": "\"The Tide. Hah. The Brother-Provost calls it a judgement, and he'd burn half the docks to prove it. The Guild calls it bad for trade, and we'd sooner drain the harbor than drown in it. Meanwhile the cathedral sinks a little further every week. Will you hear what the city has to offer, before you choose a side?\"",
           "choices": [
             { "label": "\"We'll hear everyone out, the Provost too.\"", "likes": true },
             { "label": "\"What would the Guild want with a company like ours?\"", "likes": true },
@@ -538,7 +538,7 @@
           ]
         },
         {
-          "text": "\"Harbor Fort, for a start. It has changed hands twice this year, and whoever holds it holds the harbour mouth. Beyond that, the Black Caravel sinks one ship in three, and Admiral Vane takes a cut of every cargo that lives. The Order prays about it. The Guild would sooner see it ended. Can this city count on you?\"",
+          "text": "\"Harbor Fort, for a start. It has changed hands twice this year, and whoever holds it holds the harbor mouth. Beyond that, the Black Caravel sinks one ship in three, and Admiral Vane takes a cut of every cargo that lives. The Order prays about it. The Guild would sooner see it ended. Can this city count on you?\"",
           "choices": [
             { "label": "\"If the Caravel burns, the whole city gains. Count on that.\"", "likes": true },
             { "label": "\"Only for as long as it pays.\"" }
@@ -551,7 +551,7 @@
       "disliked": "\"Everyone takes a side in Saltmere, sooner or later.\" He closes his ledger. \"Mind you don't take the wrong one.\"",
       "epilogue": {
         "title": "The Guild's Ledger",
-        "text": "Rook walks you down to the quay himself, his clerks trailing behind. Out past the harbour mouth the walls of Harbor Fort squat on their rock, grey and patient. \"Whoever holds that fort holds Saltmere by the throat. The Guild would very much like it held by friends.\"\n\n\"And somewhere beyond it the Black Caravel is turning on its circle, while Admiral Vane counts our cargo from his cove. The Order would pray him into the sea. The Guild would rather see him hanged and his debts settled, in that order.\" He taps the ledger under his arm. \"Every name in here owes someone something. Mind yours stays on the right page.\""
+        "text": "Rook walks you down to the quay himself, his clerks trailing behind. Out past the harbor mouth the walls of Harbor Fort squat on their rock, gray and patient. \"Whoever holds that fort holds Saltmere by the throat. The Guild would very much like it held by friends.\"\n\n\"And somewhere beyond it the Black Caravel is turning on its circle, while Admiral Vane counts our cargo from his cove. The Order would pray him into the sea. The Guild would rather see him hanged and his debts settled, in that order.\" He taps the ledger under his arm. \"Every name in here owes someone something. Mind yours stays on the right page.\""
       }
     },
     "dr_keepers_daughter": {
@@ -589,7 +589,7 @@
       "disliked": "\"My father was right about the sea, whatever you think of him.\" She lifts the spyglass again and says nothing more.",
       "epilogue": {
         "title": "The Dark Lamp",
-        "text": "She walks with you to the very end of the jetty and points the spyglass at a black stub of stone far out in the grey. \"That's Lantern Rock. The lamp used to sweep the whole Sound, every night of my life. Then the storm came, and the bells rang under the water, and it went out. He went out with it.\"\n\n\"Mother says not to look for him. I don't, not really. I only look for the light.\" She folds the spyglass and holds it against her chest. \"If you pass the Rock, look up at the lamp for me. Just once. Then come back and tell me what you saw.\""
+        "text": "She walks with you to the very end of the jetty and points the spyglass at a black stub of stone far out in the gray. \"That's Lantern Rock. The lamp used to sweep the whole Sound, every night of my life. Then the storm came, and the bells rang under the water, and it went out. He went out with it.\"\n\n\"Mother says not to look for him. I don't, not really. I only look for the light.\" She folds the spyglass and holds it against her chest. \"If you pass the Rock, look up at the lamp for me. Just once. Then come back and tell me what you saw.\""
       }
     }
   }

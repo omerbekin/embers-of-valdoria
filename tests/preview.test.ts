@@ -412,7 +412,7 @@ describe('stat açıklaması (tooltip)', () => {
   it('Armor: yüzdesel azaltma (formül satırı yok); büyü zırhı yoksa bunu söyler', () => {
     expect(text('armor')).toContain('Reduces physical damage taken by');
     expect(text('armor')).not.toContain('Diminishing');
-    expect(text('magicArmor')).toContain('No magic armor');
+    expect(text('magicArmor')).toContain('No Magic Armor');
     // Redtithe'in büyü zırhı kan barından (class taban 0, Ömer 2026-11-18); büyü zırhlı stat örneği
     const am = { ...content.classes.antimage!.stats, magicArmor: f.bloodBar!.magicArmorBase };
     expect(describeStat('magicArmor', am, f).lines.join('\n')).toContain('Reduces magic damage taken by');
@@ -426,7 +426,7 @@ describe('stat açıklaması (tooltip)', () => {
     expect(t).toContain('Skills: Tremor Slam, Taunt, Close Ranks, Fist Crush');
     expect(t).toContain(`Armor ${content.classes.defender!.stats.armor}`);
     // Redtithe: büyü zırhı formülü kan barı satırında (Ömer 2026-11-18)
-    expect(describeClass(content.classes.antimage!, content.skills, f).lines.join('\n')).toContain(`Magic armor up to ${f.bloodBar!.magicArmorBase} + INT x${f.bloodBar!.magicArmorPerInt}`);
+    expect(describeClass(content.classes.antimage!, content.skills, f).lines.join('\n')).toContain(`Magic Armor up to ${f.bloodBar!.magicArmorBase} + INT x${f.bloodBar!.magicArmorPerInt}`);
   });
 });
 

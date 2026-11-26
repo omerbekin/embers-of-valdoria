@@ -121,7 +121,7 @@ const ATTR_IDS: Attribute[] = ['str', 'dex', 'int', 'luck'];
 /** Sheet'te tam stat adları (Ömer 2026-10-18, stats-panels A · Band): kısaltma yok; ipuçları `data-stat` kimliğiyle aynı kalır. */
 const FULL_NAME: Record<string, string> = {
   hp: 'HP', mp: 'MP', str: 'Strength', dex: 'Dexterity', int: 'Intelligence', luck: 'Luck', damage: 'Damage', crit: 'Crit chance', critMult: 'Crit damage',
-  accuracy: 'Accuracy', spd: 'Speed', armor: 'Armor', magicArmor: 'Magic armor', evasion: 'Evasion', hpRegen: 'HP regen', mpRegen: 'MP regen', block: 'Block', blockBreak: 'Block break',
+  accuracy: 'Accuracy', spd: 'Speed', armor: 'Armor', magicArmor: 'Magic Armor', evasion: 'Evasion', hpRegen: 'HP regen', mpRegen: 'MP regen', block: 'Block', blockBreak: 'Block break',
 };
 
 /**

@@ -87,3 +87,11 @@ export function mapEndSummary(s: CampaignState, nextMapId: string | null, storyS
     loot: owned.sort((a, b) => rank(b) - rank(a)).slice(0, 3),
   };
 }
+
+/**
+ * Harita sonu kartında "Endless" düğmesi (Ömer 2026-11-23, form n_endcard = "Yalnız Endless ekle"): yalnız sefer FİNALİNDE (son harita, sıradaki harita
+ * yok, adım `complete`). Ana menüdeki Endless'ın kilidi / ön koşulu yok, düğme onu aynı sahneyle açar; sefer kaydına dokunmaz (bitmiş kayıt kalır).
+ */
+export function endCardOffersEndless(s: CampaignState, nextMapId: string | null): boolean {
+  return nextMapId === null && s.mapId === CONFIG.maps[CONFIG.maps.length - 1];
+}

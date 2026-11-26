@@ -103,7 +103,7 @@ export const providerName = (p: ProviderKey): string => (p === 'google' ? 'Googl
 
 /** Girişte hata (?auth=error&reason=...) oyuncu metni. */
 export function signInErrorText(reason: string | undefined): string {
-  if (reason === 'denied') return 'Sign-in was cancelled.';
+  if (reason === 'denied') return 'Sign-in was canceled.';
   if (reason === 'identity-taken') return 'That account is already linked to another player.';
   if (reason === 'state') return 'Sign-in took too long or was opened in another tab. Try again.';
   return 'We could not finish signing in. Check your connection and try again.';

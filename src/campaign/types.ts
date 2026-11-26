@@ -149,7 +149,7 @@ export interface MapNode {
    * Düğümün kendi tüccarı (Ömer 2026-10-29: The Deep Market'ta Odo yok). Yoksa olağan tüccar (Odo). `portrait` = assets/avatars/<portrait>.png
    * (yüz) ve varsa <portrait>_figure.png (karşılama panelinin boy figürü); `name` ekranın başlığı, `greeting` karşılama satırı.
    */
-  trader?: { name: string; portrait: string; greeting: string; /** Karşılama kartının üst satırı (yoksa "A travelling merchant"). */ kicker?: string };
+  trader?: { name: string; portrait: string; greeting: string; /** Karşılama kartının üst satırı (yoksa "A traveling merchant"). */ kicker?: string };
   /**
    * Harita 3 The Deep Market (Ömer 2026-10-29, open-questions 454 b): YALNIZ bu düğümün tüccarına özel ayar (derin cüce tüccarı, Odo yok).
    * `priceMult` = alış fiyatı çarpanı (fiyatlar yüksek), `rarityFloor` = stoğun en düşük nadirliği (stok iyi; zar bunun altına düşerse bu

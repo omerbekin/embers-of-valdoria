@@ -74,20 +74,13 @@ const KNOWN: Record<string, string> = {
 };
 
 /**
- * Küçük / şansa / cana bağlı bilinen açıklar: sapma olabilir ama ŞART değil (denge değişince kaybolabilir; o zaman test kırmızı olmasın). Yeniden üretme
- * denemesi (2026-11-23, tek tek): (C) Warrior tam canda sapma yok, %60 canda son hedefte 1-3 eksik: Whirlwind can çalması / Spin Recovery (2.f2)
- * kullanım ortasında Warrior'ı iyileştirir, Berserker bonusu (eksik cana bağlı) sonraki hedeflerde düşer; önizleme her hedefi kullanım öncesi canla
- * hesaplar (iki kurulumda da; preHit Wound düzelince 2+3 (b) kurulumunda da yalnız bu kalır).
- * (D) Hedef önceden Wound'lu iken sapma yok: Bloody Saltire (2.r) kritik vuruşta şansla Wound koyar, sonraki merkez vuruşları Opportunist (+%25)
- * alır; önizlemenin kritik üst sınırı (critMax) bunu saymaz (kritik + şans tutunca).
- * (A) düzeldi (2026-11-23): Wail of the Dead'in ödenen cana bağlı bonusu (Bloody Breath 2.f1 / Blood Banshee 2.ma) önizlemede ödenecek canla
- * sayılır (battle.ts condCtx hpPaid, tree-hooks.ts hpPaidAmount).
+ * Küçük / şansa / cana bağlı bilinen açıklar: sapma olabilir ama ŞART değil (denge değişince kaybolabilir; o zaman test kırmızı olmasın).
+ * Şu an boş. Düzelenler (2026-11-23, yalnız önizleme; ayrıntılı testler tests/preview-tree-cast.test.ts):
+ * (A) Wail of the Dead'in ödenen cana bağlı bonusu (Bloody Breath 2.f1 / Blood Banshee 2.ma) önizlemede ödenecek canla sayılır.
+ * (C) Whirlwind kullanım ortası şifa (can çalma / Spin Recovery 2.f2): en az hasar, önceki vuruşların en çok şifasıyla yükselmiş canla (Berserker düşer).
+ * (D) Saltire Cut: Bloody Saltire (2.r) kritikte şansla Wound; sonraki merkez vuruşunun kritik üst sınırı (critMax) Opportunist'i sayar.
  */
-const KNOWN_SOFT: Record<string, string> = {
-  'warrior|evolve 1+2 (a)|whirlwind|damage': 'kullanım ortası şifa Berserker bonusunu düşürüyor (C)',
-  'warrior|evolve 2+3 (b)|whirlwind|damage': 'kullanım ortası şifa Berserker bonusunu düşürüyor (C)',
-  'cutthroat|evolve 2+3 (b)|x_cut|damage+crit': 'kritikle gelen Wound sonraki vuruşlara Opportunist ekliyor, critMax üst sınır değil',
-};
+const KNOWN_SOFT: Record<string, string> = {};
 
 interface Outcome {
   checked: Set<string>;

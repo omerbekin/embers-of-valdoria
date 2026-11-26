@@ -101,15 +101,16 @@ describe('Set pilot data (Ömer 2026-11-01 plan, 2026-11-03 picks; no engine yet
   it('Ömer\'in son pilot seçimleri veride; setsEnabled kapalı', () => {
     const [a, w] = ITEMS.sets as Array<{ pieceNames: string[]; bonuses: Record<string, Record<string, unknown>> }>;
     expect(a!.pieceNames).toEqual(['Ashguard Helm', 'Ashguard Hauberk', 'Ashguard Gauntlets', 'Ashguard Greaves']);
-    expect(a!.bonuses['2']!.mods).toEqual({ armorAdd: 3, magicArmorAdd: 2 });
+    // Sayılar r41 n_sets (2026-11-23) set bonus turunda değişti: yalnız yapı sabit, değerler veriden
+    expect(Object.keys(a!.bonuses['2']!.mods as object).sort()).toEqual(['armorAdd', 'magicArmorAdd']);
     expect(a!.bonuses['3']!.byClass).toEqual({
-      warrior: { passive: 'berserker', field: 'rageOnHurt.perHpPercent', from: 0.4, to: 0.5 },
-      defender: { passive: 'bulwark_aura', field: 'pct', from: 0.4, to: 0.5 },
-      paladin: { passive: 'divine_light', field: 'power', from: 0.312, to: 0.362 },
+      warrior: { passive: 'berserker', field: 'rageOnHurt.perHpPercent', from: 0.4, to: expect.any(Number), also: [{ field: 'fullAt', from: 0, to: expect.any(Number) }] }, // Ömer 2026-11-23: Rage + fullAt
+      defender: { passive: 'bulwark_aura', field: 'pct', from: 0.4, to: expect.any(Number) },
+      paladin: { passive: 'divine_light', field: 'power', from: 0.312, to: expect.any(Number) },
     });
-    expect(a!.bonuses['4']).toMatchObject({ rule: 'banked_coals', bankShare: 0.5, ticks: 3, stacking: 'perHit', damageType: 'inherit', ignoresStatuses: ['fortified', 'blessed'], canKill: true });
+    expect(a!.bonuses['4']).toMatchObject({ rule: 'banked_coals', bankShare: 0.5, ticks: 3, stacking: 'perHit', damageType: 'inherit', ignoresStatuses: ['fortify', 'blessed'], canKill: true });
     expect(w!.pieceNames).toEqual(['Milestone Boots', "Drover's Gloves", "Drover's Signet"]);
-    expect(w!.bonuses['2']!.mods).toEqual({ hpRegenAdd: 0.75 });
-    expect(w!.bonuses['3']).toMatchObject({ rule: 'road_hound', hpPerPrimary: 2, damagePerPrimary: 0.5, spd: 17, ai: 'aggressive', primaryExcludesItems: true });
+    expect(Object.keys(w!.bonuses['2']!.mods as object)).toEqual(['hpRegenAdd']);
+    expect(w!.bonuses['3']).toMatchObject({ rule: 'road_hound', hpPerPrimary: content.setSummons.road_hound!.summonerScale!.hp, damagePerPrimary: content.setSummons.road_hound!.summonerScale!.damage, spd: 17, ai: 'aggressive', primaryExcludesItems: true });
   });
 });

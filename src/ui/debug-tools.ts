@@ -38,6 +38,7 @@ import { current as campaignState, setState as setCampaignState, MAP_SCENE } fro
 import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-session';
 import { registerMultiplayerDebug } from './debug-mp';
 import { registerEndlessDebug } from './debug-endless';
+import { registerOwnerTestsDebug } from './debug-owner-tests';
 import { registerDiagDebug } from './debug-diag';
 import { registerCloudDebug } from './debug-cloud';
 import { registerBadgeDebug } from './badge-debug';
@@ -104,6 +105,8 @@ export function registerDebugTools({ game, debug }: Ctx): void {
   registerMultiplayerDebug(game, debug);
   // Endless Lite: Setup > Endless bölümü
   registerEndlessDebug(game, debug);
+  // Owner tests (Ömer 2026-11-24): Setup > Owner tests (Mage evrim vitrini, Sound check, Endless yükleme sayacı)
+  registerOwnerTestsDebug(game, debug);
   // Hata raporu (opt-in): Data > Error reports (src/diag/)
   registerDiagDebug(debug);
   // Bulut kaydı: Data > Cloud (src/cloud/cloud.ts)

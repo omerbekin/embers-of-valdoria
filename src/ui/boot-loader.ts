@@ -52,9 +52,36 @@ function show(label: string): void {
   setBootProgress(0, label);
 }
 
+/**
+ * Ekran geçişi tutması (Ömer 2026-11-23, "klasik loading ekranı"): bir düğme (ör. harita sonu kartı Endless / Main Menu) yeni sahneye geçerken
+ * kutu BASIŞTA, Phaser karesini beklemeden (DOM, eşzamanlı) açılır ve yeni sahne kurulana kadar (`releaseBootHold`; src/game/stage.ts, sahne
+ * CREATE) kapanmaz: araya giren kod parçası / dosya yükleyicilerinin kapanışları kutuyu erken gizlemez. Yeni sahne hiç gelmezse 20 sn sonra kalkar.
+ */
+let held = false;
+let holdSafety = 0;
+export const HOLD_SAFETY_MS = 20000;
+
+export function holdBoot(label = 'Loading'): void {
+  if (typeof window === 'undefined' || !el()) return;
+  if (held) return; // çift basış: ikinci geçiş kutuyu yeniden kurmaz
+  held = true;
+  show(label);
+  setBootProgress(0.08);
+  holdSafety = window.setTimeout(releaseBootHold, HOLD_SAFETY_MS);
+}
+
+export function releaseBootHold(): void {
+  if (!held) return;
+  held = false;
+  window.clearTimeout(holdSafety);
+  hide();
+}
+
+export const bootHeld = (): boolean => held;
+
 function hide(): void {
   const root = el();
-  if (!root) return;
+  if (!root || held) return;
   setBootProgress(1);
   // çok kısa gösterimde göz kırpmasın: en az 250 ms görünür kalır, sonra solar
   const wait = Math.max(0, 250 - (performance.now() - shownAt));

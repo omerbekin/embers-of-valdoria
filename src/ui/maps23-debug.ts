@@ -224,7 +224,7 @@ export function registerMaps23Debug(debug: DebugMenu, reload: () => void, ensure
     ['dr32', 'Harbor Fort (faction elite)', 'Walk to Harbor Fort. Order side or no side: Guild Enforcer Bastion. Guild side: Inquisitor-Captain Vell.'],
     ['dr38', 'Ferry Office (charter a ship)', 'Walk to the Ferry Office; "Charter a ship" opens the sea lanes (60 gold, or free for the Guild side).'],
     ['dr45', 'Lantern Rock (lighthouse)', 'Walk to Lantern Rock; lighting the lamp gives +1 sight for the rest of the map.'],
-    ['dr54', "Fisher's Landing (harbour)", "Walk to Fisher's Landing, where the sea lanes start. The Keeper's daughter tells the Black Caravel's route."],
+    ['dr54', "Fisher's Landing (harbor)", "Walk to Fisher's Landing, where the sea lanes start. The Keeper's daughter tells the Black Caravel's route."],
     ['dr56', "Monk's Isle (faction event)", "Walk to Monk's Isle (opens the sea lanes on the way). No side: bread. Order: rest and a relic. Guild: a fight for a chest."],
   ];
   for (const [id, label, hint] of stops)

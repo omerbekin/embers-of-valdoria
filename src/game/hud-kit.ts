@@ -1,7 +1,7 @@
 import { NUM_FONT } from '../ui/menu-style';
 import { textRes } from './stage-view';
 import Phaser from 'phaser';
-import { EL, diamondPts, elText, fadeLine, hGradient, vGradient } from './elegant-ui';
+import { EL, elDot, elText, fadeLine, hGradient, vGradient } from './elegant-ui';
 import { drawCornerDots } from './corner-dots-gfx';
 
 /**
@@ -69,8 +69,7 @@ export function kitBand(g: Phaser.GameObjects.Graphics, x: number, y: number, w:
   g.lineStyle(1, 0x050302, 1).lineBetween(x, y - 0.5, x + w, y - 0.5);
   g.lineStyle(1, EL.GOLD, EL.LINE.a2).lineBetween(x, y + 0.5, x + w, y + 0.5);
   fadeLine(g, centerX - 760, centerX + 760, y + 0.5, EL.GOLD, 0.6, 'both');
-  g.fillStyle(0x140e09, 1).fillPoints(diamondPts(centerX, y + 0.5, 5), true);
-  g.lineStyle(1, EL.GOLD, 0.8).strokePoints(diamondPts(centerX, y + 0.5, 5), true);
+  elDot(g, centerX, y + 0.5, 5, EL.GOLD, 0.9); // karo 3. tur: dolu nokta
 }
 
 /** Dikey ince ayraç (uçlara doğru söner). */

@@ -54,7 +54,7 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-track .gt-bp { background: linear-gradient(90deg, #8a3a10, #ffb35a); }
 .gt-mk { position: absolute; top: 50%; width: 0; cursor: help; -webkit-tap-highlight-color: transparent; }
 .gt-mk::before { content: ''; position: absolute; left: calc(var(--mkw, 44px) / -2); top: -34px; width: var(--mkw, 44px); height: 48px; }
-.gt-mk i { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; transform: rotate(45deg); background: #0d0806; border: 1.5px solid rgba(217, 178, 106, .55); z-index: 1; transition: background .15s, border-color .15s, box-shadow .15s; }
+.gt-mk i { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: #0d0806; border: 1.5px solid rgba(217, 178, 106, .55); z-index: 1; transition: background .15s, border-color .15s, box-shadow .15s; }
 .gt-mk em { position: absolute; left: -22px; width: 44px; top: -32px; text-align: center; font: normal 600 calc(12px * var(--tx, 1)) var(--g-disp); color: var(--g-dim); transition: color .15s; }
 .gt-mk.tbd i { border-style: dashed; border-color: rgba(217, 178, 106, .3); }
 .gt-mk:hover i, .gt-mk.pin i { border-color: #fff4d6; }
@@ -97,20 +97,20 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt.cs .gt-ts b em { font-size: calc(9px * var(--tx, 1)); }
 .gt.cs .gt-ts .pl { width: 8px; height: 10px; }
 
-/* ---------- dugumler (filler kucuk elmas + rank noktalari, edge kucuk yuvarlak, notable orta ikonlu, blood price damla, evolve buyuk altin) ---------- */
+/* ---------- dugumler (Omer 2026-11-25: dugum ortasi, Saga Mastery isareti ve evolve isareti karo degil yuvarlak nokta; filler kucuk nokta + rank noktalari, edge kucuk yuvarlak, notable orta ikonlu, blood price damla, evolve buyuk altin) ---------- */
 .gt-nd { --s: var(--sF); position: absolute; transform: translate(-50%, -50%); flex: none; width: max(var(--s), var(--hw, var(--hit))); height: max(var(--s), var(--hh, var(--hit))); padding: 0; border: 0; background: none; cursor: pointer; color: inherit; -webkit-tap-highlight-color: transparent; z-index: 3; touch-action: manipulation; }
 .gt-nd.k-f { --s: var(--sF); } .gt-nd.k-e { --s: var(--sE); } .gt-nd.k-b { --s: var(--sB); } .gt-nd.k-n { --s: var(--sN); } .gt-nd.k-v { --s: var(--sV); }
 .gt-nd:focus-visible { outline: 1px dashed var(--g-gold); }
 .gt-nd .dm { position: absolute; left: 50%; top: 50%; width: var(--s); height: var(--s); transform: translate(-50%, -50%); border-radius: 50%; overflow: hidden; border: 1px solid rgba(217, 178, 106, .3); background: radial-gradient(circle, #1a120b, #0c0806 80%); transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s; }
 .gt-nd .dm img { position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; transform: translate(-50%, -50%); object-fit: contain; display: block; filter: grayscale(.9) brightness(.55); opacity: .85; transition: filter .15s; }
-.gt-nd.k-e .dm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 28%; height: 28%; transform: translate(-50%, -50%) rotate(45deg); background: rgba(217, 178, 106, .35); }
-.gt-nd.k-f .dm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 24%; height: 24%; transform: translate(-50%, -50%) rotate(45deg); background: rgba(217, 178, 106, .22); }
+.gt-nd.k-e .dm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 30%; height: 30%; border-radius: 50%; transform: translate(-50%, -50%); background: rgba(217, 178, 106, .35); }
+.gt-nd.k-f .dm::after { content: ''; position: absolute; left: 50%; top: 50%; width: 26%; height: 26%; border-radius: 50%; transform: translate(-50%, -50%); background: rgba(217, 178, 106, .22); }
 .gt-nd.k-b .drop { position: absolute; left: 50%; top: 50%; width: var(--s); height: calc(var(--s) * 1.18); transform: translate(-50%, -52%); overflow: visible; transition: filter .15s, opacity .15s; }
 .gt-nd.k-b .drop path.bd { fill: #14090a; stroke: var(--g-blood-d); stroke-width: 2.4; stroke-linejoin: round; transition: fill .15s, stroke .15s; }
 .gt-nd.k-b .drop path.bi { fill: none; stroke: rgba(198, 59, 59, .45); stroke-width: 2; stroke-linecap: round; }
 .gt-nd.k-v .dm { border: 1px solid rgba(243, 217, 153, .75); }
 .gt-nd.k-v::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--s) + 12px); height: calc(var(--s) + 12px); transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--c); opacity: .7; pointer-events: none; }
-.gt-nd.k-v::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 9px)) rotate(45deg); background: var(--c); pointer-events: none; box-shadow: 0 0 6px var(--c); }
+.gt-nd.k-v::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; transform: translate(-50%, calc(-50% - var(--s) * .5 - 9px)); background: var(--c); pointer-events: none; box-shadow: 0 0 6px var(--c); }
 .gt-nd.k-n::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--s) + 8px); height: calc(var(--s) + 8px); transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--c); opacity: .55; pointer-events: none; }
 /* durumlar (Ring, Omer 2026-11-07: ince 1 px halka; durum = halka rengi + yumusak isik; kilitli = kesik halka) */
 .gt-nd { --c: rgba(217, 178, 106, .3); }
@@ -158,7 +158,7 @@ html.short .tt-tip .gt-ctl button { min-height: 44px; }
 html.reduced-motion .gt-nd.shake { animation: none; }
 
 /* ================= ULT: + AĞACI ================= */
-.gt-ucore { position: absolute; transform: translate(-50%, -50%); z-index: 2; cursor: help; }
+.gt-ucore { position: absolute; transform: translate(-50%, -50%) scale(1.3); z-index: 2; cursor: help; } /* Ömer 2026-11-25 r47 u_core: elmas kalır, ~1,3 kat büyük (düzen ölçüsü L.core.d değişmez, yalnız görünüm) */
 .gt-ucore .ud { position: absolute; inset: 0; transform: rotate(45deg) scale(.72); border: 2px solid rgba(243, 217, 153, .8); background: radial-gradient(circle, #2a1d10, #0d0806 80%); box-shadow: 0 0 0 2px #080604, 0 0 0 3px rgba(243, 217, 153, .35), 0 0 22px rgba(243, 217, 153, .25); }
 .gt-ucore img { position: absolute; left: 50%; top: 50%; width: 94%; height: 94%; transform: translate(-50%, -50%); border-radius: 50%; object-fit: cover; }
 .gt-ulv { position: absolute; transform: translate(-50%, -50%); z-index: 4; font: 600 calc(9px * var(--tx, 1))/1 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); background: #0d0806; border: 1px solid rgba(217, 178, 106, .4); padding: 2px 5px; pointer-events: none; white-space: nowrap; }
@@ -183,6 +183,9 @@ html.reduced-motion .gt-nd.shake { animation: none; }
 .gt-acts .el-btn[data-tip] { cursor: pointer; }
 .gt-sticky { position: sticky; bottom: 0; z-index: 6; background: linear-gradient(180deg, rgba(14, 10, 7, .0), rgba(14, 10, 7, .96) 18%); padding-top: 10px; margin-top: auto; }
 .gt-acts .sh-medal { cursor: default; touch-action: auto; --sh-fs: max(14px, calc(22 * var(--u))); }
+/* Ömer 2026-11-25 (r46): ağaçtaki puan işareti karo değil yuvarlak nokta (Sheet stat taşı elmas kalır); daire karonun köşegenine yakın dursun diye inset biraz küçük */
+.gt-acts .sh-medal::before { transform: none; border-radius: 50%; inset: 6px; }
+html.short .gt-acts .sh-medal::before { inset: 3px; }
 .gt-acts .sh-ptr { margin-left: 0; }
 
 .gt-treewrap { width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
@@ -226,7 +229,7 @@ html.short .gt-ts b em { display: none; }
 .gt-barw.slim .gt-mk i { left: -5px; top: -5px; width: 10px; height: 10px; border-width: 1px; }
 /* telefon: Evolve düğümünün dış halkası küçük, ult etiketleriyle çakışmasın (Ömer 2026-11-03) */
 html.short .gt-nd.k-v::before { width: calc(var(--s) + 8px); height: calc(var(--s) + 8px); }
-html.short .gt-nd.k-v::after { width: 4px; height: 4px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 6px)) rotate(45deg); }
+html.short .gt-nd.k-v::after { width: 4px; height: 4px; transform: translate(-50%, calc(-50% - var(--s) * .5 - 6px)); }
 html.short .gt-tools { display: flex; align-items: center; gap: 8px; flex: none; min-width: 0; padding-bottom: 2px; }
 html.short .gt-tools .gt-barw { flex: 1 1 0; min-width: 0; }
 html.short .gt-tools .gt-acts.gt-inbar { flex: none; margin: 0; padding: 0; border: 0; }

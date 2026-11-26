@@ -382,7 +382,7 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 16
     },
     "cooldown": 2,
     "turnCost": 0.5,
@@ -403,7 +403,7 @@
   },
   "wail_of_the_dead": {
     "id": "wail_of_the_dead",
-    "_not": "Madde 241 + Ömer kararı (2026-10-07): bedel CAN ve Undead'in MEVCUT (anlık) canının %20'si (cost.ofCurrent 0.2; eski sabit 18 HP). Bedel = round(mevcut can x 0,2), en az 1 (src/engine/cost.ts); mevcut canın %20'si olduğu için asla öldürmez (canı 1 iken bedel 1 = kullanılamaz: 'Not enough HP'). Yapay zekada düşük can kuralı YOK (madde 247, Ömer kararı: oranlı bedel minHpRatioForHpCost'tan muaf; bedel zaten anlık canın %20'si).",
+    "_not": "Madde 241 + Ömer kararı (2026-10-07): bedel CAN ve Undead'in MEVCUT (anlık) canının %20'si (cost.ofCurrent 0.2; eski sabit 18 HP). Bedel = round(mevcut can x 0,2), en az 1 (src/engine/cost.ts); mevcut canın %20'si olduğu için asla öldürmez (canı 1 iken bedel 1 = kullanılamaz: 'Not enough HP'). r45 (Ömer r45 Undead K3): bedel %20 > %10, hasar 0,65 > 0,75, zehir 0,206 > 0,24 (Dark Bond MP 10 > 22, Raise Dead MP 24 > 35 aynı paket; Lead r45: Raise Dead L1 havuzu 35e tam sığar). r46 (Ömer seçenek 3, düz taban + ölçek): hasar 80% INT - 3,9 (L1 INT 26'da 16,9 = r44 tabanı, L20 INT 41'de 28,9), zehir 0,206'ya döndü, bedel %10 kalır (Dark Bond 16, Raise Dead 30); endless-balance'ı bozmayan en yüksek L20. Yapay zekada düşük can kuralı YOK (madde 247, Ömer kararı: oranlı bedel minHpRatioForHpCost'tan muaf; bedel zaten anlık canın %20'si).",
     "name": "Wail of the Dead",
     "icon": "wail",
     "target": "area_enemies",
@@ -414,7 +414,7 @@
     "cost": {
       "resource": "hp",
       "amount": 0,
-      "ofCurrent": 0.2
+      "ofCurrent": 0.1
     },
     "cooldown": 3,
     "motion": "cast",
@@ -424,7 +424,8 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.65,
+        "power": 0.8,
+        "flat": -3.9,
         "element": "dark"
       },
       {
@@ -457,7 +458,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.399
+        "power": 0.286,
+        "flat": 4
       },
       {
         "type": "status",
@@ -494,14 +496,15 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.575,
+        "power": 0.403,
+        "flat": 6,
         "falloff": 0.85
       },
       {
         "type": "dot",
         "status": "bleeding",
         "scale": "dex",
-        "power": 0.1,
+        "power": 0.11,
         "turns": 2
       }
     ],
@@ -538,7 +541,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.4
+        "power": 0.287,
+        "flat": 4
       }
     ],
     "vfx": "arrowrain",
@@ -565,7 +569,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 1.455,
+        "power": 1.046,
+        "flat": 14.5,
         "ignoreDefense": 0.5
       }
     ],
@@ -799,7 +804,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.587
+        "power": 0.473,
+        "flat": 2.5
       },
       {
         "type": "manaBurn",
@@ -881,7 +887,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 1.132,
+        "power": 0.905,
+        "flat": 5,
         "bonusPerMissingMana": 1,
         "bloodSpentBonus": 0.01
       }
@@ -1005,7 +1012,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 24
+      "amount": 30
     },
     "cooldown": 5,
     "initialCooldown": 1,
@@ -1647,7 +1654,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 1
+        "power": 0.808,
+        "flat": 5
       },
       {
         "type": "status",
@@ -1684,7 +1692,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 0.45
+        "power": 0.354,
+        "flat": 2.5
       }
     ],
     "vfx": "saltire",
@@ -1757,7 +1766,8 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "dex",
-        "power": 1.525,
+        "power": 1.217,
+        "flat": 8,
         "guaranteedCrit": true,
         "unblockable": true
       }
@@ -1787,7 +1797,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.722
+        "power": 0.693
       },
       {
         "type": "omen",
@@ -1827,13 +1837,13 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.285
+        "power": 0.274
       },
       {
         "type": "dot",
         "status": "wither",
         "scale": "luck",
-        "power": 0.095,
+        "power": 0.091,
         "turns": 3
       },
       {
@@ -1874,7 +1884,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.776,
+        "power": 0.745,
         "critBonus": 0.25
       },
       {
@@ -1915,7 +1925,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.694
+        "power": 0.666
       },
       {
         "type": "omen",
@@ -11494,7 +11504,7 @@
   "fervour": {
     "_not": "Ashborn Hierarch: bir dosta 2 tur Ash Surge (süre taşıyanın turu bitince düşer). Harita 3 elit ve boss kitleri (maps-2-3.md). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
     "id": "fervour",
-    "name": "Fervour",
+    "name": "Fervor",
     "target": "single_ally",
     "global": true,
     "excludeSelf": true,
@@ -12126,7 +12136,7 @@
   "skullsplitter": {
     "_not": "Clan Chief Brannoc: tek hedef + 2 tur Sunder. Harita 3 elit kiti (maps-2-3.md; Ömer 2026-11-01). Sayılar PROVİZYON, sim yok. YER TUTUCU sanat ve ses: artOf sahibinden kopya.",
     "id": "skullsplitter",
-    "name": "Skullsplitter",
+    "name": "Helm Cleaver",
     "target": "single_enemy",
     "cooldown": 3,
     "motion": "melee",

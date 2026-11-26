@@ -2,7 +2,7 @@ import { isShapeArea, RECT_CENTER_MIN, shapeBadge } from './area-shape';
 import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { lessText, moreText, multText } from './bonus-text';
-import { bonusScaleRaw, splitParts } from './spec';
+import { damageBonusRaw, splitParts } from './spec';
 import { bellsOfSkill } from './tree-hooks';
 import { rangeEnabled, rangeLabel } from './range';
 import { applySummonerScale, applySummonVariant, attributePower, dotOutgoingMult, outgoingDamageMult } from './stats';
@@ -126,27 +126,32 @@ export function stageText(area: AreaDef | undefined): string {
 
 export const ATTRIBUTE_NAME: Record<Attribute, string> = { str: 'STR', int: 'INT', dex: 'DEX', luck: 'LUCK' };
 /** Hibrit ölçek (damage.bonusScale) stat adları. */
-const BONUS_STAT_NAME: Record<Attribute | 'armor' | 'magicArmor', string> = { ...ATTRIBUTE_NAME, armor: 'Armor', magicArmor: 'Magic armor' };
+const BONUS_STAT_NAME: Record<Attribute | 'armor' | 'magicArmor', string> = { ...ATTRIBUTE_NAME, armor: 'Armor', magicArmor: 'Magic Armor' };
 
 /** Yüzde, en çok 3 ondalık (kan başına %0,5 gibi yarım değerler yuvarlanmasın). */
 const pctF = (v: number) => `${Number((v * 100).toFixed(3))}%`;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
+/** Düz taban + ölçek (damage.flat, Ömer 2026-11-25) yazısı: "9 + 80% INT" / "100% INT - 9"; flat yoksa yalnız ölçek. */
+const flatScaleText = (flat: number | undefined, scaleText: string): string => (!flat ? scaleText : flat > 0 ? `${Number(flat.toFixed(3))} + ${scaleText}` : `${scaleText} - ${Number((-flat).toFixed(3))}`);
 /** Mob pasif metinleri için küçük yardımcılar (describePassive). */
 const turnsText = (n: number) => `${n} turn${n > 1 ? 's' : ''}`;
 /** Oyuncu adı id'den farklı olan durumlar (Ömer 2026-11-16: 'slow' id'si korunur, adı Hobbled; statuses.json > slow.name ile aynı, tests/status-merge.test.ts denetler). */
-export const STATUS_NAME_OVERRIDE: Record<string, string> = { slow: 'Hobbled' };
+export const STATUS_NAME_OVERRIDE: Record<string, string> = { slow: 'Hobbled', wither: 'Withering' };
 const cap = (id: string) => STATUS_NAME_OVERRIDE[id] ?? id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, ' ');
 const groundName = (id: string) => (id === 'burning' ? 'burning ground' : id.replace(/_/g, ' '));
 /** Ölçekli sayı (statın gücü x oran, yuvarlanmış): tooltip satırlarındaki "(24)" ve `skillNumbers` AYNI hesaptan. */
 const scaled = (stats: Stats, scale: Attribute, power: number, formulas: Formulas): number => Math.round(attributePower(stats, scale, formulas) * power);
 type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
+/** Yığın başı Doom sayısı (motorla aynı: battle.ts doomSpec): ölçek x powerPerStack x m + flatPerStack x m x spellPowerMult; taban yoksa `scaled`. */
+const doomShown = (stats: Stats, doom: { scale: Attribute; powerPerStack: number; flatPerStack?: number }, m: number, formulas: Formulas): number =>
+  doom.flatPerStack ? Math.round(attributePower(stats, doom.scale, formulas) * doom.powerPerStack * m + doom.flatPerStack * m * (stats.spellPowerMult ?? 1)) : scaled(stats, doom.scale, doom.powerPerStack * m, formulas);
 /** Hasar etkisinin sayısı; hibrit ölçekte (bonusScale) ana + ek (kartın gösterdiği statlarla; savaşta aura zırhı da eklenir). */
 const damageAmount = (e: DamageEffect, stats: Stats, formulas: Formulas): number => {
   // Hasar havuzu (Global / element hasarı + ağacın "+% power" payı; motorun damageSpecFor çarpanıyla aynı): çarpan yoksa ifade birebir eskisi
   const out = outgoingDamageMult(stats, e.element, 0, e.powerAdd ?? 0);
   const power = out !== 1 ? e.power * out : e.power;
-  if (!e.bonusScale?.length) return scaled(stats, e.scale, power, formulas);
-  const bonus = bonusScaleRaw(e.bonusScale, stats);
+  if (!e.bonusScale?.length && !e.flat) return scaled(stats, e.scale, power, formulas);
+  const bonus = damageBonusRaw(e, stats);
   return Math.round(attributePower(stats, e.scale, formulas) * power + (out !== 1 ? bonus * out : bonus) * (stats.spellPowerMult ?? 1));
 };
 /** Item affix çarpanlı güç (şifa / kalkan / DoT; motorla aynı): çarpan yoksa güç aynen. */
@@ -179,7 +184,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
   const val = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
   switch (e.type) {
     case 'rage':
-      return `The lower your HP, the harder you hit: up to ${moreText(e.maxBonus)} damage at the brink of death.${e.rageOnHurt ? ` Losing HP gives Rage: ${Math.round(e.rageOnHurt.perHpPercent * 100) / 100} per 1% of your max HP lost${e.rageOnHurt.perHitCap !== undefined ? ` (at most ${e.rageOnHurt.perHitCap} per hit; shields absorbing the hit give none)` : ''}.` : ''}`;
+      return `The lower your HP, the harder you hit: up to ${moreText(e.maxBonus)} damage ${e.fullAt ? `at ${Math.round(e.fullAt * 1000) / 10}% HP or lower` : 'at the brink of death'}.${e.rageOnHurt ? ` Losing HP gives Rage: ${Math.round(e.rageOnHurt.perHpPercent * 100) / 100} per 1% of your max HP lost${e.rageOnHurt.perHitCap !== undefined ? ` (at most ${e.rageOnHurt.perHitCap} per hit; shields absorbing the hit give none)` : ''}.` : ''}`;
     case 'divineLight': {
       // Crusader's Dawn (smite.dual): şifa dual kat; aynı miktar her tur en zayıf düşmana smite
       const p = e.power * (e.smite?.dual ?? 1);
@@ -200,7 +205,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       const res = Object.entries(e.elemResist ?? {}).filter(([, v]) => (v ?? 0) > 0);
       const same = res.length > 0 && res.every(([, v]) => v === res[0]![1]);
       const resText = !res.length ? '' : same ? ` You take ${pct(res[0]![1]!)} less ${res.map(([k]) => cap(k)).join(' and ')} damage.` : ` You take less damage from ${res.map(([k, v]) => `${cap(k)} (${pct(v!)})`).join(' and ')}.`;
-      return `When an enemy hits you with a melee skill, the cell it stands on becomes ${groundName(e.ground)} for ${turnsText(e.turns)} of its turns: it Burns while it stands there (${val(e.scale, e.power)} damage at the start of its turn); at most once between your turns.${resText}`;
+      return `When an enemy hits you with a melee skill, the cell it stands on becomes ${groundName(e.ground)} for its next ${e.turns === 1 ? 'turn' : `${e.turns} turns`}: it Burns while it stands there (${val(e.scale, e.power)} damage at the start of its turn); at most once between your turns.${resText}`;
     }
     case 'pealingBells':
       return `Every ${e.onlyRings ?? 'Toll or Thunderpeal'} you ring makes your bells ${moreText(e.perBell)} stronger for the rest of the battle (it stacks with no limit; the bell that rings counts only for the next ones).`;
@@ -211,7 +216,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'soulDrain':
       return `Heal for ${pct(e.ratio)} of all damage you deal (damage dealt by your summons counts too).`;
     case 'manaOverflow':
-      return `Magic damage blocked by your magic armor builds up; every ${e.threshold} blocked, your whole team gains ${e.mana} MP.`;
+      return `Magic damage blocked by your Magic Armor builds up; every ${e.threshold} blocked, your whole team gains ${e.mana} MP.`;
     case 'spellbreakerInstinct':
       // Blood Tithe (Redtithe, Ömer 2026-11-18): bar dolu kayma = bloodAdvance + bloodAdvancePerDex x DEX (formül görünür); advance = ağacın düz eki
       if (e.bloodAdvance && e.bloodAdvancePerDex) {
@@ -224,7 +229,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
           return [
             `Blood bar: 0-${bb.max}, starts at ${bb.start}. Tithe Cut fills it; skills spend it. Missing blood is paid in HP (not by skills that spend the whole bar).`,
             `Fuller bar: when an enemy spends MP on a skill against your team, your turn bar jumps ahead, up to ${pct(peak + e.advance)} of a turn at a full bar. Once between your turns.`,
-            `Emptier bar: more Magic armor (up to ${n(bb.magicArmorBase + bb.magicArmorPerInt * stats.int)} at 0 blood) and up to ${pct(bb.lifestealMax)} life steal on skill hits.`,
+            `Emptier bar: more Magic Armor (up to ${n(bb.magicArmorBase + bb.magicArmorPerInt * stats.int)} at 0 blood) and up to ${pct(bb.lifestealMax)} life steal on skill hits.`,
           ].join(' ');
         }
         return `When an enemy uses a skill that costs MP on your team (you included), your turn bar jumps ahead by (${pct(e.bloodAdvance)} + DEX x${Math.round(e.bloodAdvancePerDex * 10000) / 100}%) x your blood fill: ${pct(peak)} of a turn with a full bar (${pct(peak / 2)} at half)${e.advance > 0 ? ` plus ${pct(e.advance)}` : ''}, so your next turn comes sooner. At most once between your turns.`;
@@ -250,7 +255,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'stonePatience':
       return `At the start of your turn, if you took no damage since your last turn, gain +${e.armor} armor (up to +${e.max}). Any damage resets the bonus.`;
     case 'deepHoard':
-      return `Gain bonus armor and magic armor equal to ${pct(e.mpRatio)} of your current MP (+${Math.round(stats.mp * e.mpRatio)} at full MP). Spending or losing MP thins it.`;
+      return `Gain bonus armor and Magic Armor equal to ${pct(e.mpRatio)} of your current MP (+${Math.round(stats.mp * e.mpRatio)} at full MP). Spending or losing MP thins it.`;
     case 'wardEtcher':
       return `After each skill that costs MP, the ally with the lowest armor (yourself only if alone) gains a magic shield of ${e.perMp}x the MP spent for ${turnsText(e.turns)}.`;
     case 'mireBound':
@@ -327,7 +332,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'frozenRanks':
       return `While it stands, all allies take ${lessText(e.perAlly)} damage with one other living ally in their row (${lessText(e.perAlly * 2)} with a full row) and cannot be ${e.immune.map(cap).join(' or ')}. It shares the cover, but it can be ${e.immune.map(cap).join(' or ')} and Frozen itself.`;
     case 'stoneOath':
-      return `Whenever an ally dies (not a summon), it permanently gains +${e.armor} armor and +${e.magicArmor} magic armor.`;
+      return `Whenever an ally dies (not a summon), it permanently gains +${e.armor} armor and +${e.magicArmor} Magic Armor.`;
     case 'furnaceCore':
       return `When it dies, its cell and the cells around it become ${groundName(e.ground)} for ${turnsText(e.turns)}.`;
     case 'graveCold':
@@ -462,9 +467,9 @@ export function describeBlood(f: Formulas, value: number, max: number, int?: num
   const p = (v: number) => `${Math.round(v * 1000) / 10}%`;
   const n = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10));
   return [
-    `Right now: ${int !== undefined ? `+${n(Math.round((b.magicArmorBase + b.magicArmorPerInt * int) * low * 100) / 100)} Magic armor` : `${p(low)} of the full Magic armor`} and ${p(b.lifestealMax * low)} life steal on skill hits`,
+    `Right now: ${int !== undefined ? `+${n(Math.round((b.magicArmorBase + b.magicArmorPerInt * int) * low * 100) / 100)} Magic Armor` : `${p(low)} of the full Magic Armor`} and ${p(b.lifestealMax * low)} life steal on skill hits`,
     `Blood: a bar from 0 to ${max}; you start every battle with ${b.start} and have no mana`,
-    `Magic armor up to ${n(b.magicArmorBase)} + INT x${n(b.magicArmorPerInt)}${int !== undefined ? ` (${n(b.magicArmorBase + b.magicArmorPerInt * int)})` : ''}: full at 0 blood, none at ${max} blood`,
+    `Magic Armor up to ${n(b.magicArmorBase)} + INT x${n(b.magicArmorPerInt)}${int !== undefined ? ` (${n(b.magicArmorBase + b.magicArmorPerInt * int)})` : ''}: full at 0 blood, none at ${max} blood`,
     `The lower the bar, the more life steal (up to ${p(b.lifestealMax)} at 0)`,
     `Missing blood is paid with HP (${p(b.hpPerBlood)} of max HP per blood); a skill cannot take you below 1 HP`,
     'Blood gives no speed or damage on its own',
@@ -551,16 +556,16 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         // Hibrit ölçek: "Damage 36% STR + 25% Armor (12)"; sayı = ana + ek (kartın gösterdiği statlarla; savaşta aura zırhı da eklenir)
         const parts = e.bonusScale.map((b) => `${pct(b.pct)} ${BONUS_STAT_NAME[b.stat]}`).join(' + ');
         const total = damageAmount(e, stats, formulas);
-        add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} + ${parts} (${total})${times > 1 ? ` x${times}` : ''}${who}`, element);
+        add(`Damage ${flatScaleText(e.flat, `${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} + ${parts}`)} (${total})${times > 1 ? ` x${times}` : ''}${who}`, element);
         if (e.bonusScale.some((b) => b.stat === 'armor')) add('Uses your current armor, aura bonus included');
       } else if (e.split) {
         // Bölünmüş hasar (Hammer Spark): iki parça, her biri kendi rengiyle ve kendi zırhına karşı; tek vuruş (spec.ts > splitParts)
         for (const p of splitParts(e)) {
           const el = p.effect.element ?? 'physical';
-          add(`${pct(e.power * p.share)} ${ATTRIBUTE_NAME[e.scale]} as ${el} damage (${damageAmount({ ...p.effect, power: e.power * p.share }, stats, formulas)}), reduced by ${p.effect.damageType === 'magic' ? 'Magic armor' : 'Armor'}${times > 1 ? ` x${times}` : ''}${who}`, el);
+          add(`${flatScaleText(e.flat ? e.flat * p.share : undefined, `${pct(e.power * p.share)} ${ATTRIBUTE_NAME[e.scale]}`)} as ${el} damage (${damageAmount({ ...p.effect, power: e.power * p.share, ...(e.flat ? { flat: e.flat * p.share } : {}) }, stats, formulas)}), reduced by ${p.effect.damageType === 'magic' ? 'Magic Armor' : 'Armor'}${times > 1 ? ` x${times}` : ''}${who}`, el);
         }
         add('Both parts land as a single hit: one hit roll, one crit roll');
-      } else add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${damageAmount(e, stats, formulas)})${times > 1 ? ` x${times}` : ''}${who}`, element);
+      } else add(`Damage ${flatScaleText(e.flat, `${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]}`)} (${damageAmount(e, stats, formulas)})${times > 1 ? ` x${times}` : ''}${who}`, element);
       // Elemente özel sapma (formulas.damage.elementVariance: şimşek): vuruş karttaki sayının çok altına ya da üstüne düşebilir
       if (formulas.damage.elementVariance?.[element] !== undefined) add(`Each hit rolls within plus or minus ${pct(formulas.damage.elementVariance[element]!)} of this`, element);
       if (e.ignoreDefense) add(`Ignores ${pct(e.ignoreDefense)} of armor`);
@@ -678,10 +683,10 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       const el = e.element ?? 'arcane';
       add(`Brands every enemy in the area for ${e.turns} turn${e.turns > 1 ? 's' : ''}${def ? ` (${def.name})` : ''}; it cannot miss`);
       // Ömer 2026-11-07: madde 2 özetlendi; MP maddeleri (bedel artışı + bedel yakımı) ve arcane maddeleri (yakım hasarı + patlama) birleşti, sayılar aynen
-      add(`An enemy with no mana gains tainted mana: ${pct(e.taintPct)} of its max HP${e.centerTaintMul ? ` (${pct(e.centerTaintMul)} more on the centre enemy)` : ''}, full, unspendable, gone when the Brand ends`);
+      add(`An enemy with no mana gains tainted mana: ${pct(e.taintPct)} of its max HP${e.centerTaintMul ? ` (${pct(e.centerTaintMul)} more on the center enemy)` : ''}, full, unspendable, gone when the Brand ends`);
       if (e.castBurnPct) add(`An enemy with mana pays ${pct(e.costMult - 1)} more MP for its skills (rounded up) and loses extra MP equal to ${pct(e.castBurnPct)} of the MP it paid (or all it has left); that counts as burned mana and hurts it too`, el);
       else add(`An enemy with mana pays ${pct(e.costMult - 1)} more MP for its skills (rounded up)`);
-      add(`Mana burned or stolen from a Branded enemy deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost (cannot miss or crit; magic armor applies); when the Brand runs out, leftover tainted mana bursts for ${pct(e.explodePct)} of it`, el);
+      add(`Mana burned or stolen from a Branded enemy deals ${el} damage equal to ${pct(e.burnDamagePct)} of the mana lost (cannot miss or crit; Magic Armor applies); when the Brand runs out, leftover tainted mana bursts for ${pct(e.explodePct)} of it`, el);
       // Ömer 2026-11-07: işaret (markDamagePct) ve Ley Thread satırları Mana Steal / Void Strike'ın kendi ipucuna taşındı (aşağıda, brandPartnerLines)
       if (e.silenceOnEmpty) add(`A Branded enemy whose mana reaches 0 is ${defs.statuses?.silence?.name ?? 'Silenced'} for ${e.silenceOnEmpty} turn${e.silenceOnEmpty > 1 ? 's' : ''}`);
       if (e.spread) add('When a Brand runs out, it leaps once to an unbranded enemy next to its bearer with a fresh Brand');
@@ -751,12 +756,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       // Yalnızca sayı satırı (Gear'daki "Doom / Omen" sayısı tooltip'te de görünsün); Doom / zamanlayıcı / boss kuralları Codex 'Curses' makalesinde
       const doom = defs.statuses?.[kind]?.doom;
       const maxStacks = defs.statuses?.[kind]?.maxStacks;
-      if (doom && maxStacks && !skill.effects.some((x) => x.type === 'detonate' && x.status === kind)) add(`Doom at ${maxStacks} Omens: ${pct(doom.powerPerStack)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack)}) ${doom.element} damage per Omen`, doom.element);
+      if (doom && maxStacks && !skill.effects.some((x) => x.type === 'detonate' && x.status === kind)) add(`Doom at ${maxStacks} Omens: ${flatScaleText(doom.flatPerStack, `${pct(doom.powerPerStack)} ${ATTRIBUTE_NAME[doom.scale]}`)} (${doomShown(stats, doom, 1, formulas)}) ${doom.element} damage per Omen`, doom.element);
       // Doom / zamanlayıcı / boss kuralları skill'de değil Codex 'Curses' makalesinde
     } else if (e.type === 'detonate') {
       const def = defs.statuses?.[e.status];
       const doom = def?.doom;
-      if (doom) add(`Then Doom strikes at once with every Omen on the target, with ${multText(e.mult)} power: ${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]} (${raw(doom.scale, doom.powerPerStack * e.mult)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
+      if (doom) add(`Then Doom strikes at once with every Omen on the target, with ${multText(e.mult)} power: ${flatScaleText(doom.flatPerStack ? doom.flatPerStack * e.mult : undefined, `${pct(doom.powerPerStack * e.mult)} ${ATTRIBUTE_NAME[doom.scale]}`)} (${doomShown(stats, doom, e.mult, formulas)}) ${doom.element} damage per Omen; it cannot miss but can crit`, doom.element);
       else add(`Detonates ${e.status} with ${multText(e.mult)} power`);
       if (doom?.bonusPerExtraTurn) add(`Effects that would lengthen an Omen add +${pct(doom.bonusPerExtraTurn)} Doom damage per turn instead`, doom.element);
       add('On a miss nothing happens: the Omens stay');
@@ -861,6 +866,11 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (parts.length) add(`On a target with ${defs.statuses?.['ley_thread']?.name ?? 'Ley Thread'}, ${other.name} ${parts.join(' and ')}; the thread is used up`);
     }
   }
+  if (skill.treeRage) {
+    fromTree = true;
+    add(`Gives you ${Math.round(skill.treeRage * 100) / 100} Rage when used`);
+    fromTree = false;
+  }
   if (skill.note) add(skill.note); // serbest not (Pose Tester: oynattığı poz)
   const initialTurns = Math.min(formulas.cooldown?.maxInitial ?? 0, Math.floor(skill.initialCooldown ?? 0));
   return {
@@ -909,7 +919,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
   };
   const raw = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
   for (const { e, times } of groupEffects(skill)) {
-    if (e.type === 'damage' && e.split) for (const p of splitParts(e)) num(`${cap(p.effect.element ?? 'physical')} damage`, damageAmount({ ...p.effect, power: e.power * p.share }, stats, formulas), p.effect.element ?? 'physical', times);
+    if (e.type === 'damage' && e.split) for (const p of splitParts(e)) num(`${cap(p.effect.element ?? 'physical')} damage`, damageAmount({ ...p.effect, power: e.power * p.share, ...(e.flat ? { flat: e.flat * p.share } : {}) }, stats, formulas), p.effect.element ?? 'physical', times);
     else if (e.type === 'damage') num('Damage', damageAmount(e, stats, formulas), e.element ?? 'physical', times);
     else if (e.type === 'heal') num('Heal', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
@@ -922,10 +932,10 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     } else if (e.type === 'omen') {
       const def = defs.statuses?.[e.status ?? 'omen'];
       const detonates = skill.effects.some((x) => x.type === 'detonate' && x.status === (e.status ?? 'omen'));
-      if (def?.doom && def.maxStacks && !detonates) num('Doom / Omen', raw(def.doom.scale, def.doom.powerPerStack), def.doom.element);
+      if (def?.doom && def.maxStacks && !detonates) num('Doom / Omen', doomShown(stats, def.doom, 1, formulas), def.doom.element);
     } else if (e.type === 'detonate') {
       const doom = defs.statuses?.[e.status]?.doom;
-      if (doom) num('Doom / Omen', raw(doom.scale, doom.powerPerStack * e.mult), doom.element);
+      if (doom) num('Doom / Omen', doomShown(stats, doom, e.mult, formulas), doom.element);
     } else if (e.type === 'push') num('Crash', raw(e.scale, e.crashPower), e.element);
     else if (e.type === 'status') {
       const def = defs.statuses?.[e.status];
@@ -964,7 +974,8 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'armorAura':
       return num('Armor aura', Math.round(stats.armor * e.pct), 'shield');
     case 'rage':
-      return e.rageOnHurt ? [...fixed('Max bonus', moreText(e.maxBonus)), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', moreText(e.maxBonus));
+      // fullAt (Ashguard Vigil 3 parça Warrior): tam bonusun geldiği can oranı
+      return [...fixed('Max bonus', moreText(e.maxBonus)), ...(e.fullAt ? fixed('Max bonus at', `${Math.round(e.fullAt * 1000) / 10}% HP`) : []), ...(e.rageOnHurt ? fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100)) : [])];
     case 'spellEcho':
       return fixed('Chance', pct(e.chance));
     case 'luckyStreak':
@@ -989,7 +1000,7 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       if (e.bloodAdvance && formulas.bloodBar) {
         // Blood Tithe (form r40 metni): dolu bar kayması + boş bar büyü zırhı ve can emme (describePassive ile aynı hesap)
         const bb = formulas.bloodBar;
-        return [...fixed('Turn bar ahead (full blood)', pct(e.advance + e.bloodAdvance + (e.bloodAdvancePerDex ?? 0) * stats.dex)), ...fixed('Magic armor (0 blood)', String(Math.round((bb.magicArmorBase + bb.magicArmorPerInt * stats.int) * 10) / 10)), ...fixed('Life steal (0 blood)', pct(bb.lifestealMax))];
+        return [...fixed('Turn bar ahead (full blood)', pct(e.advance + e.bloodAdvance + (e.bloodAdvancePerDex ?? 0) * stats.dex)), ...fixed('Magic Armor (0 blood)', String(Math.round((bb.magicArmorBase + bb.magicArmorPerInt * stats.int) * 10) / 10)), ...fixed('Life steal (0 blood)', pct(bb.lifestealMax))];
       }
       return e.bloodAdvance ? fixed('Turn bar ahead (full blood)', pct(e.advance + e.bloodAdvance + (e.bloodAdvancePerDex ?? 0) * stats.dex)) : fixed('Turn bar ahead', pct(e.advance));
     case 'omenTransfer':

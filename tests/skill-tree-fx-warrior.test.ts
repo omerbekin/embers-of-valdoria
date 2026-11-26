@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, content, previewSkill, type BattleEvent, type Combatant, type Teams, type UnitSetup } from '../src/engine';
+import { Battle, content, describeSkill, previewSkill, type BattleEvent, type Combatant, type Teams, type UnitSetup } from '../src/engine';
 import { checkTreeFx, compileTree, treeOf } from '../src/progression';
 import { emptyAlloc, take, type TreeAlloc } from '../src/progression/skill-tree';
 import type { TreeData } from '../src/progression/skill-tree-data';
@@ -65,13 +65,37 @@ describe('Warrior ağacı fx (Faz 2b)', () => {
     expect(avg(true)).toBeGreaterThan(avg(false));
   });
 
-  it('Reckless Heat: Charge 30 Rage verir ve Stun\'ı 1 tur sürer', () => {
-    const b = make({ 0: 'warrior' }, { 0: 'archer' }, { 0: { tree: tree(['3.f1*3', '3.f2*5', '3.f3*2', '3.n0', '3.r*3', '3.eb', '3.fb']) } });
+  it('Reckless Heat (r43, Ömer seçimi A): Charge Stun atar, 30 Rage verir, Warrior kendine Fortified alır; hasar bonusu yok', () => {
+    const steps = ['3.f1*3', '3.f2*5', '3.f3*2', '3.n0', '3.r*3', '3.eb', '3.fb'];
+    const fx = W.nodes['3.fb']!.fx! as unknown as Array<{ k: string; h?: string; gain?: number; effect?: { status: string; turns: number; self?: boolean }; f?: string; v?: number }>;
+    const gain = fx.find((f) => f.h === 'rage')!.gain!;
+    const fort = fx.find((f) => f.k === 'addEffect')!.effect!;
+    const cd = fx.find((f) => f.f === 'cooldown')!.v!;
+    expect(fort).toMatchObject({ status: 'fortify', self: true });
+    const b = make({ 0: 'warrior' }, { 0: 'archer' }, { 0: { tree: tree(steps) } });
+    const me = P0(b);
     const e = E0(b);
     e.stats = { ...e.stats, evasion: -5 };
-    P0(b).rage = 0;
-    cast(b, P0(b).uid, 'charge', e.uid);
-    expect(e.statuses.find((s) => s.kind === 'stun')?.turns).toBe(1);
-    expect(procs(b, 'warrior:3.fb')).toBe(1);
+    me.rage = 0;
+    cast(b, me.uid, 'charge', e.uid);
+    const baseStun = content.skills['charge']!.effects.find((x) => x.type === 'status' && x.status === 'stun') as { turns: number };
+    expect(e.statuses.find((s) => s.kind === 'stun')?.turns).toBe(baseStun.turns); // taban Charge'daki gibi
+    expect(me.statuses.find((s) => s.kind === 'fortify')?.turns).toBe(fort.turns);
+    expect(me.rage).toBeGreaterThanOrEqual(gain);
+    expect(procs(b, 'warrior:3.fb')).toBeGreaterThanOrEqual(1);
+    // bekleme ağaçla 3, güç taban Charge'ınkiyle aynı (yalnız Rolling Start vb. kendi koşullu kancaları)
+    const sk = tree(steps).skills!['charge']!;
+    expect(sk.cooldown).toBe(cd);
+    const pow = (d: typeof sk) => (d.effects.find((x) => x.type === 'damage') as { power: number }).power;
+    expect(pow(sk)).toBeCloseTo(pow(content.skills['charge']!), 6);
+  });
+
+  it('Reckless Heat: Charge tooltip yazısı ağaç bölümünde kancanın Rage miktarını yazar; ağaçsız yazmaz', () => {
+    const steps = ['3.f1*3', '3.f2*5', '3.f3*2', '3.n0', '3.r*3', '3.eb', '3.fb'];
+    const gain = (W.nodes['3.fb']!.fx!.find((f) => (f as unknown as { h?: string }).h === 'rage') as unknown as { gain: number }).gain;
+    const withTree = tree(steps).skills!['charge']!;
+    const info = describeSkill(withTree, content.classes.warrior!.stats, content.formulas);
+    expect(info.treeLines?.some((l) => l.includes(`${gain} Rage`))).toBe(true);
+    expect(describeSkill(content.skills['charge']!, content.classes.warrior!.stats, content.formulas).treeLines ?? []).toEqual([]);
   });
 });

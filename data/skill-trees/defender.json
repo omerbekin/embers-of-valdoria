@@ -1,6 +1,6 @@
 {
   "class": "defender",
-  "version": 2,
+  "version": 4,
   "picked": {
     "rows": [
       "a",
@@ -169,7 +169,7 @@
     },
     "0.f2": {
       "name": "Drilled Ranks",
-      "text": "Bulwark Aura also gives allies magic armor equal to 0.75% of your armor per rank.",
+      "text": "Bulwark Aura also gives allies Magic Armor equal to 0.75% of your armor per rank.",
       "src": "A:V3:0.f3",
       "fx": [
         {
@@ -298,14 +298,14 @@
     },
     "0.fa": {
       "name": "Anchored Stone",
-      "text": "Bulwark Aura on you is 8% stronger, but you can never Move.",
+      "text": "Bulwark Aura on you is 7.5% stronger, but you can never Move.",
       "src": "A:V1:0.fa",
       "fx": [
         {
           "k": "passive",
           "f": "selfPct",
           "op": "mul",
-          "v": 0.08
+          "v": 0.075
         },
         {
           "k": "hook",
@@ -454,7 +454,7 @@
     },
     "1.n0": {
       "name": "Rolling Quake",
-      "text": "Tremor Slam also hits the row behind for 4% damage, without Hobbled.",
+      "text": "Tremor Slam also hits the row behind for 3.75% damage, without Hobbled.",
       "src": "A:V2:1.n0",
       "fx": [
         {
@@ -463,7 +463,7 @@
           "on": "hit",
           "do": [
             {
-              "strike": 0.04,
+              "strike": 0.0375,
               "to": "behind"
             }
           ]
@@ -592,7 +592,7 @@
     },
     "1.mb": {
       "name": "Sinking Earth",
-      "text": "Enemies on quaking ground take 2.5% STR damage at the start of their turn.",
+      "text": "Enemies on quaking ground take 2.25% STR damage at the start of their turn.",
       "src": "A:V2:1.mb",
       "fx": [
         {
@@ -600,7 +600,7 @@
           "sel": "ground:quaking_ground",
           "f": "power",
           "op": "add",
-          "v": 0.025,
+          "v": 0.0225,
           "needs": "1.eb"
         }
       ]
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Bellow",
-      "text": "Taunt breaks after 0.25% more of your max HP lost per rank (30% → 30.75%).",
+      "text": "Taunt breaks after 0.125% more of your max HP lost per rank (30% → 30.375%).",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -637,14 +637,14 @@
           "sel": "taunt",
           "f": "breakRatio",
           "op": "add",
-          "v": 0.0025,
+          "v": 0.00125,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Second Breath",
-      "text": "When your Taunt ends, heal 0.75% of your max HP per rank.",
+      "text": "When your Taunt ends, heal 0.25% of your max HP per rank.",
       "src": "A:V1:2.r",
       "fx": [
         {
@@ -655,7 +655,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.0075
+              "heal": 0.0025
             }
           ]
         }
@@ -663,7 +663,7 @@
     },
     "2.f3": {
       "name": "Thick Skull",
-      "text": "Taunt gives you a shield worth 0.75% of your max HP per rank.",
+      "text": "Taunt gives you a shield worth 0.25% of your max HP per rank.",
       "src": "A:V1:2.f3",
       "fx": [
         {
@@ -673,7 +673,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.0075
+              "shield": 0.0025
             }
           ]
         }
@@ -681,14 +681,14 @@
     },
     "2.n0": {
       "name": "Cover Them",
-      "text": "When an ally drops below 30% HP, Taunt's cooldown resets.",
+      "text": "When an ally drops below 15% HP, Taunt's cooldown resets.",
       "src": "A:V3:2.n0",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
           "on": "hpBelow",
-          "below": 0.3,
+          "below": 0.15,
           "who": "ally",
           "do": [
             {
@@ -701,7 +701,7 @@
     },
     "2.r": {
       "name": "Rally Cry",
-      "text": "While you Taunt, allies take 0.25% less damage per rank (10% less → 10.75% less).",
+      "text": "While you Taunt, allies take 0.125% less damage per rank (10% less → 10.375% less).",
       "src": "A:V3:2.f1",
       "fx": [
         {
@@ -709,7 +709,7 @@
           "sel": "taunt",
           "f": "allyDamageMult",
           "op": "add",
-          "v": -0.0025,
+          "v": -0.00125,
           "rank": true
         }
       ]
@@ -904,14 +904,14 @@
     },
     "3.f3": {
       "name": "Linked Plates",
-      "text": "Damage Close Ranks shares to you is 0.75% lower per rank.",
+      "text": "Damage Close Ranks shares to you is 0.5% lower per rank.",
       "src": "A:V1:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "heal",
           "on": "guardShare",
-          "mul": -0.0075,
+          "mul": -0.005,
           "rank": true
         }
       ]
@@ -966,7 +966,7 @@
     },
     "3.eb": {
       "name": "Shield Toss",
-      "text": "Close Ranks also gives each guarded ally a shield worth 2% of your armor.",
+      "text": "Close Ranks also gives each guarded ally a shield worth 1.75% of your armor.",
       "src": "A:V1:3.eb",
       "fx": [
         {
@@ -976,7 +976,7 @@
           "status": "guard",
           "do": [
             {
-              "shield": 0.02,
+              "shield": 0.0175,
               "of": "ownerArmor",
               "to": "target"
             }
@@ -1001,7 +1001,7 @@
     },
     "3.fa": {
       "name": "Chained to Them",
-      "text": "Close Ranks shares 55%, but you cannot Move or Taunt while it lasts.",
+      "text": "Close Ranks shares 54.5%, but you cannot Move or Taunt while it lasts.",
       "src": "A:V1:3.fa",
       "fx": [
         {
@@ -1009,7 +1009,7 @@
           "sel": "guard",
           "f": "share",
           "op": "set",
-          "v": 0.55
+          "v": 0.545
         },
         {
           "k": "hook",
@@ -1099,7 +1099,7 @@
     },
     "4.u2": {
       "name": "Bitter Knuckles",
-      "text": "Fist Crush deals 2% increased damage against enemies that hit you since your last turn.",
+      "text": "Fist Crush deals 1.75% increased damage against enemies that hit you since your last turn.",
       "src": "B:V4:4.u2",
       "fx": [
         {
@@ -1109,7 +1109,7 @@
             "targetHitMeSinceMyTurn": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.0175
           }
         }
       ]

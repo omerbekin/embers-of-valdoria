@@ -49,8 +49,9 @@ describe('Frozen: ikinci atış', () => {
       }
       shot(b, t);
       expect(has(t, 'chilled')).toBe(false);
-      const fz = t.statuses.find((s) => s.kind === 'frozen');
-      expect(fz?.turns).toBe(FZ.turns);
+      // Frozen hedefin hemen sıradaki turunda (sıra hız zarına bağlı) tüketilebilir: süreyi canlı durumdan değil, atışın status olayından oku
+      const fz = b.log.filter((e) => e.type === 'status' && e.status === 'frozen' && e.target === t.uid).pop();
+      expect(fz && fz.type === 'status' ? fz.turns : undefined).toBe(FZ.turns);
       expect(b.log.some((e) => e.type === 'statusEnd' && e.status === 'chilled' && e.target === t.uid)).toBe(true);
     });
 

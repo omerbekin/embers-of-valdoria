@@ -22,10 +22,10 @@
 
 | Skill | Ne yapar | MP / bekleme | Menzil | Sayı (veri) |
 |---|---|---|---|---|
-| Venom Edge (`venom_edge`) | Yakın kesik, hedefi Wound'lar | 0 / yok | sınıf (1) | hasar physical DEX 1; status: status=wound, turns=2 |
-| Saltire Cut (`x_cut`) | X şekli (merkez + 4 çapraz), merkez iki kez vurulur | 9 / 2 | 3 | hasar physical DEX 0,45; area={shape:x, hitsAtCenter:2} |
+| Venom Edge (`venom_edge`) | Yakın kesik, hedefi Wound'lar | 0 / yok | sınıf (1) | hasar physical 5 + DEX 0,808 (r48 düz taban); status: status=wound, turns=2 |
+| Saltire Cut (`x_cut`) | X şekli (merkez + 4 çapraz), merkez iki kez vurulur | 9 / 2 | 3 | hasar physical 2,5 + DEX 0,354 (r48 düz taban); area={shape:x, hitsAtCenter:2} |
 | Smoke Bomb (`smoke_bomb`) | 2x2 alan, iki tahtaya da atılır: düşman Blinded, dost Shrouded | 10 / 3 | 4 | status: status=blinded, turns=2, side=enemies; status: status=shrouded, turns=2, side=allies; area={shape:rect, rows:2, cols:2, anchor:bottom_left} |
-| Backstab (`backstab`) | Hedefin arkasına geçip sırtından sapla; her vuruş kritik, kalkanla bloklanmaz; hedefin arkası boş olmalı | 14 / 4, ilk 3 | 3 | hasar physical DEX 1,525, guaranteedCrit=true, unblockable=true; ignoreFrontRow=true; requiresOpenBehind=true |
+| Backstab (`backstab`) | Hedefin arkasına geçip sırtından sapla; her vuruş kritik, kalkanla bloklanmaz; hedefin arkası boş olmalı | 14 / 4, ilk 3 | 3 | hasar physical 8 + DEX 1,217 (r48 düz taban), guaranteedCrit=true, unblockable=true; ignoreFrontRow=true; requiresOpenBehind=true |
 
 Geçerli sayı: `data/skills.json` > skill id; yukarıdaki sütun dökümdür. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-cutthroat.test.ts`) ve bu tablo birlikte güncellenir.
 

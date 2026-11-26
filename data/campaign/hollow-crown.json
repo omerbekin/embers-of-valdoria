@@ -92,7 +92,7 @@
       "type": "battle",
       "name": "Hearthstead Road",
       "subtitle": "Battle · Snow Wolves",
-      "lore": "The road to Hearthstead climbs through deep snow, and grey shapes pace the treeline beside it.",
+      "lore": "The road to Hearthstead climbs through deep snow, and gray shapes pace the treeline beside it.",
       "region": "I",
       "pos": [
         0.0239,
@@ -216,7 +216,7 @@
       "type": "elite",
       "name": "Wolf Den",
       "subtitle": "Elite · The Pack-Mother",
-      "lore": "Bones litter the mouth of the den, and the great she-wolf inside has grown fat on travellers.",
+      "lore": "Bones litter the mouth of the den, and the great she-wolf inside has grown fat on travelers.",
       "region": "I",
       "pos": [
         0.0598,
@@ -510,7 +510,7 @@
       "type": "battle",
       "name": "Gatehouse of Kharduin",
       "subtitle": "Battle · Guardians",
-      "lore": "The gatehouse of Kharduin, where living dwarves in stone armour ask hard questions with hammers.",
+      "lore": "The gatehouse of Kharduin, where living dwarves in stone armor ask hard questions with hammers.",
       "region": "III",
       "pos": [
         0.3995,
@@ -682,7 +682,7 @@
       "type": "rest",
       "name": "Cistern",
       "subtitle": "Rest · Camp",
-      "lore": "A cistern of clear black water, cold and still, where travellers may drink and sleep a while.",
+      "lore": "A cistern of clear black water, cold and still, where travelers may drink and sleep a while.",
       "region": "III",
       "pos": [
         0.5664,
@@ -841,7 +841,7 @@
       "type": "battle",
       "name": "Ashborn Shrine",
       "subtitle": "Battle · Ashborn",
-      "lore": "A shrine of the Ashborn cut into the rock, its altar heaped with ash and smouldering bones.",
+      "lore": "A shrine of the Ashborn cut into the rock, its altar heaped with ash and smoldering bones.",
       "region": "IV",
       "pos": [
         0.7057,

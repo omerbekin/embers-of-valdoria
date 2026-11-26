@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { textRes } from './stage-view';
 import { BODY_FONT, DISPLAY_FONT } from '../ui/menu-style';
-import { EL, diamondPts, elText, fitW, hGradient } from './elegant-ui';
+import { EL, elDot, elText, fitW, hGradient } from './elegant-ui';
 import { drawCornerDots } from './corner-dots-gfx';
 import { drawMiniShape, miniShapeSize } from './shape-draw';
 import type { MiniShape } from '../ui/shape-diagram';
@@ -260,7 +260,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
     const sy = ty + titleH + Math.round(3 * s);
     layRich(scene, items, hx + subInd, sy, Math.max(80, textMax - subInd), subSegs, '#f3d999', s);
     const sg = scene.add.graphics();
-    sg.fillStyle(mix(accent, 0xffffff, 0.52), 1).fillPoints(diamondPts(hx + Math.round(5 * s), sy + Math.round(12 * s), Math.round(3.5 * s)), true);
+    elDot(sg, hx + Math.round(5 * s), sy + Math.round(12 * s), Math.round(3.5 * s), mix(accent, 0xffffff, 0.52)); // karo 3. tur: madde imi = dolu nokta
     items.push(sg);
   }
   if (spec.titleSuffix) {
@@ -315,8 +315,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
       const a = Math.min(1, Math.min(t, 1 - t) / 0.12);
       dv.lineStyle(1, EL.GOLD, 0.3 * a).lineBetween(px + ((w - px * 2) * i) / 24, y, px + ((w - px * 2) * (i + 1)) / 24, y);
     }
-    dv.fillStyle(0x130d07, 1).fillPoints(diamondPts(w / 2, y, 4.5 * s), true);
-    dv.lineStyle(1, mix(accent, 0xffffff, 0.52), 1).strokePoints(diamondPts(w / 2, y, 4.5 * s), true);
+    elDot(dv, w / 2, y, 4.5 * s, mix(accent, 0xffffff, 0.52)); // karo 3. tur: bölücü ortası = dolu nokta
     items.push(dv);
     y += Math.round(12 * s);
   }
@@ -343,7 +342,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
     }
     const end = layRich(scene, items, textX, lineTop, w - textX - px - (now ? nowW + Math.round(10 * s) : 0), segs, accentL, s);
     const g = scene.add.graphics();
-    g.fillStyle(mix(accent, 0xffffff, 0.52), 1).fillPoints(diamondPts(bulletX, lineTop + Math.round(12 * s), Math.round(3.5 * s)), true);
+    elDot(g, bulletX, lineTop + Math.round(12 * s), Math.round(3.5 * s), mix(accent, 0xffffff, 0.52));
     items.push(g);
     if (now) drawChip(scene, items, { text: now, tone: 'v' }, w - px, lineTop + Math.round(12 * s), accent, s, true);
     y = end + Math.round(8 * s);
@@ -398,7 +397,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
     const fhh = ft.height + Math.round(14 * s);
     const fg = scene.add.graphics();
     fg.fillStyle(0x000000, 0.24).fillRect(0, y, w, fhh).lineStyle(1, EL.GOLD, 0.16).lineBetween(0, y, w, y);
-    fg.fillStyle(mix(accent, 0xffffff, 0.52), 1).fillPoints(diamondPts(px + Math.round(5 * s), y + fhh / 2, 3.5 * s), true);
+    elDot(fg, px + Math.round(5 * s), y + fhh / 2, 3.5 * s, mix(accent, 0xffffff, 0.52));
     ft.y = y + fhh / 2;
     items.push(fg, ft);
     h = y + fhh;

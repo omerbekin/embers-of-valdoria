@@ -26,7 +26,7 @@
     "id": "undertow",
     "name": "Undertow",
     "icon": "chainhook",
-    "text": "Its skills that hit a hero standing on Flooded ground also inflict Hobble for 1 turn.",
+    "text": "Its skills that hit a hero standing on Flooded ground also inflict Hobbled for 1 turn.",
     "effect": {
       "type": "undertow",
       "ground": "flooded",

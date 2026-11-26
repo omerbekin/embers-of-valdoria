@@ -495,7 +495,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     fig.alt = '';
     fig.draggable = false;
     const card = el('div', 'mw-wcard');
-    card.append(el('div', 'mw-kick', src.kicker ?? 'A travelling merchant'), el('div', 'mw-name', src.name), el('div', 'mw-greet', `"${src.greeting ?? GREETING}"`));
+    card.append(el('div', 'mw-kick', src.kicker ?? 'A traveling merchant'), el('div', 'mw-name', src.name), el('div', 'mw-greet', `"${src.greeting ?? GREETING}"`));
     if (best) {
       card.append(el('div', 'mw-notice', rare ? 'Rare ware in stock today' : "Today's pick"));
       const hl = el('div', 'mw-hl');

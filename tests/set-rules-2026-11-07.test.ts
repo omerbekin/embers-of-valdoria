@@ -49,7 +49,7 @@ describe('set verisi', () => {
     };
     expect(full('ravens_shroud').dodgeCrit).toBe(true);
     expect(full('gallows_pact').escapeStatus).toEqual({ status: 'fortify', turns: 1 });
-    expect(full('conclave_of_embers').counterAttack).toEqual({ power: 0.5, perTurn: 1 });
+    expect(full('conclave_of_embers').counterGround).toBeTruthy(); // ayrıntı: tests/conclave-answers-b.test.ts (Seçenek B, 2026-11-23)
     expect(full('kingsfall_regalia').allyTurn).toBe(true);
   });
 });
@@ -97,32 +97,7 @@ describe("Hangman's Rope (escapeStatus)", () => {
   });
 });
 
-describe('The Conclave Answers (counterAttack)', () => {
-  it('düşman taşıyana skill kullanınca bedava temel saldırıyla karşılık, turda bir kez', () => {
-    const { b, heroes, enemy } = fight({ 3: 'archer' });
-    const hero = heroes[0]!;
-    give(hero, { counterAttack: { power: 0.5, perTurn: 1 } });
-    b.debug.dodge = 'never';
-    b.debug.crit = 'never';
-    const skill = damageSkill(b, enemy, hero);
-    const first = use(b, enemy, skill, hero);
-    expect(hits(first, hero, enemy).length).toBeGreaterThan(0);
-    const second = use(b, enemy, skill, hero);
-    expect(hits(second, hero, enemy).length).toBe(0); // hak taşıyanın turuna kadar bitti
-  });
-
-  it('karşılık %50 güçte: aynı temel saldırının yarısı kadar', () => {
-    const { b, heroes, enemy } = fight({ 3: 'archer' });
-    const hero = heroes[0]!;
-    give(hero, { counterAttack: { power: 0.5, perTurn: 1 } });
-    b.debug.dodge = 'never';
-    b.debug.crit = 'never';
-    const pv = previewSkill(b, hero.uid, hero.skills[0]!, enemy.uid).find((p) => p.uid === enemy.uid)!.damage!;
-    const dealt = hits(use(b, enemy, damageSkill(b, enemy, hero), hero), hero, enemy).reduce((s, h) => s + h.amount + h.absorbed, 0);
-    expect(dealt).toBeGreaterThanOrEqual(Math.floor(pv.min * 0.5) - 1);
-    expect(dealt).toBeLessThanOrEqual(Math.ceil(pv.max * 0.5) + 1);
-  });
-});
+// The Conclave Answers: 2026-11-23 Seçenek B ile karşılık vuruşu kalktı; testleri tests/conclave-answers-b.test.ts.
 
 describe('Royal Command (allyTurn)', () => {
   it('turns modu: dost hemen ek tur alır, sayacı değişmez; savaşta bir kez', () => {
@@ -177,9 +152,9 @@ describe('YZ: set kurallarının vuruş bedeli', () => {
   it('veride payları var', () => {
     expect(content.aiConfig.value?.setRules).toMatchObject({ unseenGift: expect.any(Number), ropeFortify: expect.any(Number), counterCost: expect.any(Number) });
   });
-  it('karşılık veren ve kaçınınca kritik hazırlayan hedefe vurmak daha az değerli', () => {
+  it('zemin bırakan ve kaçınınca kritik hazırlayan hedefe vurmak daha az değerli', () => {
     const bare = scoreOn(undefined);
-    expect(scoreOn({ counterAttack: { power: 0.5, perTurn: 1 } })).toBeLessThan(bare);
+    expect(scoreOn({ counterGround: { ground: 'burning', scale: 'int', power: 0.5, turns: 1, perTurn: 1, status: 'overextended', statusTurns: 1 } })).toBeLessThan(bare);
     expect(scoreOn({ dodgeCrit: true })).toBeLessThan(bare);
   });
 });

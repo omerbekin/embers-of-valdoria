@@ -370,7 +370,7 @@ export function buildNodeCard(card: HTMLElement, c: NodeCardCtx): HTMLElement | 
   if (f.kind === 'ahead') card.classList.add('veil');
   const fights = c.foes.length > 0;
   const vis = fights ? visibleFoes(c.foes, f) : [];
-  const hidden = fights && !vis.length ? h('p', 'nc-hidden', 'Their colours are not yet known.') : null;
+  const hidden = fights && !vis.length ? h('p', 'nc-hidden', 'Their colors are not yet known.') : null;
   const known = fights && f.known && !tier ? h('p', 'nc-known', 'You have fought here before.') : null;
   const piece = kindPiece(c);
 

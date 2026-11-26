@@ -1,10 +1,10 @@
 {
-  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Stonebound Warden; palet YOK, stonebound_warden çizimi.",
+  "_not": "Harita 3 Hollow Crown, kit dilimi (maps-2-3.md 4.3). Sayılar PROVİZYON, sim yok; bayrak kapalı, karşılaşmaya bağlı değil. Gelişmiş Stonebound Warden; kendi çizimi (spriteId = id, r49).",
   "id": "hollow_warden",
-  "name": "Hollow Warden",
+  "name": "Hollow Warden",
   "bloodless": true,
   "family": "undead",
-  "spriteId": "stonebound_warden",
+  "spriteId": "hollow_warden",
   "color": "#6f7a86",
   "logo": "bulwark",
   "frontPriority": 0,

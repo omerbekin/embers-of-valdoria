@@ -282,15 +282,16 @@ describe('Faz 4a: Defender', () => {
     expect(me.shield - sh0).toBe(Math.round(me.maxHp * 3 * num('defender', '2.f3', '0.do.0.shield')));
   });
 
-  it('Cover Them: bir dost %30 altına düşünce Taunt cooldown\'u sıfırlanır (kendin sayılmaz)', () => {
+  it('Cover Them: bir dost eşiğin altına düşünce Taunt cooldown\'u sıfırlanır (kendin sayılmaz)', () => {
     const b = make({ 0: 'defender', 1: 'warrior' }, { 0: 'mage' }, withTree(0, only('defender', { '2.n0': 1 })));
     const me = P(b);
     const ally = P(b, 1);
+    const below = num('defender', '2.n0', '0.below'); // r44 (Ömer r45 D2): eşik 0,3 > 0,15; değer veriden
     me.cooldowns.taunt = 3;
-    me.hp = Math.floor(me.maxHp * 0.2);
+    me.hp = Math.floor(me.maxHp * below * 0.66);
     X(b).hpCrossTrig(me, Math.floor(me.maxHp * 0.5), E(b), emitOf(b));
     expect(me.cooldowns.taunt).toBe(3);
-    ally.hp = Math.floor(ally.maxHp * 0.25);
+    ally.hp = Math.floor(ally.maxHp * below * 0.8);
     X(b).hpCrossTrig(ally, Math.floor(ally.maxHp * 0.5), E(b), emitOf(b));
     expect(me.cooldowns.taunt).toBeUndefined();
   });

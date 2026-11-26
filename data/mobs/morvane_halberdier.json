@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ mob. GÖRSEL YER TUTUCU: spriteId 'oathsworn_brother' (kendi ChatGPT çizimi gelince spriteId 'morvane_halberdier'; mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ mob. GÖRSEL: kendi sprite'ı var (spriteId 'morvane_halberdier', 2026-11 itibarıyla yer tutucu değil). Sayılar PROVİZYON (npm run sim:campaign).",
   "id": "morvane_halberdier",
   "name": "Morvane Halberdier",
   "family": "morvane_army",

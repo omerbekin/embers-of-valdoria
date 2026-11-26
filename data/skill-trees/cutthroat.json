@@ -1,6 +1,6 @@
 {
   "class": "cutthroat",
-  "version": 2,
+  "version": 3,
   "picked": {
     "rows": [
       "b",
@@ -971,7 +971,7 @@
     },
     "2.v": {
       "name": "Butcher's Cross",
-      "text": "Saltire Cut hits every enemy in the X twice, not just the center; power 0.45 to 0.35.",
+      "text": "Saltire Cut hits every enemy in the X twice, not just the center; power 0.354 to 0.264.",
       "src": "B:V3:2.v",
       "fx": [
         {
@@ -986,7 +986,7 @@
           "sel": "damage",
           "f": "power",
           "op": "set",
-          "v": 0.35
+          "v": 0.264
         }
       ]
     },

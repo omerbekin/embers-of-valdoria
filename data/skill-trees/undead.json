@@ -240,7 +240,7 @@
     },
     "0.ea": {
       "name": "Dying Light",
-      "text": "While below 50% HP, your skills ignore 2.25% of the target's magic armor.",
+      "text": "While below 50% HP, your skills ignore 2.25% of the target's Magic Armor.",
       "src": "A:V1:0.ea",
       "fx": [
         {
@@ -767,7 +767,7 @@
     },
     "2.ea": {
       "name": "Deeper Cut",
-      "text": "Wail of the Dead costs 30% of your current HP instead of 20% and deals 6.5% increased damage.",
+      "text": "Wail of the Dead costs 30% of your current HP instead of 10% and deals 6.5% increased damage.",
       "src": "A:V1:2.ea",
       "fx": [
         {

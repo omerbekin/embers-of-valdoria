@@ -55,7 +55,6 @@ import { classSpriteIds } from '../sprite-needs';
 import {
   BADGE_LABEL,
   EL,
-  diamondPts,
   elBack,
   elGo,
   elScreenIn,
@@ -65,6 +64,7 @@ import {
   elConfirm,
   elConfirmOpen,
   elDiamond,
+  elDot,
   elGlow,
   elHeading,
   elLink,
@@ -440,11 +440,11 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   private diamond(r: number, hollow = false): Phaser.GameObjects.Graphics {
-    return elDiamond(this, r, hollow);
+    return elDiamond(this, r, hollow, true); // Quick Battle: karo yerine ince altın halka (karo 3. tur, Ömer r48)
   }
 
   private lnk(label: string, run: () => void, o: { size?: number; small?: string; touch?: TouchZoneOpts | true } = {}) {
-    return elLink(this, label, run, { ...o, isBusy: () => !!this.drag?.moved });
+    return elLink(this, label, run, { ...o, ring: true, isBusy: () => !!this.drag?.moved });
   }
 
   /** Sol üst ◂ Back / Esc: kurulum ekranı, onaysız ana menünün Play kartlarına döner. Multiplayer'da lobiden ayrılmak onay ister. */
@@ -535,7 +535,8 @@ export class TeamSelectScene extends Phaser.Scene {
         this.active = side;
         this.refresh();
       }, { touch: { growX: 'right', maxExtraW: 60 } });
-      const sep = this.cz(0, ACTS_CY, '◆', 14, 'rgba(217,178,106,0.35)', 0).setOrigin(0.5);
+      const sep = this.add.graphics();
+      elDot(sep, 0, ACTS_CY, 7, GOLDC, 0.45, true); // Random ◆ Clear ayracı: ince halka (karo 3. tur)
       const total = r.width + 6 + 14 + 6 + c.width;
       const x0 = enemy ? SIDE_W - total : 0;
       r.root.setPosition(x0, ACTS_CY);
@@ -641,7 +642,7 @@ export class TeamSelectScene extends Phaser.Scene {
           this.randomize('party', false);
           this.randomize('enemies');
         },
-        { kind: 'secondary', w, isBusy: () => !!this.drag?.moved, touch: { growY: 'up' } }, // alt komşusu START: yalnızca yukarı büyür
+        { kind: 'secondary', w, ends: 'ring', isBusy: () => !!this.drag?.moved, touch: { growY: 'up' } }, // alt komşusu START: yalnızca yukarı büyür
       );
       const cy = top - gap - rb.h / 2;
       rb.root.setY(cy);
@@ -656,7 +657,7 @@ export class TeamSelectScene extends Phaser.Scene {
 
   /** START BATTLE (multiplayer: READY): kitin primary düğmesi, sağ alt köşe. */
   private buildStart(): void {
-    const b = elButton(this, this.mp ? 'Ready' : 'Start Battle', () => !this.drag?.moved && this.start(), { kind: 'primary', minLabel: this.mp ? 'Not ready' : undefined, isBusy: () => !!this.drag?.moved, touch: { growY: 'down' } });
+    const b = elButton(this, this.mp ? 'Ready' : 'Start Battle', () => !this.drag?.moved && this.start(), { kind: 'primary', ends: 'ring', minLabel: this.mp ? 'Not ready' : undefined, isBusy: () => !!this.drag?.moved, touch: { growY: 'down' } });
     b.root.setY(START.cy).setDepth(30);
     this.startUi = b;
     this.toastFn = elToast(this);
@@ -738,8 +739,8 @@ export class TeamSelectScene extends Phaser.Scene {
       }
       const sx = x;
       if (pri) {
-        sg.fillStyle(EMBER, 0.3).fillPoints(this.diamondPts(x + 4, 0, 7), true);
-        sg.fillStyle(EMBER, 1).fillPoints(this.diamondPts(x + 4, 0, 4.5), true);
+        sg.fillStyle(EMBER, 0.3).fillCircle(x + 4, 0, 6);
+        elDot(sg, x + 4, 0, 5.5, EMBER, 1, true);
         x += 9 + 2;
       }
       const ic = this.add.image(x + 11, 0, ensureIcon(this, statIconName(k), STAT_COLOR[k], false)).setDisplaySize(22, 22);
@@ -838,10 +839,6 @@ export class TeamSelectScene extends Phaser.Scene {
     });
   }
 
-  private diamondPts(cx: number, cy: number, r: number): Phaser.Math.Vector2[] {
-    return [new Phaser.Math.Vector2(cx, cy - r), new Phaser.Math.Vector2(cx + r, cy), new Phaser.Math.Vector2(cx, cy + r), new Phaser.Math.Vector2(cx - r, cy)];
-  }
-
   /** Bilgi satırındaki class'ı değiştirir (fare çekilince geri dönmez). */
   private showInfo(id: string | null): void {
     const next = infoClassAfter(this.infoId, id);
@@ -872,7 +869,7 @@ export class TeamSelectScene extends Phaser.Scene {
       const gw = g.items.length * lay.tile + (g.items.length - 1) * lay.gap;
       // Grup etiketi: elmas + STR + saydamlaşan çizgi
       const gl = this.add.graphics();
-      gl.fillStyle(colN, 0.85).fillPoints(diamondPts(4, 10, 5.6), true);
+      elDot(gl, 4, 10, 5.6, colN, 0.85, true);
       const label = this.cz(18, 10, g.test ? 'Test' : (g.stat ?? 'other'), 14, col, 0.26).setOrigin(0, 0.5);
       const lx = 18 + label.width + 10;
       fadeLine(gl, lx, gw, 10, colN, 0.45, 'out');

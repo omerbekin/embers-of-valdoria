@@ -233,9 +233,9 @@
       "multiHitCap": "medium",
       "tickCap": "medium",
       "singleLeanDeg": 4,
-      "light": { "pose": false, "poseMs": 0, "flash": "#ffe0d8", "flashMs": 60, "flashAlpha": 0.45, "tint": null, "tintMs": 0, "recoilPx": 4, "recoilMs": 140, "knockPx": 0, "knockMs": 0, "leanMult": 0.3, "crouchMult": 0.25, "dust": false },
-      "medium": { "pose": true, "poseMs": 530, "flash": "#ffffff", "flashMs": 110, "flashAlpha": 0.45, "tint": null, "tintMs": 0, "recoilPx": 22, "recoilMs": 280, "knockPx": 0, "knockMs": 0, "leanMult": 0.9, "crouchMult": 0.9, "dust": false },
-      "heavy": { "pose": true, "poseMs": 880, "flash": "#ffffff", "flashMs": 190, "flashAlpha": 0.45, "tint": "#ff6a6a", "tintMs": 260, "recoilPx": 50, "recoilMs": 440, "knockPx": 40, "knockMs": 130, "leanMult": 1.8, "crouchMult": 1.6, "dust": true },
+      "light": { "pose": false, "poseMs": 0, "flash": "#ffe0d8", "flashMs": 60, "flashAlpha": 0.25, "tint": null, "tintMs": 0, "recoilPx": 4, "recoilMs": 140, "knockPx": 0, "knockMs": 0, "leanMult": 0.3, "crouchMult": 0.25, "dust": false },
+      "medium": { "pose": true, "poseMs": 530, "flash": "#ffffff", "flashMs": 110, "flashAlpha": 0.25, "tint": null, "tintMs": 0, "recoilPx": 22, "recoilMs": 280, "knockPx": 0, "knockMs": 0, "leanMult": 0.9, "crouchMult": 0.9, "dust": false },
+      "heavy": { "pose": true, "poseMs": 880, "flash": "#ffffff", "flashMs": 190, "flashAlpha": 0.25, "tint": "#ff6a6a", "tintMs": 260, "recoilPx": 50, "recoilMs": 440, "knockPx": 40, "knockMs": 130, "leanMult": 1.8, "crouchMult": 1.6, "dust": true },
       "shake": { "minRatio": 0.35, "ms": 220, "intensity": 0.0045 }
     },
     "forcedMove": {

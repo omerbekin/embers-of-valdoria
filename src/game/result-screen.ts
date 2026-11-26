@@ -6,7 +6,7 @@ import type { Battle, BattleEvent, Combatant, Side } from '../engine';
 import { debugState } from './debug-state';
 import { copyMatchData } from '../ui/match-copy';
 import { fitText } from './menu-ui';
-import { EL, elBody, elButton, elText, diamondPts, hGradient, vGradient, type ElButton } from './elegant-ui';
+import { EL, elBody, elButton, elText, diamondPts, elDot, hGradient, vGradient, type ElButton } from './elegant-ui';
 import { drawCornerDots } from './corner-dots-gfx';
 import { tierStyle, unitName } from './unit-label';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
@@ -151,10 +151,9 @@ function ornamentLine(scene: Phaser.Scene, cx: number, cy: number, half: number,
     g.lineStyle(1, light, 0.55).lineBetween(cx + dir * 16, cy + 4, cx + dir * (half - 30), cy + 4);
     g.fillStyle(light, 0.9).fillCircle(cx + dir * half, cy, 3);
   }
-  const d = 8;
-  const pts = [new Phaser.Math.Vector2(cx, cy - d), new Phaser.Math.Vector2(cx + d, cy), new Phaser.Math.Vector2(cx, cy + d), new Phaser.Math.Vector2(cx - d, cy)];
-  g.fillStyle(0x1a1008, 1).fillPoints(pts, true);
-  g.lineStyle(1.5, light, 1).strokePoints(pts, true);
+  // karo 3. tur (Ömer 2026-11-26 r48): sonuç ekranı süsü = ince altın halka (karo yerine)
+  g.fillStyle(0x1a1008, 1).fillCircle(cx, cy, 6.4);
+  elDot(g, cx, cy, 8, light, 1, true);
   return g;
 }
 
@@ -385,8 +384,8 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     const hy = blockTop + 26;
     {
       const g = scene.add.graphics();
-      g.fillStyle(win ? EL.EMBER : 0x5a4a38, 1).fillPoints(diamondPts(x0 + 30, hy, 6), true);
-      if (win) g.fillStyle(EL.EMBER, 0.22).fillPoints(diamondPts(x0 + 30, hy, 10), true);
+      if (win) g.fillStyle(EL.EMBER, 0.22).fillCircle(x0 + 30, hy, 8);
+      elDot(g, x0 + 30, hy, 7, win ? EL.EMBER : 0x8a7455, 1, true); // karo 3. tur: taraf başlığı = ince halka
       hGradient(g, x0 + 30 + 120, hy, panelW - 52 - 120, 1, EL.GOLD, [[0, 0.3], [1, 0]]);
       area.add(g);
     }
@@ -478,7 +477,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
         const tg = scene.add.graphics();
         vGradient(tg, tagX, tagY - th / 2, tw, th, 0xf0a85a, [[0, 1], [1, 1]]);
         tg.fillGradientStyle(0xf0a85a, 0xf0a85a, 0xe0702a, 0xe0702a, 1).fillRect(tagX, tagY - th / 2, tw, th);
-        tg.fillStyle(0x2a1405, 1).fillPoints(diamondPts(tagX + 11, tagY, 4.5), true);
+        elDot(tg, tagX + 11, tagY, 4.5, 0x2a1405);
         label.setX(tagX + 22);
         // etiket satırdan ayrı: satırlar bitince 200 ms'de altın parlamayla oturur (a17)
         const tagBox = scene.add.container(0, 0);
@@ -595,7 +594,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const buttons = scene.add.container(0, 0).setAlpha(0);
   const bw = 420;
   const kitButton = (label: string, run: () => void, x: number, w: number, primary: boolean): ElButton => {
-    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, ready: true, touch: { growY: 'both', maxW: w + gap - 4 } });
+    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, ready: true, ends: 'ring', touch: { growY: 'both', maxW: w + gap - 4 } });
     b.root.setPosition(x, barY);
     return b;
   };

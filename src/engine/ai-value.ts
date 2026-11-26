@@ -1,8 +1,8 @@
 import type { Battle } from './battle';
 import { previewForTargets } from './preview';
-import { bonusScaleRaw } from './spec';
+import { damageBonusRaw } from './spec';
 import { manaShieldNeed } from './tree-hooks';
-import { attributePower } from './stats';
+import { attributePower, rageMissFrac } from './stats';
 import type { Combatant, SkillDef } from './types';
 
 /**
@@ -27,7 +27,7 @@ export interface AiValueConfig {
   /** Harita 3 4. dilim mob kitleri (ai.ts > mobKitValue). Yoksa 0. */
   mobKit?: { sunder: number; wardEtch: number; lastEmber: number; exposure: number; diveSafe: number; spentTurn: number; coolTurn: number; coolArmor: number; reach: number; stormhide: number; stagger: number; furnace: number; chant: number; fury: number; lightDark: number; kindle: number; graveCold: number; hoarfrost: number };
   /** Set kuralları (ai.ts > setRuleValue, Banked Coals; ai.json > value.setRules). Yoksa 0. */
-  setRules?: { coalDelay: number; coalDoomed: number; coalCover: number; unseenGift?: number; ropeFortify?: number; counterCost?: number; refrainGift?: number; refrainSeed?: number; bequestCost?: number; burdenShare?: number };
+  setRules?: { coalDelay: number; coalDoomed: number; coalCover: number; unseenGift?: number; ropeFortify?: number; counterCost?: number; conclaveWearer?: number; refrainGift?: number; refrainSeed?: number; bequestCost?: number; burdenShare?: number };
   /** Harita 3 boss / elit dokunuşları (ai.ts > bossTouchValue). Yoksa 0. */
   bossTouch?: { heat: number; whiteout: number; sermon: number; sermonTurn: number; sermonBreak: number; packHeal: number; packKill: number; vault: number; frostbound: number; caveMark: number; fervour: number; everburn: number; quench: number; nave: number; crown: number; shepherd: number; douse: number; command: number; ranks: number; oath: number; coreBurn: number };
   /** Harita 3 imza mekanikleri (ai.ts > signatureValue, rodChoice). Yoksa 0. */
@@ -138,7 +138,8 @@ export interface AiCoverageConfig {
   bell: { horizon: number; discount: number };
   opportunistShare: number;
   push: { reachShare: number; crowdShare: number };
-  tree: { triggerShare: number; retaliationShare: number; cooldownShare: number };
+  /** rageShare (r43): ağaç Rage kancalarının kendi kazancı payı (ai.ts > treeRageValue; tavanı aşan Rage değersiz). */
+  tree: { triggerShare: number; retaliationShare: number; cooldownShare: number; rageShare: number };
   reactionShare: number;
   omenTransferShare: number;
   grudgeShare: number;
@@ -162,7 +163,7 @@ export const DEFAULT_COVERAGE: AiCoverageConfig = {
   bell: { horizon: 2, discount: 0.7 },
   opportunistShare: 0.5,
   push: { reachShare: 0.5, crowdShare: 0.1 },
-  tree: { triggerShare: 1, retaliationShare: 1, cooldownShare: 0.25 },
+  tree: { triggerShare: 1, retaliationShare: 1, cooldownShare: 0.25, rageShare: 1 },
   reactionShare: 1,
   omenTransferShare: 1,
   grudgeShare: 1,
@@ -287,7 +288,7 @@ export function skillRawValue(battle: Battle, stats: Combatant['stats'], skill: 
     if (e.type === 'damage') {
       const m = u ? passiveDamageMult(battle, u, e) : 1;
       const bellPow = u && e.powerPerBell && (u.bells ?? 0) > 0 ? e.powerPerBell * (u.bells ?? 0) : 0;
-      v += (attributePower(stats, e.scale, battle.formulas) * (e.power + bellPow) + bonusScaleRaw(e.bonusScale, stats) * (stats.spellPowerMult ?? 1)) * m;
+      v += (attributePower(stats, e.scale, battle.formulas) * (e.power + bellPow) + damageBonusRaw(e, stats) * (stats.spellPowerMult ?? 1)) * m;
     } else if (e.type === 'heal') v += attributePower(stats, e.scale, battle.formulas) * e.power;
     else if (e.type === 'hot' || isHealSkillGround(battle, skill, e)) v += attributePower(stats, e.scale, battle.formulas) * e.power * e.turns; // şifa skill'inin zemini (Healing Rain) hot gibi
     else if (e.type === 'shield') v += attributePower(stats, e.scale, battle.formulas) * e.power * 0.5;
@@ -299,7 +300,7 @@ export function skillRawValue(battle: Battle, stats: Combatant['stats'], skill: 
 export function passiveDamageMult(battle: Battle, u: Combatant, e: { bell?: boolean }): number {
   const pe = u.passive?.effect;
   if (!pe) return 1;
-  if (pe.type === 'rage') return 1 + pe.maxBonus * (u.maxHp > 0 ? 1 - u.hp / u.maxHp : 0);
+  if (pe.type === 'rage') return 1 + pe.maxBonus * rageMissFrac(pe, u.hp, u.maxHp);
   if (pe.type === 'longshot') return 1 + pe.perRow * (Math.floor(u.slot / battle.formulas.formation.lanes) + (pe.extraRows ?? 0));
   if (pe.type === 'pealingBells' && e.bell && (u.bells ?? 0) > 0) return 1 + pe.perBell * (u.bells ?? 0);
   return 1;
@@ -365,8 +366,9 @@ export class ValueContext {
       for (const u of i.reach) addTo(u, (i.hit * 0.5) / Math.max(1, i.reach.length));
     }
     for (const h of this.hits) if (h.before) this.before.set(h.target, (this.before.get(h.target) ?? 0) + h.hit);
-    // YZ kapsamı: kendi birimlerimizin bir sonraki turumuzdan önce (kendi tur başlarında) yiyeceği DoT / zemin tikleri de tehlikeye girer
-    if (battle.ground.length > 0 || battle.combatants.some((c) => c.side === actor.side && c.statuses.some((st) => st.fromGround || battle.statusDef(st.kind)?.dot))) {
+    // YZ kapsamı: kendi birimlerimizin bir sonraki turumuzdan önce (kendi tur başlarında) yiyeceği DoT / zemin tikleri de tehlikeye girer;
+    // r43: Banked Coals'un sıradaki kor tiki de (Ashguard Vigil 4 parça; Fortified azaltmaz, round'a girmez)
+    if (battle.ground.length > 0 || battle.combatants.some((c) => c.side === actor.side && (c.coals?.length || c.statuses.some((st) => st.fromGround || battle.statusDef(st.kind)?.dot)))) {
       let first: Set<string> | null = null;
       if (battle.mode === 'turns') {
         const q = battle.turnQueue();
@@ -379,6 +381,7 @@ export class ValueContext {
         let t = 0;
         for (const st of u.statuses) t += battle.statusTickDamage(u, st);
         for (const g of battle.ground) if (g.board === u.board && g.slots.includes(u.slot) && g.sourceSide !== u.side && !g.noDamage && battle.groundDirectTick(g.ground)) t += battle.groundTickDamage(g.ground, g.amount, u);
+        if (u.coals?.length) t += battle.coalNextTick(u);
         if (t > 0) this.before.set(u.uid, (this.before.get(u.uid) ?? 0) + t);
       }
     }

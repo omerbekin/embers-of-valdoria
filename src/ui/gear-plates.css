@@ -80,39 +80,13 @@
   opacity: 1;
 }
 
-.gr-slot.gr-plate::before,
-.gr-slot.gr-plate::after {
-  content: '';
-  position: absolute;
-  width: max(4px, calc(10 * var(--u)));
-  height: max(4px, calc(10 * var(--u)));
-  transform: rotate(45deg);
-  background: #130d07;
-  border: 1px solid color-mix(in srgb, var(--rc) 70%, #fff);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.gr-slot.gr-plate::before {
-  left: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
-  top: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
-}
-
-.gr-slot.gr-plate::after {
-  right: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
-  bottom: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
-}
+/* köşe süsü YOK (Ömer 2026-11-25 r47: eşya plakasında karo da nokta da olmaz) */
 
 .gr-slot.gr-plate.empty,
 .gr-slot.gr-plate.blocked {
   border: 1px dashed var(--g-line2);
   box-shadow: none;
   background: rgba(8, 6, 4, 0.5);
-}
-
-.gr-slot.gr-plate.empty::before,
-.gr-slot.gr-plate.empty::after {
-  display: none;
 }
 
 .gr-slot.gr-plate:hover {

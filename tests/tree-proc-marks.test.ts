@@ -57,7 +57,8 @@ describe('ağaç ölçüm işaretleri (r41 B)', () => {
   it('B1 + B2: savaşta yan vuruş, genişleyen zemin ve Double Hit zinciri sayılır; işaretler savaşı değiştirmez (aynı seed, aynı olay akışı)', () => {
     const want = ['skald:1.ea', 'paladin:1.eb', 'mage:4.u3'];
     const seen = new Set<string>();
-    for (let seed = 1; seed <= 12 && seen.size < want.length; seed++) {
+    // r41 akşam: hız formülü değişince (spdPerDex 0,25) Skald yan vuruşu ilk 12 seed'de çıkmadı; arama 40 seed'e kadar (bulunca durur)
+    for (let seed = 1; seed <= 40 && seen.size < want.length; seed++) {
       const marked = battle(TREES(), seed);
       const plain = battle(Object.fromEntries(Object.entries(TREES()).map(([k, u]) => [k, { tree: unmarked(u.tree) }])), seed);
       // battleStart'taki skill tanımları işareti taşır (yalnız o alan farklı); onu atınca akış birebir aynı olmalı

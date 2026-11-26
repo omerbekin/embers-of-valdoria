@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_H, GAME_W, type StageMetrics } from '../ui/viewport';
 import { hideStrayTips } from '../ui/tip-vis';
+import { releaseBootHold } from '../ui/boot-loader';
 
 /**
  * Geniş ekran sahnesi (Phaser tarafı; ölçü hesabı saf: `src/ui/viewport.ts > stageMetrics`).
@@ -81,7 +82,11 @@ export function hookStageScenes(game: Phaser.Game): void {
     ev.on(Phaser.Scenes.Events.ADDED_TO_SCENE, (obj: Phaser.GameObjects.GameObject) => {
       if (stageView.zoom > 1) sharpenText(obj);
     });
-    ev.on(Phaser.Scenes.Events.CREATE, () => applyScene(scene));
+    ev.on(Phaser.Scenes.Events.CREATE, () => {
+      applyScene(scene);
+      // geçiş yükleme ekranı (boot-loader > holdBoot): gerçek sahne kurulunca kalkar; kod parçası inerken açık olan yer tutucu sayılmaz
+      if (typeof (scene as { isLoading?: unknown }).isLoading !== 'function') releaseBootHold();
+    });
     ev.on(Phaser.Scenes.Events.SHUTDOWN, hideStrayTips); // sahibi yok olan ipuçları (Valor HUD, çanta item'i) sol üstte asılı kalmasın
     if (scene.sys.isActive()) applyScene(scene); // önyüklemede create'i bu kancadan önce bitmiş sahne
   }

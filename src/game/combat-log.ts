@@ -8,7 +8,7 @@ import type { HudLogEntry, LogPart } from '../ui/battle-hud';
 export interface LogNames {
   /** Birimin adı ve tarafı (yoksa undefined: satır atlanır). */
   unit(uid: string): { name: string; side: 'party' | 'enemy' } | undefined;
-  skill(id: string): string;
+  skill(id: string, actorUid?: string): string;
   status(id: string): string;
   ground(id: string): string;
   /** Global eylemin türü (rest | skip | move). */
@@ -88,7 +88,7 @@ export class CombatLog {
       }
       case 'skillUsed': {
         this.close();
-        this.cur = { round: this.round, actor: e.actor, verb: [{ t: ' used ' }, { t: this.names.skill(e.skill), k: 'sk' }], hits: [], notes: [], skill: this.names.skill(e.skill) };
+        this.cur = { round: this.round, actor: e.actor, verb: [{ t: ' used ' }, { t: this.names.skill(e.skill, e.actor), k: 'sk' }], hits: [], notes: [], skill: this.names.skill(e.skill, e.actor) };
         this.done.push(this.cur);
         return true;
       }

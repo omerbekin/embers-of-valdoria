@@ -146,7 +146,7 @@ describe('Hammer Spark: bölünmüş hasar (damage.split)', () => {
     const pctTxt = `${Math.round(dmg('hammer_spark').power * 50)}% STR`; // veriden (0,57 x 0,5 = 0,285 -> 28%)
     expect(text).toContain(`${pctTxt} as physical damage`);
     expect(text).toContain(`${pctTxt} as lightning damage`);
-    expect(text).toContain('Magic armor');
+    expect(text).toContain('Magic Armor');
     expect(text).toContain('single hit');
   });
 });

@@ -54,7 +54,7 @@ describe('ondalık hız: değerler', () => {
     expect(roundSpeed(14 + 0.4 * 7, f)).toBe(16.8);
     expect(roundSpeed(13.77777, f)).toBe(13.778);
     const dex7 = { ...content.classes.warrior!, overrides: undefined };
-    expect(Number.isInteger(dex7.stats.spd)).toBe(Number.isInteger(14 + 0.4 * dex7.attributes.dex));
+    expect(Number.isInteger(dex7.stats.spd)).toBe(Number.isInteger(f.attributes.spdBase + f.attributes.spdPerDex * dex7.attributes.dex));
     expect(applyUnitModifiers(withSpd(15), { spdAdd: 0.1 + 0.2 }, f).stats.spd).toBe(15.3);
     const teams: Teams = { party: cells({ 0: 'warrior' }), enemies: cells({ 0: 'warrior' }) };
     const setup = content.battleSetup('random-battle', 3, 'turns', teams, false);

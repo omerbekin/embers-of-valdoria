@@ -145,8 +145,8 @@ describe('M-N2 zorla hareket (Boarding Hook)', () => {
   });
 
   it('YZ çekilebilecek arka sıra hedefine Boarding Hook kullanır', () => {
-    // Warrior + Defender ön sırada, Archer şerit 2 arkada (ön hücre boş): çekme değeri var
-    const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 11, 'turns', teamsFor('reaver_chief_hook'), false));
+    // Warrior + Defender ön sırada, Archer şerit 2 arkada (ön hücre boş): çekme değeri var. Seed 1: r42 hız 0,25 sonrası seed 11'de önder ilk turunda gutting_sweep seçip sonra ölüyordu; seed 1'de ilk turda çeker
+    const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', teamsFor('reaver_chief_hook'), false));
     const h = leader(b, 'reaver_chief_hook');
     let hooked = false;
     for (let n = 0; n < 400 && !b.winner && !hooked; n++) {

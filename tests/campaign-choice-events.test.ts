@@ -23,6 +23,7 @@ import {
   storyLikes,
   type CampaignState,
 } from '../src/campaign';
+import { content } from '../src/engine';
 import { BAG_SIZE, ITEMS, instanceRarity, makeItem } from '../src/progression';
 
 // Seçenekli olaylar (N2), kasaba tüccarı (T1), kasaba sahnesi + diyalog (T5; sis açma YOK). fill-plan.md 4.2 ve 5.
@@ -119,10 +120,9 @@ describe("Witch's Hut choice event", () => {
     expect(nextStep(completeSimple(s, 'event')).kind).toBe('move');
   });
 
-  it('a choice whose battle encounter does not exist yet is hidden', () => {
-    const fold = eventChoices('shepherds_fold').map((c) => c.id);
-    const expected = ENCOUNTERS.fold_flock ? ['search', 'castle', 'bread', 'rest'] : ['castle', 'bread', 'rest'];
-    expect(fold).toEqual(expected);
+  it('a choice whose battle encounter does not exist is hidden; the Fold shows all four (fold_flock exists)', () => {
+    expect(ENCOUNTERS.fold_flock).toBeTruthy();
+    expect(eventChoices('shepherds_fold').map((c) => c.id)).toEqual(['search', 'castle', 'bread', 'rest']);
   });
 });
 
@@ -140,6 +140,28 @@ describe("Shepherd's Fold choice event", () => {
     expect(restHealOf(t)).toBe(1);
     const r = restAtCamp(t);
     r.roster.filter((h) => !isFallen(h)).forEach((h) => expect(h.hpRatio).toBe(1));
+  });
+
+  it('Search for the flock: two-wave fight (all classes exist), win pays 30 gold + chest, then a full-heal rest', () => {
+    const enc = ENCOUNTERS.fold_flock!;
+    expect(enc.units.map((u) => u.class)).toEqual(['ash_hound', 'moor_raider', 'ash_hound', 'ember_acolyte']);
+    expect(enc.waves).toHaveLength(1);
+    expect(enc.waves![0]!.units.map((u) => u.class)).toEqual(['moor_raider', 'charcoal_burner', 'ember_acolyte']);
+    for (const u of [...enc.units, ...enc.waves![0]!.units]) expect(content.mobs[u.class], u.class).toBeDefined();
+    const s = atFold();
+    const t = chooseEvent(s, 'search');
+    expect(t.gold).toBe(s.gold);
+    expect(nextStep(t).kind).toBe('battle');
+    expect(battlePlan(t).encounterId).toBe('fold_flock');
+    expect(battlePlan(t).waves).toHaveLength(1); // 2. dalga motora gider: toplam iki dalga
+    expect(battlePlan(t).waves![0]!.enemies.filter(Boolean)).toHaveLength(3);
+    const win = EVENTS.shepherds_fold!.choices!.find((c) => c.id === 'search')!.win!;
+    const won = autoResolve(t);
+    expect(won.eventChoice?.battle).toBeUndefined();
+    expect(won.gold).toBeGreaterThanOrEqual(s.gold + win.gold!);
+    expect(win.chest).toBe(true);
+    expect(won.pendingLoot?.kind).toBe('treasure');
+    expect(restHealOf(won)).toBe(1);
   });
 
   it('Ask about the castle is story text only, then the normal 50% rest', () => {

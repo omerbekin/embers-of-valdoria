@@ -35,7 +35,7 @@
 .sd-ttl { font: 600 max(16px, calc(38 * var(--u))) / 1.12 var(--g-disp); letter-spacing: .12em; text-transform: uppercase; margin: 0;
   background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .9)); }
 .sd-pips { display: flex; gap: 7px; align-items: center; }
-.sd-pips i { width: max(3px, calc(6 * var(--u))); height: max(3px, calc(6 * var(--u))); transform: rotate(45deg); border: 1px solid var(--g-edge); }
+.sd-pips i { width: max(3px, calc(6 * var(--u))); height: max(3px, calc(6 * var(--u))); border-radius: 50%; border: 1px solid var(--g-edge); }
 .sd-pips i.on { background: var(--g-gold); border-color: var(--g-gold); } .sd-pips i.done { background: rgba(217, 178, 106, .4); }
 .sd-body { display: flex; flex-direction: column; gap: max(7px, calc(16 * var(--u))); animation: sd-fade var(--m-card-in, 220ms) var(--m-ease, ease-out) both; }
 .sd-narr { margin: 0; font: 400 max(13px, calc(26 * var(--u))) / 1.36 var(--g-body); color: #bfae8d; }
@@ -54,13 +54,13 @@
   animation: sd-ch-in var(--m-card-in, 260ms) var(--m-ease, ease-out) both; animation-delay: calc(var(--m-card-delay, 90ms) + var(--i, 0) * var(--m-card-stagger, 70ms)); }
 .sd-ch + .sd-ch { border-top: 1px solid var(--g-line); }
 @keyframes sd-ch-in { from { opacity: 0; transform: translateY(var(--m-card-rise, 8px)); } to { opacity: 1; transform: none; } }
-.sd-ch::before { content: ''; position: absolute; left: max(4px, calc(10 * var(--u))); top: 50%; width: 0.33em; height: 0.33em; margin-top: -0.18em; transform: rotate(45deg) scale(.85);
+.sd-ch::before { content: ''; position: absolute; left: max(4px, calc(10 * var(--u))); top: 50%; width: 0.33em; height: 0.33em; margin-top: -0.18em; border-radius: 50%; transform: scale(.85);
   background: var(--g-ember); opacity: .8; transition: transform var(--m-card-hover, 170ms) var(--m-ease, ease-out), opacity var(--m-card-hover, 170ms) var(--m-ease, ease-out), box-shadow var(--m-card-hover, 170ms) var(--m-ease, ease-out); }
 .sd-ch:focus-visible { outline: none; color: #fff6e2; box-shadow: 0 0 0 1px var(--g-edge), 0 0 calc(14 * var(--u)) rgba(243, 217, 153, .22); }
-.sd-ch:focus-visible::before { opacity: 1; transform: rotate(45deg) scale(1); }
+.sd-ch:focus-visible::before { opacity: 1; transform: scale(1); }
 @media (hover: hover) {
   .sd-ch:hover { translate: 0 calc(-1 * var(--m-card-lift, 4px)); color: #fff6e2; background: rgba(232, 196, 126, .07); box-shadow: 0 0 0 1px var(--g-edge), 0 0 calc(14 * var(--u)) rgba(243, 217, 153, .22); }
-  .sd-ch:hover::before { opacity: 1; transform: rotate(45deg) scale(1); box-shadow: 0 0 6px rgba(224, 112, 42, .7); }
+  .sd-ch:hover::before { opacity: 1; transform: scale(1); box-shadow: 0 0 6px rgba(224, 112, 42, .7); }
 }
 html.reduced-motion .sd-panel, html.reduced-motion .sd-scrim, html.reduced-motion .sd-body, html.reduced-motion .sd-ch { animation: none; }
 

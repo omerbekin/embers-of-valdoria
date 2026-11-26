@@ -384,9 +384,22 @@ async function iconKeyOpts(png) {
   return { bgMax, noise: bgMax - 8, soft: bgMax + 30, depth: 6 };
 }
 
+/** Tek ikonlu sayfalar (tüm kare = ikon; kaynak assets/source/mob-icons/<ad>.png): ızgara aranmaz. Royal Command (r51, global skill; globalIconName id'ye bakar). */
+const SINGLE_ICONS = ['royal_command'];
+
 async function importIcons() {
   mkdirSync(join(ICON_OUT, 'small'), { recursive: true });
   let n = 0;
+  for (const name of SINGLE_ICONS) {
+    const src = join(ICON_SRC, `${name}.png`);
+    if (!existsSync(src)) continue;
+    const cellPng = await sharp(src).removeAlpha().png().toBuffer();
+    const buf = await blackToAlpha(cellPng, { trim: false, ...(await iconKeyOpts(cellPng)) });
+    await sharp(buf).resize(128, 128, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(ICON_OUT, `${name}.png`));
+    await sharp(buf).resize(64, 64, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(ICON_OUT, 'small', `${name}.png`));
+    n++;
+    console.log(`tek ikon ${name} -> ${ICON_OUT}/${name}.png`);
+  }
   for (const [sheet, names] of Object.entries(ICON_SHEETS)) {
     const src = join(ICON_SRC, `${sheet}.png`);
     const outDir = ICON_SHEET_OUT[sheet] ?? ICON_OUT;

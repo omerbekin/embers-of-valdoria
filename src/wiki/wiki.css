@@ -502,8 +502,8 @@
   content: '';
   width: 0.57em;
   height: 0.57em;
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.55);
+  border-radius: 50%; /* karo 3. tur: dolu nokta */
+  background: rgba(217, 178, 106, 0.55);
   transition: background 0.18s;
 }
 

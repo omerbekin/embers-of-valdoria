@@ -56,7 +56,7 @@ describe.each(MODES)('%s modu', (mode) => {
       expect(has(at(b, 'enemy', 7), 'haste')).toBe(false);
       for (const s of [0, 1, 3, 7]) expect(has(at(b, 'party', s), 'haste')).toBe(false);
     });
-    it('Great Axe bedelsiz; Skullsplitter Sunder verir', () => {
+    it('Great Axe bedelsiz; Helm Cleaver Sunder verir', () => {
       const b = make(SET, mode);
       const c = at(b, 'enemy', 1);
       const h = at(b, 'party', 1);
@@ -384,8 +384,8 @@ describe('YZ', () => {
     ['frozen_crossbowman', { 1: 'frozen_standard_bearer', 0: 'frozen_halberdier', 2: 'frozen_halberdier', 7: 'frozen_crossbowman' }, ['crossbow_bolt', 'ice_shot']],
     ['pyre_witch', { 6: 'pyre_witch', 1: 'cinder_knight' }, ['pyre_bolt', 'spread_the_flame']],
   ] as [string, Record<number, string>, string[]][])('%s imzalarını gerçek savaşta atar', (id, enemies, need) => {
-    // Pyre Witch: Spread yalnız yerde Burning varken; tur başına hız zarıyla (Ömer 2026-11-07) 1-3 seed'lerinde denk gelmiyor, 5 eklendi
-    const seen = uses(enemies, id, 90, id === 'pyre_witch' ? [1, 2, 3, 5] : [1, 2, 3]);
+    // Pyre Witch: Spread yalnız yerde Burning varken; tur başına hız zarıyla (Ömer 2026-11-07) 1-3 seed'lerinde denk gelmiyor, 5 eklendi; r42 hız 0,25 sonrası 1-5 yetmedi, 7-10 eklendi
+    const seen = uses(enemies, id, 90, id === 'pyre_witch' ? [1, 2, 3, 5, 7, 8, 9, 10] : [1, 2, 3]);
     for (const s of need) expect([...seen], `${id} ${s}`).toContain(s);
   }, 120000);
 });

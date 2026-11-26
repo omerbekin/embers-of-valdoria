@@ -35,10 +35,10 @@
 
 | Skill (id) | Ne yapar | Bedel / bekleme | Sayı (veri) |
 |---|---|---|---|
-| Tithe Cut (`mana_burn`) | Tek hedefe fiziksel DEX hasarı; isabette 7 MP söker, sökülen MP başına 2 kan + isabet başına 5 kan | 0 / yok | damage dex 0,665; manaBurn amount 7, bloodPerMp 2 |
+| Tithe Cut (`mana_burn`) | Tek hedefe fiziksel DEX hasarı; isabette 7 MP söker, sökülen MP başına 2 kan + isabet başına 5 kan | 0 / yok | damage 2,5 + dex 0,473 (r48 düz taban); manaBurn amount 7, bloodPerMp 2 |
 | Blood Brand (`drain_field`) | 2x2 alandaki (Ömer 2026-11-21 form r40; önce tek düşman) her düşmana 3 tur Bleeding + 3 tur işaret. İşaretli birim class skill'i kullanınca Bleeding'i bir kez ek tik yer (süre azalmaz); MP bedelleri x1,5; Tithe Cut ve Exsanguinate ona %40 fazla vurur | 25 kan / 3 | dot bleeding dex 0,214 (Ömer 2026-11-20 r32), 3 tur; bloodBrand turns 3, costMult 1,5, ticks 1, markDamagePct 0,4 |
 | Mirror Vein (`spell_ward`) = "Kan Örtüsü" (Ömer 2026-11-18) | Bütün takıma (yaşayan dostlar + kendisi) 2 tur kalkan: birim başına 6 + INT x 0,5 (Redtithe'in INT'i). Kalkan her hasarı emer; bu kalkanlardan biri bir BÜYÜ (magic hasarlı düşman skill vuruşu) emince Redtithe 2 + DEX x 0,2 kan kazanır (vuruş başına, üst sınır yok). Süre taşıyanın tur başında düşer; yeniden atınca süre yenilenir. Eski "ilk büyüyü emip Bleeding yansıtma" etkisi kalktı | 15 kan / 3 (Ömer 2026-11-20 r34) | shield scale int, flat 6, power 0,5, turns 2, onAbsorb.giveBlood { base 2, perDex 0,2 } |
-| Exsanguinate (`void_strike`) | Tek hedefe fiziksel DEX hasar; en az 30 kan ister ve barın TAMAMINI harcar: hasar x (1 + harcanan / 100); hedefin eksik MP'si hasarı büyütür | tüm kan (en az 30; Ömer 2026-11-20) / 3, ilk 3 | damage dex 1,05, bonusPerMissingMana 1, bloodSpentBonus 0,01 |
+| Exsanguinate (`void_strike`) | Tek hedefe fiziksel DEX hasar; en az 30 kan ister ve barın TAMAMINI harcar: hasar x (1 + harcanan / 100); hedefin eksik MP'si hasarı büyütür | tüm kan (en az 30; Ömer 2026-11-20) / 3, ilk 3 | damage 5 + dex 0,905 (r48 düz taban), bonusPerMissingMana 1, bloodSpentBonus 0,01 |
 
 Geçerli sayı: `data/skills.json` > skill id. Sayı değişince veri, ilgili test (`tests/skill-tree-fx-antimage.test.ts`, `tests/redtithe*.test.ts`) ve bu tablo birlikte güncellenir.
 

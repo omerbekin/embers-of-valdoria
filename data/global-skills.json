@@ -65,7 +65,7 @@
     "text": "Call on the Crown of Ash: your whole party deals more damage for a while, and you end your turn."
   },
   "royal_command": {
-    "_not": "Royal Command (Kingsfall Regalia 3 parça; Ömer seçimi 2026-11-07 R-Y): yalnızca set kuralını (ItemEffects.allyTurn) taşıyan kahraman görür ve kullanır; savaşta bir kez. Seçilen canlı dost hemen bir tur oynar (turns modu); o turun sonunda dostun sayacı düşmez. Test modunda sıra yok: hak harcanır. İkon YER TUTUCU (warcry, ödünç). YZ: data/ai.json > global.command.",
+    "_not": "Royal Command (Kingsfall Regalia 3 parça; Ömer seçimi 2026-11-07 R-Y): yalnızca set kuralını (ItemEffects.allyTurn) taşıyan kahraman görür ve kullanır; savaşta bir kez. Seçilen canlı dost hemen bir tur oynar (turns modu); o turun sonunda dostun sayacı düşmez. Test modunda sıra yok: hak harcanır. Kendi boyalı ikonu assets/mob-icons/royal_command.png (r51; globalIconName id'ye bakar), veri ikonu warcry yalnız yedek. YZ: data/ai.json > global.command.",
     "id": "royal_command",
     "name": "Royal Command",
     "icon": "warcry",

@@ -56,6 +56,7 @@ import {
   dueCinematic,
   CINEMATICS,
   mapEndSummary,
+  endCardOffersEndless,
   cinematicSeen,
   markCinematicSeen,
   markTipSeen,
@@ -3331,10 +3332,12 @@ export class CampaignMapScene extends Phaser.Scene {
         ? [{ label: `Continue to ${titleCase(nextMap.title)}`, primary: true, run: () => this.mapIntro(nextMap.id) }]
         : [
             { label: 'Stay on the map', run: () => this.closeModal() },
-            { label: 'Main Menu', primary: true, run: () => elGo(this, MENU_SCENE) },
+            ...(endCardOffersEndless(s, null) ? [{ label: 'Endless', run: () => { checkpoint(); elGo(this, 'EndlessScene', undefined, { loading: true }); } }] : []),
+            { label: 'Main Menu', primary: true, run: () => elGo(this, MENU_SCENE, undefined, { loading: true }) },
           ],
     });
     this.modal = { close: () => handle.close(), root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
+    this.events.once('shutdown', () => handle.close()); // Endless / Main Menu'ye geçişte DOM kartı yeni sahnenin üstünde asılı kalmasın
   }
 
   /** Jenerik (src/ui/credits.ts; Harita 3 kapanış sinemasından sonra). Sahne kapanırsa DOM katmanı da kapanır; bitince / X ile `then`. */

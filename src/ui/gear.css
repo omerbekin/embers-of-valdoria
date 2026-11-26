@@ -1320,7 +1320,7 @@ html.rotated .gr-loot-tile.rb-tile {
   width: max(5px, calc(11 * var(--u)));
   height: max(5px, calc(11 * var(--u)));
   margin-left: calc(-0.5 * max(5px, calc(11 * var(--u))));
-  transform: rotate(45deg);
+  border-radius: 50%; /* karo 3. tur (Ömer r48): seçim işareti = dolu nokta */
   background: var(--g-ember);
   box-shadow: 0 0 0 1px var(--g-ember2), 0 0 10px rgba(240, 140, 40, 0.9);
   z-index: 2;
@@ -1558,9 +1558,9 @@ html.rotated .gr-loot-tile.rb-tile {
   top: 50%;
   width: 0.4em;
   height: 0.4em;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: #130d07;
-  border: 1px solid var(--rl);
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur (Ömer r48): bölücü ortası = dolu nokta, nadirlik rengi */
+  background: var(--rl);
 }
 
 .it-kind {
@@ -1751,7 +1751,8 @@ html.rotated .gr-loot-tile.rb-tile {
   top: 50%;
   width: 36%;
   height: 36%;
-  transform: translate(-50%, -50%) rotate(45deg);
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur: madde imi = dolu nokta */
   background: rgba(217, 178, 106, 0.55);
 }
 
@@ -2862,7 +2863,7 @@ html.short .mw-greet {
   width: 0.47em;
   height: 0.47em;
   margin-left: -0.235em;
-  transform: rotate(45deg);
+  border-radius: 50%; /* karo 3. tur: dolu nokta */
   background: var(--g-ember);
   box-shadow: 0 0 0 1px var(--g-ember2), 0 0 8px rgba(240, 140, 40, 0.7);
 }
@@ -5169,9 +5170,9 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
   top: 50%;
   width: 0.35em;
   height: 0.35em;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: #130d07;
-  border: 1px solid var(--acl);
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur: bölücü ortası = dolu nokta */
+  background: var(--acl);
 }
 
 .gr-pl .pl-chips {
@@ -5812,9 +5813,9 @@ html.short .sh-foot.idle {
   top: 50%;
   width: 0.4em;
   height: 0.4em;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: #130d07;
-  border: 1px solid #e9d29a;
+  transform: translate(-50%, -50%);
+  border-radius: 50%; /* karo 3. tur: bölücü ortası = dolu nokta */
+  background: #e9d29a;
 }
 
 /* HP / MP */
@@ -6701,7 +6702,7 @@ html.reduced-motion .gr-item.gr-new {
    ===================================================================================================================================== */
 .gr-head > .gr-title {
   --orn-line: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.7));
-  --orn-dia: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='2' y='2' width='6' height='6' transform='rotate(45 5 5)' fill='%23140e09' stroke='%23d9b26a' stroke-opacity='.85'/%3E%3C/svg%3E");
+  --orn-dia: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' r='2.6' fill='%23d9b26a' fill-opacity='.9'/%3E%3C/svg%3E");
   --orn-w: 2.1em;
   display: flex;
   align-items: center;

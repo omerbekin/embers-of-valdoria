@@ -399,7 +399,7 @@
       "id": "item_quality",
       "group": "On the Road",
       "title": "Item Quality",
-      "text": "The colour shows an item’s quality. Each step up adds a line: Uncommon a second C, Rare a B, Epic an A.",
+      "text": "The color shows an item's quality. Each step up adds an affix line: Uncommon adds a second C, Rare adds a B, and Epic adds an A.",
       "place": "bottom",
       "trigger": {
         "screen": "gear",
@@ -448,7 +448,7 @@
       "id": "hp_carry",
       "group": "On the Road",
       "title": "Wounds Carry Over",
-      "text": "Wounds carry over between battles. A victory restores up to {victoryHeal}% of each hero’s health, less on easy fights.",
+      "text": "Wounds carry over between battles. A victory restores up to {victoryHeal}% of each hero's health, less on easy fights.",
       "trigger": {
         "screen": "map",
         "minWins": 1

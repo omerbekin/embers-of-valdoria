@@ -61,7 +61,7 @@ import { classSpriteIds } from '../sprite-needs';
 import { classAvatar, fitText } from '../menu-ui';
 import { hpBar } from '../campaign-ui';
 import { CONFIRM } from '../../ui/confirm-labels';
-import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elPanel, elScreenIn, elText, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
+import { EL, elDot, elBack, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elPanel, elScreenIn, elText, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
 import { motion, MOTION } from '../../ui/motion';
 import { SlotDrag, makeDragGhost } from '../slot-drag';
 import { classBoardHero, clientToWorld, mountSceneBoard, type SceneBoard } from '../scene-board';
@@ -1304,7 +1304,7 @@ export class EndlessScene extends Phaser.Scene {
     const w = dia + t.width;
     const x0 = align === 'center' ? x - w / 2 : x;
     const g = this.add.graphics();
-    g.fillStyle(EL.EMBER, 0.9).fillPoints(diamondPts(x0 + 4, wrapped ? t.y + size * 0.6 : cy, size * 0.18), true); // yazıya oranlı
+    elDot(g, x0 + 4, wrapped ? t.y + size * 0.6 : cy, size * 0.18, EL.EMBER, 0.9); // yazıya oranlı (karo 3. tur: dolu nokta)
     add(g);
     t.setX(x0 + dia);
     // add() kartın yerel koordinatına kaydırır: ipucu alanının yerini önce hesapla

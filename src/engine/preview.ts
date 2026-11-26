@@ -454,7 +454,55 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       preHitAdded.push({ target, status });
     }
   };
+  // Bedel candan (resource hp, Soul Exchange'in candan ödemesi, kan bedelinin eksik kısmı): gerçek kullanım canı vuruşlardan ÖNCE düşürür; kullanıcının
+  // can koşulları (Berserker, missingHp, selfHpBelow) ödendikten sonraki canı görür. Önizleme canı geçici düşürür, döngü bitince geri koyar (en az 1)
+  const hpBeforePay = actor.hp;
+  // (c) / (d): önizleme vuruşunu geçici durumla "kuru" hesaplar (hedef havuzu ve girdisi geri alınır); dönen = o vuruşla birikmiş hasar girdisi
+  let selfHealHi = 0;
+  const dryHit = (target: Combatant, run: () => void): TargetPreview['damage'] | undefined => {
+    const p = pool(target);
+    const saved = { hp: p.hp, shield: p.shield, magicShield: p.magicShield, mp: p.mp, hooks: p.hooks ? new Map(p.hooks) : undefined };
+    const e = entry(target.uid);
+    const before = e.damage ? { ...e.damage } : undefined;
+    run();
+    const got = e.damage ? { ...e.damage } : undefined;
+    Object.assign(p, { hp: saved.hp, shield: saved.shield, magicShield: saved.magicShield, mp: saved.mp });
+    if (saved.hooks) p.hooks = saved.hooks;
+    if (before) e.damage = before;
+    else delete e.damage;
+    return got;
+  };
+  const withActorHp = (hp: number, run: () => void): void => {
+    const was = actor.hp;
+    actor.hp = hp;
+    try {
+      run();
+    } finally {
+      actor.hp = was;
+    }
+  };
+  const withStatuses = (target: Combatant, kinds: string[], run: () => void): void => {
+    const added = kinds.map((kind) => ({ kind, turns: 2, source: actor.uid }) as Combatant['statuses'][number]);
+    target.statuses.push(...added);
+    try {
+      run();
+    } finally {
+      for (const st of added) {
+        const i = target.statuses.indexOf(st);
+        if (i >= 0) target.statuses.splice(i, 1);
+      }
+    }
+  };
+  const payHp = ((): number => {
+    if (skill.cost.resource === 'blood') {
+      const amount = skillCostAmount(skill.cost, actor);
+      return amount > 0 && actor.maxBlood !== undefined ? Math.min(battle.bloodSplitFor(actor, skill, amount).hp, actor.hp - 1) : 0;
+    }
+    const pay = skillCostPay(skill.cost, actor, undefined, battle.freeMp);
+    return pay.resource === 'hp' ? pay.amount : 0;
+  })();
   try {
+  if (payHp > 0) actor.hp = Math.max(1, actor.hp - payHp);
   for (const target of targets) {
     for (const effect of skill.effects) {
       if (!battle.effectAppliesTo(skill, effect, target, actor)) continue;
@@ -502,7 +550,25 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const fo = effect.falloff ? Math.min(1, effect.falloff + fa) : effect.falloff; // motorla aynı: en çok 1
         // Bölünmüş hasar (damage.split, Hammer Spark): parça başına ayrı tür / element, gerçek vuruşla aynı (ekler yalnız ilk parçada); split yoksa tek parça
         const parts = splitParts(effect);
-        for (let k = 0; k < times; k++) for (let pi = 0; pi < parts.length; pi++) addDamage(target, parts[pi]!.effect, (fo ? Math.pow(fo, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1) * parts[pi]!.share, idx > 0 || k > 0 || pi > 0, hiOf(k), pi > 0 ? parts[0]!.effect : undefined);
+        for (let k = 0; k < times; k++)
+          for (let pi = 0; pi < parts.length; pi++) {
+            const hit = () => addDamage(target, parts[pi]!.effect, (fo ? Math.pow(fo, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1) * parts[pi]!.share, idx > 0 || k > 0 || pi > 0, hiOf(k), pi > 0 ? parts[0]!.effect : undefined);
+            const prev = entry(target.uid).damage;
+            const p0 = { min: prev?.min ?? 0, critMax: prev?.critMax ?? 0, hpLossMax: prev?.hpLossMax ?? 0 };
+            // (c) kullanım ortası kendine şifa (önceki vuruşların can çalması / Spin Recovery'si, en çok): kullanıcının canı yükselir, cana bağlı bonus
+            // (Berserker, missingHp) düşer: en az hasar o canla
+            const healedHp = selfHealHi > 0 ? Math.min(actor.maxHp, actor.hp + selfHealHi) : actor.hp;
+            const lowMin = healedHp !== actor.hp ? dryHit(target, () => withActorHp(healedHp, hit))?.min : undefined;
+            // (d) önceki vuruşun proc durumu (Bloody Saltire: kritikte şansla Wound): aynı hedefe sonraki vuruş onu görür; kritik üst sınırı o durumla
+            const procSt = k > 0 && pi === 0 ? battle.previewProcStatuses(actor, target, skill, parts[0]!.effect, { ...(hiOf(k - 1) ? { hit: hiOf(k - 1)! } : {}), crit: true }).filter((st) => !battle.statusBlocked(target, st) && !target.statuses.some((x) => x.kind === st)) : [];
+            const highCrit = procSt.length ? dryHit(target, () => withStatuses(target, procSt, hit))?.critMax : undefined;
+            hit();
+            const d = entry(target.uid).damage;
+            if (!d) continue;
+            if (lowMin !== undefined) d.min = p0.min + Math.max(0, Math.min(d.min - p0.min, lowMin - p0.min));
+            if (highCrit !== undefined) d.critMax = p0.critMax + Math.max(d.critMax - p0.critMax, highCrit - p0.critMax);
+            selfHealHi += battle.previewSelfHealOnHit(actor, target, skill, parts[pi]!.effect, d.hpLossMax - p0.hpLossMax, hiOf(k) ? { hit: hiOf(k)! } : {});
+          }
       } else if (effect.type === 'randomStatus') {
         const e = entry(target.uid);
         const blocked = effect.options.filter((o) => battle.statusBlocked(target, o.status)).map((o) => battle.statusDef(o.status)?.name ?? o.status);
@@ -647,6 +713,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     }
   }
   } finally {
+    actor.hp = hpBeforePay;
     // Önizleme saf kalır (hata olsa bile): hedef listesi, ödenecek can ve geçici preHit durumları geri alınır
     if (actor.treeHooks) {
       battle.setCondTargets(prevTargets);
@@ -766,7 +833,7 @@ function omenPreview(battle: Battle, actor: Combatant, skill: SkillDef, target: 
     const doom = def.doom;
     if (!doom || (!det && omens < max)) return undefined;
     const mult = (det ? det.mult : 1) * battle.doomExtraMult(cur); // uzatma yerine Doom bonusu (bonusPerExtraTurn)
-    const r = battle.doomRange(target, kind, omens, mult, actor.stats[doom.scale] * (actor.stats.spellPowerMult ?? 1)); // = Battle.doomStat
+    const r = battle.doomRange(target, kind, omens, mult, actor.stats[doom.scale] * (actor.stats.spellPowerMult ?? 1), actor.stats.spellPowerMult ?? 1); // = Battle.doomStat / doomSpm
     if (!r) return undefined;
     // Kalkan ham hasar kuralı (Ömer 2026-11-21): kalkan Doom'un ham karşılığına çarpar (motorla aynı savunma oranı)
     const soak = shieldCoverOf(p, doom.damageType === 'magic', 1, p.shield > 0 || p.magicShield > 0 ? battle.doomKeep(target, kind) : 1);

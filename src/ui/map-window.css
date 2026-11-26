@@ -89,7 +89,7 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
 .mw-pnm { font: 600 max(calc(13px * var(--tx, 1)), calc(24 * var(--u) * var(--tx, 1))) var(--g-disp); letter-spacing: .07em; text-transform: uppercase; color: var(--acl); text-shadow: 0 0 max(5px, calc(12 * var(--u))) color-mix(in srgb, var(--ac) 40%, transparent); line-height: 1.15; }
 .mw-pds { margin: 0; font: 400 max(calc(12px * var(--tx, 1)), calc(21 * var(--u) * var(--tx, 1))) / 1.28 var(--g-body); color: #cdb88d; }
 .mw-pdv { position: relative; height: 1px; background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent); margin: max(2px, calc(4 * var(--u))) 0; }
-.mw-pdv::after { content: ''; position: absolute; left: 50%; top: 50%; width: 0.35em; height: 0.35em; transform: translate(-50%, -50%) rotate(45deg); background: #130d07; border: 1px solid var(--acl); }
+.mw-pdv::after { content: ''; position: absolute; left: 50%; top: 50%; width: 0.35em; height: 0.35em; transform: translate(-50%, -50%); border-radius: 50%; background: var(--acl); }
 .mw-plate .mw-chips { margin-top: auto; }
 .mw-plate .need { font: max(calc(11px * var(--tx, 1)), calc(18 * var(--u) * var(--tx, 1))) var(--g-body); color: #ffb35a; }
 .mw-plate.chosen::before, .mw-card.sel::before { content: ''; position: absolute; left: 50%; top: 0; width: max(5px, calc(10 * var(--u))); height: max(5px, calc(10 * var(--u))); transform: translate(-50%, -50%) rotate(45deg); background: var(--g-ember); border: 1px solid var(--g-ember2); z-index: 3; box-shadow: 0 0 8px rgba(240,140,40,.8); }

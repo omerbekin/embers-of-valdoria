@@ -277,7 +277,7 @@ export interface ItemsData {
   uniques: unknown[];
   sets: unknown[];
   /** Equip best'in set bonusu değerlemesi (Item Points; yalnızca seçim, güç değil): sınıf satırı (3. parça) ve motor kuralı (4. parça) başına düz değer. Stat bonusları affix IP'lerinden. */
-  setValue?: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[] };
+  setValue?: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[]; boostWeight?: number };
   /** Set parçaları (Ömer 2026-11-03 pilot): ana katalogdan ayrı; havuzlara girmez, yalnızca nadir düşüşün set dalı ve debug verir. */
   setItems?: ItemDef[];
   traits: Record<string, unknown>;
@@ -1192,6 +1192,9 @@ export function templateShowsPart(text: string, i: number, form: BonusForm): boo
 }
 
 /** items.json doğrulaması (boş liste = geçerli). Test: tests/items-data.test.ts. */
+/** Set parçası affix şablonu istisnası (Ömer form r50, Odran C "kutsal ateş"): yalnız Odran's Ring C + B + A (A = Elemental damage). */
+export const SET_TIER_EXCEPTION = { id: 'odrans_ring', tiers: 'C,B,A' } as const;
+
 export function validateItems(data: ItemsData = ITEMS): string[] {
   const errors: string[] = [];
   const kinds = data.offhandKinds ?? [];
@@ -1212,12 +1215,17 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     for (const d of pieces) {
       if (d.rarity !== 'epic') errors.push(`set item ${d.id}: must be epic`);
       const tiers = (d.affixes ?? []).map((id) => data.affixDefs[id]?.tier);
-      if (tiers.join() !== 'C,C,B') errors.push(`set item ${d.id}: affixes must be C, C, B`);
+      // Tek istisna (Ömer form r50, Odran seçenek C "kutsal ateş"): Odran's Ring'de C + B + A (Elemental damage); başka set parçası C, C, B kalır
+      const tierRule = d.id === SET_TIER_EXCEPTION.id ? SET_TIER_EXCEPTION.tiers : 'C,C,B';
+      if (tiers.join() !== tierRule) errors.push(`set item ${d.id}: affixes must be ${tierRule.split(',').join(', ')}`);
       for (const id of d.affixes ?? []) if (data.affixDefs[id]?.slots && !data.affixDefs[id]!.slots!.includes(d.slot)) errors.push(`set item ${d.id}: ${id} cannot roll on ${d.slot}`);
       for (const [id, m] of Object.entries(d.boost ?? {}))
         if (!d.affixes?.includes(id) || !(typeof m === 'number' && m >= 0.5 && m <= 3)) errors.push(`set item ${d.id}: boost ${id} must name one of its affixes with a multiplier 0.5-3`);
     }
   }
+  // Equip best set boost payı (r49): 0 (boost'suz IP) ile 1 (tam boost'lu IP) arası
+  const bw = data.setValue?.boostWeight;
+  if (bw !== undefined && !(typeof bw === 'number' && bw >= 0 && bw <= 1)) errors.push('setValue.boostWeight must be 0-1');
   for (const s of data.slots) if (!(s.weight > 0) || !s.name) errors.push(`slot ${s.id}: bad weight/name`);
   if (data.rarities.map((r) => r.id).join() !== RARITY_IDS.join()) errors.push(`rarities must be ${RARITY_IDS.join(', ')}`);
   data.rarities.forEach((r, i) => {

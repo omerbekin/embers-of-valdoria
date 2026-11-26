@@ -15,6 +15,7 @@
  * Skill -> anahtar: fire_bolt -> 'fireball', blizzard -> 'blizzard', mana_barrier -> 'barrier', meteor -> 'meteor'
  * Promise VURUŞ ANINDA çözülür; kuyruk (sönen duman, kor) arkada akar. Tüm süreler k.slow() ile skillSlowdown'a uyar.
  */
+import { phoneFxK } from '../../vfx-phone';
 import { FULL_W } from '../../../ui/viewport'; // geniş ekran: tam ekran karartma görünen alanın tamamını kaplar
 import type Phaser from 'phaser';
 import type { CombatantView } from '../../combatant-view';
@@ -386,8 +387,12 @@ function smoke(c: VfxCtx, k: VfxKit, x: number, y: number, o: { n: number; sprea
 /** Parçacık: fizik (yerçekimi, sürtünme), kıvılcım soğur (rampa), kül salınır, kar rüzgârla eğik iner. */
 type Part = { x: number; y: number; vx: number; vy: number; g: number; drag: number; life: number; age: number; size: number; kind: 'spark' | 'ash' | 'snow' | 'ice' | 'mote'; heat?: number; floor?: number; ph?: number; a?: number; col?: number };
 
+type Rect = { x0: number; y0: number; x1: number; y1: number };
+/** Birimlerin ad + can/mana çubuğu bölgeleri (kar bu bölgelerde seyreltilir). Görünüm listesi yoksa boş. */
+const barRects = (c: VfxCtx): (() => Rect[]) => () => (c.allViews ? c.allViews().filter((v) => v.combatant.hp > 0).map((v) => v.barArea()) : []);
+
 /** Tek Graphics üzerinde parçacık alanı çizer; `spawn` her karede yeni parçacık ekleyebilir. dur: efekt (yavaşlatılmamış) ms. */
-function particles(c: VfxCtx, k: VfxKit, depth: number, dur: number, init: Part[], spawn?: (t: number, dt: number, out: Part[]) => void): Phaser.GameObjects.Graphics {
+function particles(c: VfxCtx, k: VfxKit, depth: number, dur: number, init: Part[], spawn?: (t: number, dt: number, out: Part[]) => void, avoid?: () => Rect[]): Phaser.GameObjects.Graphics {
   const g = c.scene.add.graphics().setDepth(depth);
   const ps = init.slice();
   let last = 0;
@@ -397,6 +402,7 @@ function particles(c: VfxCtx, k: VfxKit, depth: number, dur: number, init: Part[
     last = t;
     if (spawn) spawn(t, dt * 1000, ps);
     g.clear();
+    const keep = avoid ? avoid() : [];
     for (let i = ps.length - 1; i >= 0; i--) {
       const p = ps[i]!;
       p.age += dt * 1000;
@@ -433,7 +439,9 @@ function particles(c: VfxCtx, k: VfxKit, depth: number, dur: number, init: Part[
         const sw = Math.sin(p.age * 0.006 + (p.ph ?? 0)) * 10;
         g.fillStyle(p.col ?? 0x6e6862, (p.a ?? 0.85) * (q > 0.7 ? (1 - q) / 0.3 : 1)).fillRect(k.snap(p.x + sw), k.snap(p.y), s, Math.max(2, s - 2));
       } else if (p.kind === 'snow') {
-        const al = (p.a ?? 0.8) * (q > 0.85 ? (1 - q) / 0.15 : q < 0.1 ? q / 0.1 : 1);
+        let al = (p.a ?? 0.8) * (q > 0.85 ? (1 - q) / 0.15 : q < 0.1 ? q / 0.1 : 1);
+        // can çubuğu / ad bölgesinde kar neredeyse görünmez: çubuklar okunur kalır
+        for (const r of keep) if (p.x > r.x0 && p.x < r.x1 && p.y > r.y0 && p.y < r.y1) al *= 0.12;
         g.fillStyle(p.col ?? 0xffffff, al);
         if (s >= 4) {
           // yakın tanecik: hız yönünde iz (rüzgârla eğik çizgi)
@@ -580,6 +588,130 @@ function heatHaze(c: VfxCtx, k: VfxKit): { level: (a: number) => void; stop: () 
 }
 
 // =====================================================================================================================
+// EVOLVE v3 ORTAK (Ömer 2026-11-24: "Skilleri biraz daha abartılı olması lazım. Şu anki hali sadece biraz daha kalın"). Evolve = BAŞKA SINIFTA bir an:
+// büyücünün arkasında dev mühür (wind-up), ekran kararması / renk basması, gökten ya da yerden dev öğe, hedefte kalıcı iz. Telefon kuralı: kalın bantlar
+// (halka >= %15 yarıçap), boyutlar phoneFxK() ile; ışıklar hedefin ARKASINDA. Bu bölümdeki dokular yalnız evolve'larda kullanılır (taban dokulara dokunulmadı).
+
+/**
+ * Kalın evolve mührü (128x128, beyaz; tint + ADD): kalın dış bant (~%16 yarıçap), 12 kalın rün bloğu, iç bant ve altı köşeli yıldız (iki üçgen),
+ * ortada küçük çekirdek. Telefonda küçülünce de okunur (runeRingTex'in ince çizgileri telefonda kaybolur).
+ */
+const bigSigilTex = (k: VfxKit, s: Phaser.Scene): string =>
+  k.softTexture(s, 'v2mage:bigsigil', 128, 128, (x, y) => {
+    const dx = (x + 0.5) / 64 - 1;
+    const dy = (y + 0.5) / 64 - 1;
+    const r = Math.hypot(dx, dy);
+    if (r >= 0.99) return null;
+    if (r > 0.83) return { c: r > 0.87 && r < 0.95 ? '#ffffff' : '#e6e6e6', a: 1 - (Math.abs(r - 0.91) / 0.08) * 0.45 };
+    const a = (Math.atan2(dy, dx) + Math.PI) / (Math.PI * 2);
+    if (r > 0.64 && r < 0.79) {
+      const seg = Math.floor(a * 12);
+      const fx = a * 12 - seg;
+      if (fx < 0.16 || fx > 0.84) return null;
+      const fy = (r - 0.64) / 0.15;
+      const h = hash2(seg, 5, 13);
+      const stem = Math.abs(fx - (0.38 + h * 0.24)) < 0.12;
+      const bar = Math.abs(fy - (0.3 + hash2(seg, 6, 13) * 0.4)) < 0.17 && fx > 0.22 && fx < 0.78;
+      return stem || bar ? { c: '#ffffff', a: 0.95 } : null;
+    }
+    if (r > 0.52 && r < 0.6) return { c: '#ececec', a: 0.85 };
+    if (r < 0.52) {
+      // altı köşeli yıldız: normal açıları 30 + 60i, merkezden uzaklık 0,25 (iki eşkenar üçgenin kenarları)
+      for (let i = 0; i < 6; i++) {
+        const th = Math.PI / 6 + (i * Math.PI) / 3;
+        if (Math.abs(dx * Math.cos(th) + dy * Math.sin(th) - 0.25) < 0.04) return { c: '#ffffff', a: 0.9 };
+      }
+      if (r < 0.12) return { c: '#ffffff', a: 0.75 };
+    }
+    return null;
+  });
+
+/** Güneş sütunu (32x96, dikey): ortası beyaz-altın, kenara cos^2 ile sönen, gürültüyle titreşen; üst ucu göğe doğru erir (ADD). */
+const sunPillarTex = (k: VfxKit, s: Phaser.Scene): string =>
+  k.softTexture(s, 'v2mage:sunpillar', 32, 96, (x, y) => {
+    const u = Math.abs((x + 0.5) / 16 - 1);
+    const body = Math.cos((u * Math.PI) / 2) ** 2;
+    const top = Math.min(1, (y + 1) / 40);
+    const a = body * top * (0.8 + 0.35 * fbm(x / 4, y / 9, 251));
+    if (a < 0.07) return null;
+    return { c: u < 0.24 ? '#fff6d0' : u < 0.55 ? '#ffd070' : '#ff9a2a', a: Math.min(1, a) };
+  });
+
+/**
+ * Buzul kayası (48x96, uç yukarıda): üç sivri buz kütlesi (orta önde, en yüksek), yüzlü gölgeleme (sol yüz açık, sağ koyu), parlak sol kenar,
+ * koyu sağ kenar, içte ince kırık çizgileri; dibi hafif saydam (yerden çıkıyor gibi).
+ */
+const glacierTex = (k: VfxKit, s: Phaser.Scene): string =>
+  k.softTexture(s, 'v2mage:glacier', 48, 96, (x, y) => {
+    const nx = (x + 0.5) / 48;
+    const ny = (y + 0.5) / 96;
+    const spikes: Array<[number, number, number]> = [
+      [0.22, 0.34, 0.2],
+      [0.79, 0.22, 0.2],
+      [0.5, 0.02, 0.27],
+    ];
+    let out: { c: string; a: number } | null = null;
+    for (let i = 0; i < spikes.length; i++) {
+      const [cx, top, hw] = spikes[i]!;
+      if (ny < top) continue;
+      const half = hw * ((ny - top) / (1 - top)) ** 0.8 * (0.88 + 0.24 * fbm(ny * 9, i * 3.1, 261)) + 0.012;
+      const d = (nx - cx) / half;
+      if (Math.abs(d) > 1) continue;
+      const edgeL = d < -1 + 0.22;
+      const edgeR = d > 1 - 0.18;
+      const crack = Math.abs(fbm(nx * 7 + i, ny * 4, 271) - 0.5) < 0.025;
+      const c = edgeL ? '#e8f8ff' : edgeR ? '#2f5f80' : crack ? '#d6f2ff' : d < -0.1 ? '#a9daf2' : d < 0.35 ? '#7cbde0' : '#5a9cc4';
+      out = { c, a: ny > 0.9 ? 0.75 : 0.95 };
+    }
+    return out;
+  });
+
+/** Tam ekran soğuk / sıcak renk basması (ADD, kısa): birimler dahil her şeyi eşit boyar (beyaz değil, renkli). */
+function colorWash(c: VfxCtx, k: VfxKit, tint: number, alpha: number, dur: number): void {
+  const r = c.scene.add.rectangle(960, 540, FULL_W, 1080, tint, alpha).setDepth(k.DEPTH - 20).setBlendMode(k.Phaser.BlendModes.ADD);
+  c.scene.tweens.add({ targets: r, alpha: 0, duration: k.slow(dur), ease: 'Quad.easeOut', onComplete: () => r.destroy() });
+}
+
+/** Büyücünün ARKASINDA dikey dev mühür (wind-up): kalın mühür açılır ve döner, arkasında yumuşak ışık; `close(ms)` söndürür. */
+function casterSeal(c: VfxCtx, k: VfxKit, tint: number, glowTint: number, open: number): { close: (delay: number) => void } {
+  const a = c.actor;
+  const pk = phoneFxK();
+  const back = a.container.depth - 1;
+  const x = a.container.x - face(a) * a.w * 0.08;
+  const y = a.container.y - a.h * 0.6;
+  const D = a.h * 1.3 * pk;
+  const lt = glow(c, k, x, y, D * 0.4, glowTint, 0, back);
+  const seal = c.scene.add.image(x, y, bigSigilTex(k, c.scene)).setDisplaySize(D * 0.35, D * 0.35).setTint(tint).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0).setDepth(back);
+  c.scene.tweens.add({ targets: seal, displayWidth: D, displayHeight: D, alpha: 0.95, duration: k.slow(open), ease: 'Cubic.easeOut' });
+  c.scene.tweens.add({ targets: seal, angle: 120 * face(a), duration: k.slow(open + 1400) });
+  c.scene.tweens.add({ targets: lt, displayWidth: D * 1.3, displayHeight: D * 1.3, alpha: 0.5, duration: k.slow(open), ease: 'Sine.easeOut' });
+  return {
+    close: (delay) => {
+      fade(c, k, seal, delay, 380, { displayWidth: D * 1.25, displayHeight: D * 1.25 });
+      fade(c, k, lt, delay, 420);
+    },
+  };
+}
+
+/** Kalın piksel çizgi (2 px adımlı kareler): çatlak ve iz için; Graphics'e çizer. */
+function thickLine(k: VfxKit, g: Phaser.GameObjects.Graphics, pts: Pt[], upto: number, w: number, col: number, alpha: number): void {
+  g.fillStyle(col, alpha);
+  for (let i = 1; i < pts.length; i++) {
+    const p0 = pts[i - 1]!;
+    const p1 = pts[i]!;
+    const segU = Math.min(1, Math.max(0, upto * (pts.length - 1) - (i - 1)));
+    if (segU <= 0) break;
+    const len = Math.hypot(p1.x - p0.x, p1.y - p0.y) * segU;
+    const n = Math.max(1, Math.ceil(len / 2));
+    const ww = Math.max(2, w * (1 - (i - 1) / (pts.length - 1)) ** 0.6);
+    for (let j = 0; j <= n; j++) {
+      const q = (j / n) * segU;
+      g.fillRect(k.snap(p0.x + (p1.x - p0.x) * q - ww / 2), k.snap(p0.y + (p1.y - p0.y) * q - ww / 2), ww, ww);
+    }
+  }
+}
+
+// =====================================================================================================================
 // FIRE BOLT
 
 /**
@@ -588,7 +720,7 @@ function heatHaze(c: VfxCtx, k: VfxKit): { level: (a: number) => void; stop: () 
  * tük soğuyan kıvılcım. Çarpınca: kısa sıcak ışık, küçük katmanlı ateş patlaması (soğuyup ise döner), gövdede kısa alev dilleri, yükselen
  * is, yere düşen kıvılcımlar, yanık izi. İlk hasar ~0,67 sn (v1 ~0,74 sn).
  */
-const fireBolt: V2Vfx = async (c, k) => {
+const fireBoltBase: V2Vfx = async (c, k) => {
   const f = face(c.actor);
   const hand = handOf(c.actor);
   c.actor.play('cast');
@@ -661,6 +793,208 @@ const fireBolt: V2Vfx = async (c, k) => {
 };
 
 // =====================================================================================================================
+// SUNFIRE (Fire Bolt evolve'u; pilot 2026-11-23)
+
+/**
+ * Evolve onaylı mı: birimin onaylı evolve listesi (Combatant.evolved, BattleScene'in ikon/ad kuralıyla aynı kaynak) bu skill'i içeriyor mu.
+ * Pose Tester kopyası (pt_fire_bolt) `artOf` ile aynı efekti oynar ama evolve'u yoktur: taban efekt.
+ */
+const isEvolved = (c: VfxCtx): boolean => !!c.actor.combatant.evolved?.includes(c.skill.id);
+
+/** Güneş çekirdeği: beyaz-sarı disk, çevresinde dönen ışın tacı (ışın boyu açıya göre değişir). 2 varyant (titreme). */
+const sunTex = (k: VfxKit, s: Phaser.Scene, v: number): string =>
+  k.softTexture(s, `v2mage:sun${v}`, 64, 64, (x, y) => {
+    const dx = (x + 0.5) / 32 - 1;
+    const dy = (y + 0.5) / 32 - 1;
+    const r = Math.hypot(dx, dy);
+    const ang = Math.atan2(dy, dx);
+    const ray = Math.abs(Math.cos(7 * ang + v * 0.45)) ** 5;
+    const len = 0.46 + 0.5 * ray + (fbm(ang * 2 + 5, v * 1.7, 211) - 0.5) * 0.08;
+    if (r >= len) return null;
+    const heat = clamp01(1.08 - (r / len) * 0.85 + (r < 0.3 ? 0.25 : 0));
+    return { c: fireHex(heat), a: r > len - 0.1 ? (len - r) / 0.1 : 1 };
+  });
+
+/** Güneş patlaması: kalın, uca doğru sönen 14 kama ışın (ADD ile ışık; büyüyüp döner). */
+const sunburstTex = (k: VfxKit, s: Phaser.Scene): string =>
+  k.softTexture(s, 'v2mage:sunburst', 96, 96, (x, y) => {
+    const dx = (x + 0.5) / 48 - 1;
+    const dy = (y + 0.5) / 48 - 1;
+    const r = Math.hypot(dx, dy);
+    if (r >= 1) return null;
+    const ang = Math.atan2(dy, dx);
+    const spike = Math.abs(Math.cos(7 * ang)) ** 4; // kalın kama ışınlar (telefonda küçülünce de okunur)
+    const a = (spike * 1.15 + (r < 0.22 ? 0.6 : 0)) * (1 - r * 0.8) ** 1.1;
+    if (a < 0.08) return null;
+    return { c: r < 0.35 ? '#fff6d0' : '#ffd070', a: Math.min(1, a) };
+  });
+
+/** Güneş halkası: yumuşak, gürültüyle yırtılan ince şok halkası (ADD). */
+const sunRingTex = (k: VfxKit, s: Phaser.Scene): string =>
+  k.softTexture(s, 'v2mage:sunring', 64, 64, (x, y) => {
+    const dx = (x + 0.5) / 32 - 1;
+    const dy = (y + 0.5) / 32 - 1;
+    const r = Math.hypot(dx, dy);
+    const w = 0.15 + 0.07 * fbm((Math.atan2(dy, dx) + 3.2) * 2, 1.3, 223);
+    const a = 1 - Math.abs(r - 0.86) / w;
+    if (a <= 0.05) return null;
+    return { c: a > 0.6 ? '#fff0b8' : '#ffb84a', a: Math.min(1, a) };
+  });
+
+/**
+ * Sunfire v3 (Fire Bolt evolve; Ömer 2026-11-24 "abartılı"): BAŞKA SINIF bir an.
+ *  1) Wind-up: gök kızıl alacakaranlığa kararır; büyücünün ARKASINDA dev altın güneş mührü + dönen ışın tacı açılır; asanın ucunun üstünde KÜÇÜK
+ *     BİR GÜNEŞ doğar (ışık tozu içine çekilir, büyür).
+ *  2) Güneş yüksek bir yayla fırlar (dev çekirdek, kalın altın iz, ışık tozu).
+ *  3) Çarpma: gökten hedefe GÜNEŞ SÜTUNU iner (hedefin arkasında), altın renk basması + sert sarsıntı, dev dönen ışın patlaması, yerde genişleyen
+ *     şok halkası, hedefin çevresinde ALEV ÇEMBERİ, büyük ateş patlaması ve kıvılcım yağmuru.
+ *  4) Kalıcı iz: zemine yanmış güneş mührü (kor gibi nabız atar) + büyük yanık, ~1,5 sn kalır.
+ * İlk hasar ~0,70 sn yavaşlatmasız (taban ~0,57; +%23). Sesler: ignite başta, roar fırlatışta, blast çarpmada.
+ */
+const sunfire: V2Vfx = async (c, k) => {
+  const f = face(c.actor);
+  const hand = handOf(c.actor);
+  c.actor.play('cast');
+  c.sfx('sunfireIgnite');
+  const pk = phoneFxK();
+  // 1) WIND-UP
+  const dim = c.scene.add.rectangle(960, 540, FULL_W, 1080, 0x1c0806, 1).setAlpha(0).setDepth(k.DEPTH - 25);
+  c.scene.tweens.add({ targets: dim, alpha: 0.45, duration: k.slow(300) });
+  const seal = casterSeal(c, k, 0xffc850, 0xff9a2a, 300);
+  const a = c.actor;
+  const rays = c.scene.add.image(a.container.x - f * a.w * 0.08, a.container.y - a.h * 0.6, sunburstTex(k, c.scene)).setDisplaySize(40, 40).setDepth(a.container.depth - 2).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0).setTint(0xffb84a);
+  c.scene.tweens.add({ targets: rays, displayWidth: a.h * 1.9 * pk, displayHeight: a.h * 1.9 * pk, alpha: 0.75, rotation: 0.5 * f, duration: k.slow(340), ease: 'Cubic.easeOut' });
+  palmFlare(c, k, hand, 300, 0xffc850);
+  const birth = { x: hand.x + f * 26, y: hand.y - 86 * pk };
+  const SUN = 140 * pk;
+  const bHalo = glow(c, k, birth.x, birth.y, 30, 0xff9a2a, 0, k.DEPTH + 30);
+  const bCore = glow(c, k, birth.x, birth.y, 12, 0xfff6d0, 0, k.DEPTH + 35);
+  const bSun = c.scene.add.image(birth.x, birth.y, sunTex(k, c.scene, 0)).setDisplaySize(8, 8).setDepth(k.DEPTH + 34);
+  void k.counter(c.scene, k.slow(330), (u) => {
+    const e = 1 - (1 - u) ** 2;
+    bSun.setDisplaySize(8 + (SUN - 8) * e, 8 + (SUN - 8) * e).setRotation(u * 4).setTexture(sunTex(k, c.scene, Math.floor(u * 18) % 2));
+    bHalo.setDisplaySize(30 + SUN * 1.9 * e, 30 + SUN * 1.9 * e).setAlpha(0.5 * e);
+    bCore.setDisplaySize(12 + SUN * 0.4 * e, 12 + SUN * 0.4 * e).setAlpha(e);
+  });
+  particles(c, k, k.DEPTH + 36, 330, Array.from({ length: 18 }, () => {
+    const ang = k.rnd(0, Math.PI * 2);
+    const r = k.rnd(120, 200) * pk;
+    const life = k.rnd(220, 320);
+    return { x: birth.x + Math.cos(ang) * r, y: birth.y + Math.sin(ang) * r, vx: (-Math.cos(ang) * r) / (life / 1000), vy: (-Math.sin(ang) * r) / (life / 1000), g: 0, drag: 0, life, age: 0, size: 4, kind: 'mote' as const, col: 0xffd870, a: 1 };
+  }));
+  await k.wait(c.scene, k.slow(340));
+  c.actor.play('idle');
+  seal.close(120);
+  fade(c, k, rays, 120, 420);
+  bSun.destroy();
+  bHalo.destroy();
+  bCore.destroy();
+  let screenDone = false;
+  await Promise.all(
+    c.targets.map(async (t) => {
+      c.sfx('sunfireRoar');
+      const from = birth;
+      const to = k.contact(c.actor, t);
+      const dir = to.x >= from.x ? 1 : -1;
+      const arc = 70 + Math.min(110, Math.abs(to.x - from.x) * 0.12);
+      const aura = glow(c, k, from.x, from.y, SUN * 2.4, 0xff9a2a, 0.36, k.DEPTH + 30);
+      const halo = glow(c, k, from.x, from.y, SUN * 1.4, 0xffc050, 0.55, k.DEPTH + 31);
+      const core = glow(c, k, from.x, from.y, SUN * 0.45, 0xfff6d0, 1, k.DEPTH + 35);
+      const sun = c.scene.add.image(from.x, from.y, sunTex(k, c.scene, 0)).setDisplaySize(SUN, SUN).setDepth(k.DEPTH + 34);
+      const body = c.scene.add.image(from.x, from.y, streakTex(k, c.scene, 0)).setOrigin(1, 0.5).setDisplaySize(260, 90 * pk).setDepth(k.DEPTH + 32).setFlipX(dir < 0).setTint(0xffe6a8);
+      let px = from.x;
+      let py = from.y;
+      let n = 0;
+      const pos = (e: number): Pt => ({ x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e - Math.sin(e * Math.PI) * arc });
+      await k.counter(c.scene, k.slow(360), (u) => {
+        const e = u * u * 0.45 + u * 0.55;
+        const { x, y } = pos(e);
+        core.setPosition(x, y);
+        halo.setPosition(x - dir * 10, y).setAlpha(0.5 + 0.12 * Math.sin(u * 50));
+        aura.setPosition(x - dir * 24, y).setAlpha(0.32 + 0.06 * Math.sin(u * 37));
+        const sz = SUN * (1 + 0.06 * Math.sin(u * 40));
+        sun.setPosition(k.snap(x), k.snap(y)).setTexture(sunTex(k, c.scene, Math.floor(u * 24) % 2)).setRotation(u * 9).setDisplaySize(sz, sz);
+        const nx = pos(Math.min(1, e + 0.02));
+        const rot = Math.atan2(nx.y - y, nx.x - x);
+        body.setOrigin(dir > 0 ? 1 : 0, 0.5).setPosition(k.snap(x + dir * 20), k.snap(y)).setRotation(dir > 0 ? rot : rot - Math.PI).setTexture(streakTex(k, c.scene, Math.floor(u * 24) % 2)).setDisplaySize(200 + 140 * Math.min(1, u * 3), 90 * pk);
+        const dist = Math.hypot(x - px, y - py);
+        const steps = Math.min(8, Math.floor(dist / 9));
+        for (let i = 1; i <= steps; i++) {
+          const qx = px + ((x - px) * i) / steps;
+          const qy = py + ((y - py) * i) / steps;
+          n++;
+          fireball(c, k, qx - dir * 16 + k.rnd(-6, 6), qy + k.rnd(-9, 9), { size: [k.rnd(44, 56) * pk, k.rnd(80, 104) * pk], life: k.rnd(150, 230), rise: k.rnd(8, 24), drift: -dir * k.rnd(6, 16), depth: k.DEPTH + 30, fadeFrom: 0, cool: [0, 0.65] });
+          if (n % 2 === 0) {
+            const mote = glow(c, k, qx - dir * 22 + k.rnd(-10, 10), qy + k.rnd(-16, 16), k.rnd(12, 22) * pk, 0xffd870, 0.95, k.DEPTH + 36);
+            c.scene.tweens.add({ targets: mote, alpha: 0, y: mote.y + k.rnd(-18, 10), duration: k.slow(k.rnd(260, 400)), onComplete: () => mote.destroy() });
+          }
+          if (n % 6 === 0) smoke(c, k, qx - dir * 36, qy, { n: 1, spread: 4, size: [26, 40], rise: [30, 60], life: [600, 800], alpha: 0.26, drift: -dir * 10 });
+        }
+        if (steps) {
+          px = x;
+          py = y;
+        }
+      });
+      aura.destroy();
+      core.destroy();
+      halo.destroy();
+      sun.destroy();
+      body.destroy();
+      // 3) ÇARPMA
+      c.sfx('sunfireBlast');
+      if (!screenDone) {
+        // ekran düzeyi öğeler bir kez (çok hedefte üst üste binip hedefi beyazlatmasın)
+        screenDone = true;
+        warmFlash(c, k, 0xffa040, 0.2, 380);
+        k.shake(c.scene, 260, 0.012);
+        c.scene.tweens.add({ targets: dim, alpha: 0, delay: k.slow(500), duration: k.slow(600), onComplete: () => dim.destroy() });
+      }
+      const behind = t.container.depth - 1;
+      const gx = t.container.x;
+      const gy = t.container.y;
+      // güneş sütunu: gökten hedefin ayağına (hedefin ARKASINDA), önce kalınlaşır sonra incelip söner
+      const PW = t.w * 1.05 * pk;
+      const pillar = c.scene.add.image(gx, gy + 6, sunPillarTex(k, c.scene)).setOrigin(0.5, 1).setDisplaySize(PW * 0.4, gy + 6).setDepth(behind).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(1);
+      void k.counter(c.scene, k.slow(620), (u) => {
+        const w = u < 0.2 ? 0.4 + (u / 0.2) * 0.9 : 1.3 - (u - 0.2) * 1.4;
+        pillar.setDisplaySize(Math.max(4, PW * w), gy + 6).setAlpha(u < 0.45 ? 0.85 : 0.85 * (1 - (u - 0.45) / 0.55));
+        if (u >= 1) pillar.destroy();
+      });
+      const footGlow = glow(c, k, gx, gy - 6, PW * 2.2, 0xffc050, 0.75, k.FLOOR_FX + 7).setDisplaySize(PW * 2.6, PW * 0.8);
+      fade(c, k, footGlow, 220, 520);
+      const flash = glow(c, k, to.x, to.y, 120, 0xfff6d0, 1, behind);
+      c.scene.tweens.add({ targets: flash, displayWidth: 380 * pk, displayHeight: 380 * pk, alpha: 0, duration: k.slow(280), ease: 'Quad.easeOut', onComplete: () => flash.destroy() });
+      const burst = c.scene.add.image(to.x, to.y, sunburstTex(k, c.scene)).setDisplaySize(100, 100).setDepth(behind).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(1);
+      c.scene.tweens.add({ targets: burst, displayWidth: 560 * pk, displayHeight: 560 * pk, rotation: 0.7 * dir, alpha: 0, duration: k.slow(460), ease: 'Cubic.easeOut', onComplete: () => burst.destroy() });
+      // yerde şok halkası (yatık, kalın)
+      const ring = c.scene.add.image(gx, gy - 2, sunRingTex(k, c.scene)).setDisplaySize(60, 22).setDepth(k.FLOOR_FX + 8).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0.95);
+      c.scene.tweens.add({ targets: ring, displayWidth: 620 * pk, displayHeight: 200 * pk, alpha: 0, duration: k.slow(520), ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+      // alev çemberi: hedefin çevresinde elips üstünde alev dilleri (arka yarı hedefin arkasında, ön yarı önünde)
+      const rx = t.w * 0.85 * pk;
+      for (let i = 0; i < 10; i++) {
+        const th = (i / 10) * Math.PI * 2 + k.rnd(-0.12, 0.12);
+        const fx = gx + Math.cos(th) * rx;
+        const fy = gy + Math.sin(th) * rx * 0.3;
+        flames(c, k, fx, fy, 1, 0, [80 * pk, 130 * pk], { life: [520, 760], depth: Math.sin(th) < 0 ? behind : t.container.depth + 1 });
+      }
+      fireball(c, k, to.x, to.y, { size: [100, 250 * pk], life: 500, rise: 34, depth: k.DEPTH + 40, light: 0.6, cool: [0.1, 0.5], fadeFrom: 0.25 });
+      for (let i = 0; i < 8; i++) fireball(c, k, to.x + k.rnd(-44, 44), to.y + k.rnd(-34, 26), { size: [44, k.rnd(100, 140) * pk], life: k.rnd(340, 520), rise: k.rnd(24, 80), drift: k.rnd(-30, 30), delay: i * 26, depth: k.DEPTH + 39, cool: [0.05, 0.5], fadeFrom: 0.25 });
+      particles(c, k, k.DEPTH + 44, 1100, sparks(to.x, to.y, 30, k, { speed: [160, 520], angle: [-Math.PI * 0.97, -Math.PI * 0.03], g: 900, life: [450, 950], size: [3, 5], heat: 0.97, floor: gy + k.rnd(-6, 6) }));
+      smoke(c, k, to.x, to.y - 20, { n: 7, spread: 30, size: [60, 100], rise: [100, 190], life: [1200, 1600], alpha: 0.58, tint: [0x2a221e, 0x3a302a], drift: -dir * 24, jitter: 16, delay: [120, 300] });
+      // 4) kalıcı iz: zemine yanmış güneş mührü + büyük yanık
+      const mark = c.scene.add.image(gx, gy - 2, bigSigilTex(k, c.scene)).setDisplaySize(t.w * 2.2 * pk, t.w * 2.2 * pk * 0.3).setTint(0xff7a1a).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0).setDepth(k.FLOOR_FX + 3);
+      c.scene.tweens.add({ targets: mark, alpha: 1, duration: k.slow(140) });
+      c.scene.tweens.add({ targets: mark, alpha: 0.7, delay: k.slow(300), duration: k.slow(260), yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });
+      fade(c, k, mark, 1800, 700);
+      scorch(c, k, gx, gy - 2, t.w * 1.3 * pk, { delay: 60, hold: 1300 });
+    }),
+  );
+};
+
+/** Fire Bolt: onaylı evolve'u (Sunfire) varsa Sunfire efekti, yoksa taban efekt (bayt bayt eskisi). */
+const fireBolt: V2Vfx = (c, k) => (isEvolved(c) ? sunfire(c, k) : fireBoltBase(c, k));
+
+// =====================================================================================================================
 // BLIZZARD
 
 /** Blizzard'ın kırağısı: hücreler merkezden dışa donar; ince kırağı benekleri ve dallanan kristal çizgiler (kontur yok). */
@@ -705,14 +1039,90 @@ function frostFloor(c: VfxCtx, k: VfxKit, slots: number[], center: Pt): { g: Pha
   return { g, draw };
 }
 
+/** Don halkası: kalın, kenarı kırağı gürültüsüyle yırtık buz-beyaz şok halkası (ADD; telefonda küçülünce de okunur kalınlıkta). */
+const frostRingTex = (k: VfxKit, s: Phaser.Scene): string =>
+  k.softTexture(s, 'v2mage:frostring', 64, 64, (x, y) => {
+    const dx = (x + 0.5) / 32 - 1;
+    const dy = (y + 0.5) / 32 - 1;
+    const r = Math.hypot(dx, dy);
+    const w = 0.16 + 0.08 * fbm((Math.atan2(dy, dx) + 3.2) * 2.4, 2.1, 241);
+    const a = 1 - Math.abs(r - 0.82) / w;
+    if (a <= 0.05) return null;
+    return { c: a > 0.65 ? '#f2fcff' : a > 0.3 ? '#bfe7f8' : '#7cc4e8', a: Math.min(1, a) };
+  });
+
+/**
+ * Eternal Winter v3 wind-up (yalnız evolve): büyücünün ARKASINDA buz mührü, alanın ÜSTÜNDE gökte dev yatık buz mührü (fırtına kapısı) açılır, ekran
+ * koyu kış mavisine kararır, tüm savaş alanını yatay süpüren TİPİ başlar (iri, hızlı kar çizgileri; alanın dışına da taşar). `end()` kuyrukta söndürür.
+ */
+function eternalWinterWindup(c: VfxCtx, k: VfxKit, center: Pt, span: number, cloudY: number, wind: number): { end: () => void } {
+  const seal = casterSeal(c, k, 0x9fdcff, 0x4aa3ff, 280);
+  const deep = c.scene.add.rectangle(960, 540, FULL_W, 1080, 0x061430, 1).setAlpha(0).setDepth(k.DEPTH - 24);
+  c.scene.tweens.add({ targets: deep, alpha: 0.3, duration: k.slow(320) });
+  // gökteki fırtına kapısı: yatık kalın mühür + arkasında soğuk ışık; birimlerin başının ve can çubuklarının çok üstünde (telefonda büyütülmez: zaten dev)
+  const S = Math.min(640, span + 100);
+  // üstteki "Mage uses ..." bandı (BattleScene.announce: y 202-262, ekran ortasında, genişliği yazıya göre) mührün üstüne/yanına binmesin: mühür her ekranda bandın ALTINA iner (can çubukları barRects ile ayrıca seyreltilir).
+  const skyY = Math.max(120, cloudY - 190, 262 + 18 + S * 0.17);
+  const skyGlow = glow(c, k, center.x, skyY, S, 0x6fc0ff, 0, k.DEPTH + 16).setDisplaySize(S * 1.1, S * 0.34);
+  c.scene.tweens.add({ targets: skyGlow, alpha: 0.35, duration: k.slow(300) });
+  const sky = c.scene.add.image(center.x, skyY, bigSigilTex(k, c.scene)).setDisplaySize(S * 0.4, S * 0.4 * 0.28).setTint(0x7fd0ff).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0).setDepth(k.DEPTH + 17);
+  c.scene.tweens.add({ targets: sky, displayWidth: S, displayHeight: S * 0.28, alpha: 0.62, duration: k.slow(320), ease: 'Cubic.easeOut' });
+  // tipi: ekranın tamamında yatay savrulan iri kar (rüzgâr yönünde, hafif düşüşle)
+  let on = true;
+  let acc = 0;
+  const L = 960 - FULL_W / 2 - 80;
+  const R = 960 + FULL_W / 2 + 80;
+  particles(c, k, k.DEPTH + 21, 3600, [], (_t, dt, out) => {
+    if (!on) return;
+    acc += dt * 0.32;
+    while (acc >= 1) {
+      acc -= 1;
+      const near = Math.random() < 0.35;
+      const vx = wind * (near ? k.rnd(1300, 1800) : k.rnd(800, 1150));
+      const life = ((R - L) / Math.abs(vx)) * 1000;
+      out.push({ x: wind > 0 ? L : R, y: k.rnd(40, 1040), vx, vy: k.rnd(60, 180), g: 0, drag: 0, life, age: 0, size: near ? 6 : 4, kind: 'snow', a: near ? 0.85 : 0.55, col: Math.random() < 0.3 ? 0xd8eef8 : 0xffffff });
+    }
+  }, barRects(c));
+  return {
+    end: () => {
+      on = false;
+      seal.close(0);
+      fade(c, k, sky, 0, 600, { displayWidth: S * 1.15 });
+      fade(c, k, skyGlow, 0, 600);
+      c.scene.tweens.add({ targets: deep, alpha: 0, duration: k.slow(700), onComplete: () => deep.destroy() });
+    },
+  };
+}
+
+/**
+ * Eternal Winter dev buz mızrağı saplandıktan sonra (yalnız evolve): mızrak yerde, hedefin ARKASINDA dikili kalır, dibinde buz ışığı; ~1,4 sn sonra
+ * çatlayıp iri buz parçalarına dağılır.
+ */
+function giantSpearStay(c: VfxCtx, k: VfxKit, sp: Img, to: Pt, depth: number, wind: number, bits: Part[]): void {
+  sp.setDepth(depth);
+  const lt = glow(c, k, to.x, to.y - 10, sp.displayWidth * 3, 0x9fdcff, 0.55, depth - 0.5);
+  fade(c, k, lt, 200, 700);
+  void k.wait(c.scene, k.slow(1400)).then(() => {
+    for (let j = 0; j < 14; j++) {
+      const ang = k.rnd(-Math.PI * 0.9, -Math.PI * 0.1);
+      const s = k.rnd(90, 260);
+      const h = k.rnd(0.1, 0.9);
+      const px = sp.x - Math.cos(sp.rotation + Math.PI / 2) * sp.displayHeight * h;
+      const py = sp.y - Math.sin(sp.rotation + Math.PI / 2) * sp.displayHeight * h;
+      bits.push({ x: px, y: py, vx: Math.cos(ang) * s + wind * 40, vy: Math.sin(ang) * s, g: 1200, drag: 1.2, life: k.rnd(380, 650), age: 0, size: Math.random() < 0.5 ? 6 : 4, kind: 'ice', floor: to.y + k.rnd(0, 12), col: Math.random() < 0.4 ? 0xffffff : 0xbfe7f8 });
+    }
+    fade(c, k, sp, 0, 260, { displayHeight: sp.displayHeight * 0.4 });
+  });
+}
+
 /**
  * Blizzard (rect 3x2): asanın kristali soğuk parlar; ekran soğuk maviye kararır, alanın üstünde yırtık, gürültü dokulu koyu fırtına bulutu
  * rüzgârla akar. İnce kar RÜZGÂRLA EĞİK ve yoğun yağar (uzak taneler küçük ve silik, yakınlar iz bırakır), yerde soğuk sis süzülür, hücreler
  * merkezden dışa kırağılanır. Sonra ince, yarı saydam buz mızrakları rüzgâr açısıyla saplanır ve ince kırıntılara dağılır (buz sisi);
  * ilk mızrak yere değince hasar. Hedeflerin ayağında kısa, saydam buz kabuğu. İlk hasar ~0,97 sn, fırtına toplam ~0,25 sn daha uzun (2026-10-09; v1 ilk hasar ~1,4 sn).
  */
-const blizzard: V2Vfx = async (c, k) => {
-  c.sfx('windHowl');
+const blizzardFx = async (c: VfxCtx, k: VfxKit, evo: boolean): Promise<void> => {
+  c.sfx(evo ? 'eternalWinterHowl' : 'windHowl');
   c.actor.play('cast');
   const crystalAt = staffFlare(c, k, 300, 0x8fd8ff);
   particles(c, k, k.DEPTH + 42, 900, Array.from({ length: 6 }, () => ({ x: crystalAt.x + k.rnd(-8, 8), y: crystalAt.y + k.rnd(-8, 8), vx: k.rnd(-30, 30), vy: k.rnd(-70, -30), g: -20, drag: 1, life: k.rnd(500, 850), age: 0, size: 2, kind: 'ice' as const, a: 0.8 })));
@@ -728,19 +1138,22 @@ const blizzard: V2Vfx = async (c, k) => {
   const cloudY = yTop - 300;
   const wind = c.board === 'enemy' ? 1 : -1; // büyücüden uzağa
   const slant = 0.62; // kar düşüş eğimi (vx / vy)
+  // Eternal Winter v3: önce fırtına kapısı açılır (büyücünün arkasında mühür, gökte dev mühür, koyu kış mavisi, tüm alanı süpüren tipi)
+  const winter = evo ? eternalWinterWindup(c, k, center, x1 - x0, cloudY, wind) : null;
+  if (evo) await k.wait(c.scene, k.slow(130));
   // 1) soğuk karartma + rüzgârla savrulan kar perdesi (beyazlık: yarı saydam, gürültülü sis katmanları alanı süpürür; çizgi film bulutu yok)
   const dim = c.scene.add.rectangle(960, 540, FULL_W, 1080, 0x0a1828, 1).setAlpha(0).setDepth(k.DEPTH - 25);
-  c.scene.tweens.add({ targets: dim, alpha: 0.32, duration: k.slow(420) });
+  c.scene.tweens.add({ targets: dim, alpha: evo ? 0.42 : 0.32, duration: k.slow(420) });
   const clouds: Img[] = [];
   const span = x1 - x0 + 360;
-  const nVeil = Math.max(5, Math.round(span / 160));
+  const nVeil = Math.max(5, Math.round(span / (evo ? 115 : 160)));
   for (let i = 0; i < nVeil; i++) {
     const layer = i % 2;
     const x = x0 - 180 + (span * (i + 0.5)) / nVeil + k.rnd(-30, 30);
     const y = k.rnd(cloudY + 120, yBot - 40);
     const w = k.rnd(260, 380);
     const p = c.scene.add.image(x - wind * 220, y, smokeTex(k, c.scene, i % 3)).setDisplaySize(w, w * 0.42).setTint(layer ? 0xc8dcea : 0xe6f0f6).setAlpha(0).setDepth(k.DEPTH + 18 + layer).setRotation(k.rnd(-0.2, 0.2)).setFlipX(Math.random() < 0.5);
-    c.scene.tweens.add({ targets: p, alpha: layer ? 0.22 : 0.3, duration: k.slow(k.rnd(380, 520)), delay: k.slow(i * 30) });
+    c.scene.tweens.add({ targets: p, alpha: (layer ? 0.22 : 0.3) + (evo ? 0.07 : 0), duration: k.slow(k.rnd(380, 520)), delay: k.slow(i * 30) });
     c.scene.tweens.add({ targets: p, x: x + wind * k.rnd(220, 320), y: y + k.rnd(10, 40), displayWidth: w * 1.3, duration: k.slow(2900), delay: k.slow(i * 30), ease: 'Linear' });
     clouds.push(p);
   }
@@ -749,7 +1162,7 @@ const blizzard: V2Vfx = async (c, k) => {
   let acc = 0;
   const snowG = particles(c, k, k.DEPTH + 20, 3300, [], (_t, dt, out) => {
     if (!snowOn) return;
-    acc += dt * 0.69; // ~690 tane / sn (Ömer 2026-10-09: +%15)
+    acc += dt * (evo ? 1.1 : 0.69); // ~690 tane / sn (Ömer 2026-10-09: +%15)
     while (acc >= 1) {
       acc -= 1;
       const near = Math.random() < 0.28;
@@ -757,12 +1170,12 @@ const blizzard: V2Vfx = async (c, k) => {
       const floor = k.rnd(yTop - 10, yBot + 6);
       const life = ((floor - cloudY - 20) / vy) * 1000;
       const sx = k.rnd(x0 - 160, x1 + 160) - wind * slant * (floor - cloudY);
-      out.push({ x: sx, y: cloudY + k.rnd(10, 40), vx: wind * vy * slant * k.rnd(0.85, 1.15), vy, g: 0, drag: 0, life, age: 0, size: near ? 4 : Math.random() < 0.5 ? 2 : 3, kind: 'snow', a: near ? 0.9 : k.rnd(0.45, 0.8), col: Math.random() < 0.25 ? 0xd8eef8 : 0xffffff });
+      out.push({ x: sx, y: cloudY + k.rnd(10, 40), vx: wind * vy * slant * k.rnd(0.85, 1.15), vy, g: 0, drag: 0, life, age: 0, size: evo ? (near ? 5 : 3) : near ? 4 : Math.random() < 0.5 ? 2 : 3, kind: 'snow', a: near ? 0.9 : k.rnd(0.45, 0.8), col: Math.random() < 0.25 ? 0xd8eef8 : 0xffffff });
     }
-  });
+  }, barRects(c));
   await k.wait(c.scene, k.slow(240));
   c.actor.play('idle');
-  c.sfx('hailPatter');
+  c.sfx(evo ? 'eternalWinterHail' : 'hailPatter');
   // 3) zemin kırağılanır + soğuk sis
   const frost = frostFloor(c, k, slots, center);
   void k.counter(c.scene, k.slow(600), (u) => frost.draw(u), 'Quad.easeOut');
@@ -774,52 +1187,84 @@ const blizzard: V2Vfx = async (c, k) => {
     c.scene.tweens.add({ targets: m, x: m.x + wind * 150, displayWidth: 200, duration: k.slow(2500), delay: k.slow(i * 40), ease: 'Linear' });
     fade(c, k, m, 1550 + i * 40, 900);
   }
-  await k.wait(c.scene, k.slow(360)); // fırtına biraz daha uzun sürer (Ömer 2026-10-09: +0,25 sn)
+  await k.wait(c.scene, k.slow(evo ? 450 : 360)); // fırtına biraz daha uzun sürer (Ömer 2026-10-09: +0,25 sn)
   // 4) buz mızrakları rüzgâr açısıyla saplanır
   let landed = 0;
   let firstLanded: () => void = () => undefined;
   const first = new Promise<void>((r) => (firstLanded = r));
   const iceBits: Part[] = [];
-  const iceG = particles(c, k, k.DEPTH + 33, 1900, [], (_t, _dt, out) => {
+  const iceG = particles(c, k, k.DEPTH + 33, evo ? 3600 : 1900, [], (_t, _dt, out) => {
     while (iceBits.length) out.push(iceBits.pop()!);
   });
   void iceG;
   const ang = Math.atan2(1, wind * slant); // düşüş yönü
   // mızrak sayısı: hedefli hücre 3, boş hücre 2; toplamın ~%15'i kadar ek mızrak hücrelere sırayla dağıtılır (Ömer 2026-10-09)
   const base = cells.map((cl) => (c.targets.some((t) => t.combatant.slot === cl.s) ? 3 : 2));
-  const extra = Math.round(base.reduce((a, b) => a + b, 0) * 0.15);
+  const extra = Math.round(base.reduce((a, b) => a + b, 0) * (evo ? 0.4 : 0.15));
   for (let i = 0; i < extra; i++) base[i % base.length]! += 1;
   const jobs = cells.flatMap((cl, ci) =>
     Array.from({ length: base[ci]! }, async (_, i) => {
       await k.wait(c.scene, k.slow(i * 155 + (ci % 3) * 30 + k.rnd(0, 40)));
       const to = i === 0 ? { x: cl.m.x + k.rnd(-12, 12), y: cl.m.y - k.rnd(24, 46) } : k.inQuad(cl.q, 0.75);
-      const len = i === 0 ? 96 : k.rnd(60, 84);
-      const fall = 420;
-      const sp = c.scene.add.image(to.x - Math.cos(ang) * fall, to.y - Math.sin(ang) * fall, shardTex(k, c.scene)).setOrigin(0.5, 1).setDisplaySize(len * 0.27, len).setDepth(k.DEPTH + 30).setRotation(ang - Math.PI / 2);
+      // Eternal Winter v3: hedefli hücrenin ilk mızrağı DEV (gökten iner, yerde dikili kalır)
+      const giant = evo && i === 0 && c.targets.some((t) => t.combatant.slot === cl.s);
+      const len = giant ? 300 * (1 + (phoneFxK() - 1) * 0.5) : evo ? (i === 0 ? 136 : k.rnd(84, 112)) : i === 0 ? 96 : k.rnd(60, 84);
+      const fall = giant ? 950 : 420;
+      const sp = c.scene.add.image(to.x - Math.cos(ang) * fall, to.y - Math.sin(ang) * fall, shardTex(k, c.scene)).setOrigin(0.5, 1).setDisplaySize(len * (giant ? 0.2 : evo ? 0.34 : 0.27), len).setDepth(k.DEPTH + 30).setRotation(ang - Math.PI / 2);
       await k.travel(c.scene, sp, to, 190, { ease: 'in' });
-      sp.destroy();
+      const tgt = giant ? c.targets.find((t) => t.combatant.slot === cl.s) : undefined;
+      if (tgt) giantSpearStay(c, k, sp, to, tgt.container.depth - 1, wind, iceBits);
+      else sp.destroy();
       if (landed++ === 0) firstLanded();
-      if (landed % 3 === 1) c.sfx('iceCrack');
+      if (landed % 3 === 1) c.sfx(evo ? 'eternalWinterShatter' : 'iceCrack');
       // kırılma: ince buz kırıntıları sekip düşer, buz sisi
-      for (let j = 0; j < 10; j++) {
+      for (let j = 0; j < (evo ? 16 : 10); j++) {
         const a = k.rnd(-Math.PI * 0.95, -Math.PI * 0.05);
         const s = k.rnd(80, 260);
         iceBits.push({ x: to.x, y: to.y, vx: Math.cos(a) * s + wind * 40, vy: Math.sin(a) * s, g: 1300, drag: 1.5, life: k.rnd(320, 600), age: 0, size: Math.random() < 0.3 ? 4 : 2, kind: 'ice', floor: to.y + k.rnd(0, 10), col: Math.random() < 0.4 ? 0xffffff : 0xbfe7f8 });
       }
       const mist = c.scene.add.image(to.x, to.y - 6, smokeTex(k, c.scene, j3(landed))).setDisplaySize(40, 26).setTint(0xe4f4fb).setAlpha(0.55).setDepth(k.DEPTH + 26);
       c.scene.tweens.add({ targets: mist, displayWidth: 120, displayHeight: 56, alpha: 0, x: mist.x + wind * 30, y: mist.y - 16, duration: k.slow(620), ease: 'Sine.easeOut', onComplete: () => mist.destroy() });
+      if (evo && i === 0) {
+        // Eternal Winter: ilk mızrak yere değince hücrede kalın buz halkası açılır, zeminde kalıcı buz kristalleri yükselir (soğuk yerinde kalır)
+        const ring = c.scene.add.image(cl.m.x, cl.m.y, frostRingTex(k, c.scene)).setDisplaySize(40, 20).setDepth(k.FLOOR_FX + 6).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0.9);
+        c.scene.tweens.add({ targets: ring, displayWidth: 330, displayHeight: 165, alpha: 0, duration: k.slow(520), ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+        for (let q = 0; q < 3; q++) {
+          const cx = cl.m.x + (q - 1) * 38 + k.rnd(-8, 8);
+          const cy = cl.m.y + k.rnd(-4, 10);
+          const h = k.rnd(56, 84) * (q === 1 ? 1.2 : 0.85);
+          const cr = c.scene.add.image(cx, cy, shardTex(k, c.scene)).setOrigin(0.5, 1).setFlipY(true).setRotation(k.rnd(-0.25, 0.25)).setDisplaySize(h * 0.36, 2).setDepth(k.FLOOR_FX + 12);
+          c.scene.tweens.add({ targets: cr, displayHeight: h, duration: k.slow(140), ease: 'Quad.easeOut' });
+          fade(c, k, cr, 1700, 800);
+        }
+      }
     }),
   );
   await Promise.race([first, k.wait(c.scene, k.slow(480))]);
   // vuruş anı: kısa sarsıntı, hedeflerin ayağında saydam buz kabuğu
-  k.shake(c.scene, 120, 0.004);
+  k.shake(c.scene, evo ? 240 : 120, evo ? 0.011 : 0.004);
+  if (evo) {
+    // Eternal Winter v3: kısa soğuk mavi renk basması (bir kez)
+    colorWash(c, k, 0x3f8fd8, 0.16, 320);
+    // Eternal Winter: alanın ortasından dışa donma dalgası (zeminde, birimlerin ARKASINDA: hedef beyazlamaz) + yükselen buz tozu
+    const reach = x1 - x0 + 200;
+    const nova = c.scene.add.image(center.x, center.y, frostRingTex(k, c.scene)).setDisplaySize(80, 40).setDepth(k.FLOOR_FX + 8).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0.85);
+    c.scene.tweens.add({ targets: nova, displayWidth: reach * 1.25, displayHeight: reach * 0.62, alpha: 0, duration: k.slow(560), ease: 'Cubic.easeOut', onComplete: () => nova.destroy() });
+    const chill = glow(c, k, center.x, center.y - 24, 160, 0x9fdcff, 0.5, k.FLOOR_FX + 9);
+    c.scene.tweens.add({ targets: chill, displayWidth: reach * 1.1, displayHeight: reach * 0.7, alpha: 0, duration: k.slow(640), ease: 'Quad.easeOut', onComplete: () => chill.destroy() });
+    for (const cl of cells)
+      for (let i = 0; i < 5; i++) {
+        const mote = glow(c, k, cl.m.x + k.rnd(-50, 50), cl.m.y + k.rnd(-10, 20), k.rnd(8, 13), 0xdff6ff, 0.9, k.DEPTH + 36);
+        c.scene.tweens.add({ targets: mote, y: mote.y - k.rnd(70, 140), x: mote.x + wind * k.rnd(20, 60), alpha: 0, duration: k.slow(k.rnd(900, 1500)), delay: k.slow(k.rnd(0, 300)), ease: 'Sine.easeOut', onComplete: () => mote.destroy() });
+      }
+  }
   for (const t of c.targets) {
     const fp = k.feet(t);
     for (let i = 0; i < 4; i++) {
       const x = fp.x + (i - 1.5) * t.w * 0.16 + k.rnd(-5, 5);
-      const h = k.rnd(30, 54) * (1 - Math.abs(i - 1.5) * 0.15);
+      const h = k.rnd(30, 54) * (1 - Math.abs(i - 1.5) * 0.15) * (evo ? 1.4 : 1);
       // yukarı bakan kısa buz dikeni (doku ters: uç yukarıda), dipten büyür
-      const sp = c.scene.add.image(x, fp.y + 6, shardTex(k, c.scene)).setOrigin(0.5, 1).setFlipY(true).setRotation(k.rnd(-0.3, 0.3)).setDisplaySize(h * 0.3, 2).setDepth(t.container.depth + 1);
+      const sp = c.scene.add.image(x, fp.y + 6, shardTex(k, c.scene)).setOrigin(0.5, 1).setFlipY(true).setRotation(k.rnd(-0.3, 0.3)).setDisplaySize(h * (evo ? 0.38 : 0.3), 2).setDepth(t.container.depth + 1);
       c.scene.tweens.add({ targets: sp, displayHeight: h, duration: k.slow(110), delay: k.slow(i * 16), ease: 'Quad.easeOut' });
       fade(c, k, sp, 650, 420);
     }
@@ -830,12 +1275,15 @@ const blizzard: V2Vfx = async (c, k) => {
   void Promise.all(jobs).then(async () => {
     await k.wait(c.scene, k.slow(330));
     snowOn = false;
-    c.scene.tweens.add({ targets: clouds, alpha: 0, duration: k.slow(700), onComplete: () => clouds.forEach((p) => p.destroy()) });
+    winter?.end();
+    c.scene.tweens.add({ targets: clouds, alpha: 0, duration: k.slow(evo ? 950 : 700), onComplete: () => clouds.forEach((p) => p.destroy()) });
     c.scene.tweens.add({ targets: dim, alpha: 0, duration: k.slow(700), onComplete: () => dim.destroy() });
-    c.scene.tweens.add({ targets: frost.g, alpha: 0, delay: k.slow(500), duration: k.slow(900), onComplete: () => frost.g.destroy() });
+    c.scene.tweens.add({ targets: frost.g, alpha: 0, delay: k.slow(evo ? 1300 : 500), duration: k.slow(evo ? 1100 : 900), onComplete: () => frost.g.destroy() });
     void snowG;
   });
 };
+/** Blizzard: onaylı evolve'u (Eternal Winter) varsa daha yoğun, kalıcı soğuklu hâli, yoksa taban efekt (bayt bayt eskisi). */
+const blizzard: V2Vfx = (c, k) => blizzardFx(c, k, isEvolved(c));
 /** Sis dokusu varyantı (0..2). */
 const j3 = (n: number): number => n % 3;
 
@@ -1161,27 +1609,155 @@ const CRATER_IB = { method: 'crossfade', sub: 2 };
 const ICE_GLOW = 0xbfeaff;
 
 /**
+ * Glacier Crater (Ice Crater evolve) çarpma anı: hedefin hücresinden dışa kalın bir don halkası açılır, yan komşu hücreler (aynı sıranın şerit
+ * komşuları; "yanındaki düşmanlar") kırağıyla donar, her birinde kısa buz dikenleri yükselir. Halka ve ışıklar zeminde, birimlerin arkasında.
+ */
+function glacierFrost(c: VfxCtx, k: VfxKit, t: CombatantView): void {
+  const LANES = 3; // data/formulas.json > formation.lanes (yuva = sıra x 3 + şerit)
+  const slot = t.combatant.slot;
+  const row = Math.floor(slot / LANES);
+  const near = [slot - 1, slot + 1].filter((s) => s >= 0 && Math.floor(s / LANES) === row);
+  const me = k.cellMid(c.board, slot);
+  const pk = phoneFxK(); // telefonda halka büyür
+  const ring = c.scene.add.image(me.x, me.y, frostRingTex(k, c.scene)).setDisplaySize(60 * pk, 30 * pk).setDepth(k.FLOOR_FX + 8).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0.9);
+  c.scene.tweens.add({ targets: ring, displayWidth: 460 * pk, displayHeight: 230 * pk, alpha: 0, duration: k.slow(520), ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+  if (!near.length) return;
+  const frost = frostFloor(c, k, near, me);
+  void k.counter(c.scene, k.slow(420), (u) => frost.draw(u), 'Quad.easeOut');
+  c.scene.tweens.add({ targets: frost.g, alpha: 0, delay: k.slow(1100), duration: k.slow(900), onComplete: () => frost.g.destroy() });
+  for (const s of near) {
+    const m = k.cellMid(c.board, s);
+    for (let i = 0; i < 3; i++) {
+      const h = k.rnd(46, 76) * (i === 1 ? 1.2 : 0.85);
+      const sp = c.scene.add.image(m.x + (i - 1) * 34 + k.rnd(-8, 8), m.y + k.rnd(-2, 10), shardTex(k, c.scene)).setOrigin(0.5, 1).setFlipY(true).setRotation(k.rnd(-0.28, 0.28)).setDisplaySize(h * 0.36, 2).setDepth(k.FLOOR_FX + 12);
+      c.scene.tweens.add({ targets: sp, displayHeight: h, duration: k.slow(150), delay: k.slow(120 + i * 40), ease: 'Quad.easeOut' });
+      fade(c, k, sp, 1300, 700);
+    }
+    const g = glow(c, k, m.x, m.y - 10, 120, 0x9fdcff, 0.4, k.FLOOR_FX + 9);
+    fade(c, k, g, 160, 520);
+  }
+}
+
+/**
+ * Glacier Crater v3 wind-up (yalnız evolve): hedefin ayağından dışa zemin YARILIR: kalın, buz mavisi ışıyan çatlaklar (koyu kenarlı) yayılır, yer
+ * gürler (hafif sarsıntı). Çatlaklar kalıcı iz olarak ~1,6 sn kalır, sonra söner.
+ */
+function glacierCracks(c: VfxCtx, k: VfxKit, t: CombatantView, grow: number): void {
+  const pk = phoneFxK();
+  const x = t.container.x;
+  const y = t.container.y;
+  const cracks = Array.from({ length: 9 }, (_, i) => {
+    let ang = (i / 9) * Math.PI * 2 + k.rnd(-0.25, 0.25);
+    const L = k.rnd(150, 250) * pk;
+    let p = { x: x + Math.cos(ang) * t.w * 0.12, y: y + Math.sin(ang) * t.w * 0.04 };
+    const pts = [p];
+    for (let j = 0; j < 7; j++) {
+      ang += k.rnd(-0.45, 0.45);
+      p = { x: p.x + (Math.cos(ang) * L) / 7, y: p.y + (Math.sin(ang) * L * 0.32) / 7 };
+      pts.push(p);
+    }
+    return pts;
+  });
+  const dark = c.scene.add.graphics().setDepth(k.FLOOR_FX + 5);
+  const lit = c.scene.add.graphics().setDepth(k.FLOOR_FX + 6).setBlendMode(k.Phaser.BlendModes.ADD);
+  void k.counter(c.scene, k.slow(grow), (u) => {
+    dark.clear();
+    lit.clear();
+    for (const pts of cracks) {
+      thickLine(k, dark, pts, u, 14 * pk, 0x0c2030, 0.8);
+      thickLine(k, lit, pts, u, 7 * pk, 0x6fc8ff, 0.9);
+      thickLine(k, lit, pts, u * 0.85, 3 * pk, 0xd8f4ff, 0.9);
+    }
+  }, 'Quad.easeOut');
+  const pool = glow(c, k, x, y - 4, t.w * 3 * pk, 0x4aa3ff, 0, k.FLOOR_FX + 4).setDisplaySize(t.w * 3.4 * pk, t.w * 1.0 * pk);
+  c.scene.tweens.add({ targets: pool, alpha: 0.55, duration: k.slow(grow) });
+  fade(c, k, pool, grow + 500, 700);
+  k.shake(c.scene, grow, 0.0025);
+  c.scene.tweens.add({ targets: [dark, lit], alpha: 0, delay: k.slow(1700), duration: k.slow(700), onComplete: () => { dark.destroy(); lit.destroy(); } });
+}
+
+/**
+ * Glacier Crater v3 vuruş anı (yalnız evolve): yarılan zeminden hedefin ARKASINDA DEV BUZUL KAYASI yükselir (hedefin ~2 katı boy, yanlarında iki küçük
+ * kaya), ~1 sn dikili kalır, sonra çatlayıp iri buz parçalarına dağılarak çöker. Soğuk mavi renk basması + sert sarsıntı.
+ */
+function glacierRise(c: VfxCtx, k: VfxKit, t: CombatantView): void {
+  const pk = phoneFxK();
+  const x = t.container.x;
+  const y = t.container.y;
+  // tüm birimlerin ARKASINDA (zemin efektleri katmanı): itilen hedef ya da arka şeritteki birim kayanın önünde kalır, siluet kaybolmaz
+  const back = k.FLOOR_FX + 14;
+  const rocks = [
+    { dx: 0, h: t.h * 1.9 * pk, flip: false, d: 0 },
+    { dx: -t.w * 0.62 * pk, h: t.h * 1.05 * pk, flip: true, d: 60 },
+    { dx: t.w * 0.62 * pk, h: t.h * 1.2 * pk, flip: false, d: 30 },
+  ];
+  // zemin çöker: hedefin ayağında koyu krater çukuru açılır (çatlaklarla birlikte kalır)
+  const pit = c.scene.add.ellipse(x, y, 10, 4, 0x061420, 0.7).setDepth(k.FLOOR_FX + 4);
+  c.scene.tweens.add({ targets: pit, displayWidth: t.w * 1.9 * pk, displayHeight: t.w * 0.55 * pk, duration: k.slow(130), ease: 'Quad.easeOut' });
+  fade(c, k, pit, 1500, 700);
+  const bits: Part[] = [];
+  particles(c, k, k.DEPTH + 44, 2200, [], (_t, _dt, out) => {
+    while (bits.length) out.push(bits.pop()!);
+  });
+  for (const r of rocks) {
+    const w = r.h * 0.6;
+    const img = c.scene.add.image(x + r.dx, y + 8, glacierTex(k, c.scene)).setOrigin(0.5, 1).setDisplaySize(w, 2).setFlipX(r.flip).setDepth(back - (r.dx ? 0.5 : 0)).setAlpha(0.97);
+    c.scene.tweens.add({ targets: img, displayHeight: r.h, duration: k.slow(170), delay: k.slow(r.d), ease: 'Quad.easeOut' });
+    const lt = glow(c, k, x + r.dx, y - r.h * 0.35, w * 1.8, 0x6fc0ff, 0.45, back - 1).setDisplaySize(w * 1.6, r.h * 0.9);
+    fade(c, k, lt, r.d + 200, 600);
+    // yükselirken dipten kopan iri parçalar
+    for (let j = 0; j < 6; j++) {
+      const ang = k.rnd(-Math.PI * 0.85, -Math.PI * 0.15);
+      const s = k.rnd(220, 480);
+      bits.push({ x: x + r.dx + k.rnd(-w * 0.4, w * 0.4), y: y - k.rnd(0, 20), vx: Math.cos(ang) * s, vy: Math.sin(ang) * s, g: 1100, drag: 1, life: k.rnd(450, 800), age: 0, size: Math.random() < 0.5 ? 8 : 6, kind: 'ice', floor: y + k.rnd(-4, 12), col: Math.random() < 0.4 ? 0xffffff : 0xbfe7f8, a: 0.95 });
+    }
+    // dikili kalır, sonra çatlayıp çöker
+    void k.wait(c.scene, k.slow(800 + r.d)).then(() => {
+      for (let j = 0; j < 10; j++) {
+        const hh = k.rnd(0.1, 0.9) * r.h;
+        const ang = k.rnd(-Math.PI * 0.9, -Math.PI * 0.1);
+        const s = k.rnd(80, 240);
+        bits.push({ x: x + r.dx + k.rnd(-w * 0.3, w * 0.3), y: y - hh, vx: Math.cos(ang) * s, vy: Math.sin(ang) * s, g: 1300, drag: 1.2, life: k.rnd(350, 600), age: 0, size: Math.random() < 0.5 ? 6 : 4, kind: 'ice', floor: y + k.rnd(-4, 12), col: Math.random() < 0.4 ? 0xffffff : 0xbfe7f8 });
+      }
+      fade(c, k, img, 0, 300, { displayHeight: r.h * 0.35, y: img.y + 6 });
+    });
+  }
+}
+
+/**
  * Ice Crater: asanın kristali buz mavisi parlar, hedefin ayağı altında yatık buz mührü açılır; ardından kraterden buz dikenleri fışkırır
  * (sheet: halka belirir, çöker, dikenler s6'da en yüksek, çatlayıp çöker, kırağı + sis kalır). Dikenler birimin ARKASINDA yükselir, halkanın
  * ön kenarı ayağının önünde (kırpılmış ikinci kopya). Vuruşta kısa buz ışığı, yukarı saçılan kıymıklar, ince soğuk sis. İtme / çarpma motor
  * olayıdır: birimin kayması `moved`, çarpma buz çatlağı `crash_ice_crater` (aşağıda). Promise vuruş anında çözülür.
  */
-const iceCrater: V2Vfx = async (c, k) => {
+const iceCraterFx = async (c: VfxCtx, k: VfxKit, evo: boolean): Promise<void> => {
   await k.sheetsReady(c.scene, [SH_CRATER, SH_CRACK]);
   c.actor.play('cast');
-  c.sfx('iceCrack');
+  c.sfx(evo ? 'glacierCrack' : 'iceCrack');
   const crystal = staffFlare(c, k, 260, 0x8fd8ff);
   particles(c, k, k.DEPTH + 42, 700, Array.from({ length: 5 }, () => ({ x: crystal.x + k.rnd(-8, 8), y: crystal.y + k.rnd(-8, 8), vx: k.rnd(-30, 30), vy: k.rnd(-60, -24), g: -20, drag: 1, life: k.rnd(420, 700), age: 0, size: 2, kind: 'ice' as const, a: 0.8 })));
-  for (const t of c.targets) runeSigil(c, k, t.container.x, t.container.y - 2, t.w * 1.45, 0.3, { open: 200, hold: 220, tint: 0x8fd8ff, alpha: 0.55, depth: k.FLOOR_FX + 4 });
-  await k.wait(c.scene, k.slow(230));
+  for (const t of c.targets) {
+    runeSigil(c, k, t.container.x, t.container.y - 2, t.w * (evo ? 1.95 : 1.45) * phoneFxK(), 0.3, { open: 200, hold: 220, tint: 0x8fd8ff, alpha: evo ? 0.7 : 0.55, depth: k.FLOOR_FX + 4 });
+    if (evo) runeSigil(c, k, t.container.x, t.container.y - 2, t.w * 2.7 * phoneFxK(), 0.3, { open: 260, hold: 260, tint: 0xdff6ff, alpha: 0.42, depth: k.FLOOR_FX + 3 });
+    // Glacier Crater v3: zemin yarılır (kalın ışıyan çatlaklar), yer gürler
+    if (evo) glacierCracks(c, k, t, 300);
+  }
+  // Glacier Crater v3: büyücünün arkasında buz mührü
+  const gSeal = evo ? casterSeal(c, k, 0x9fdcff, 0x4aa3ff, 260) : null;
+  await k.wait(c.scene, k.slow(evo ? 300 : 230));
+  gSeal?.close(80);
   c.actor.play('idle');
-  const hitMs = (CRATER_HIT / CRATER_FPS) * 1000;
+  const pk = phoneFxK(); // telefonda krater / mühür büyür (masaüstünde 1 = eskisi)
+  const fps = evo ? CRATER_FPS * 0.9 : CRATER_FPS;
+  const hitMs = (CRATER_HIT / fps) * 1000;
   const arrive = new Map<CombatantView, Promise<void>>();
   for (const t of c.targets) {
-    const size = (256 * t.w * 1.8) / CRATER_RING;
+    const size = ((256 * t.w * 1.8) / CRATER_RING) * (evo ? 1.35 : 1) * pk;
     const x = t.container.x;
     const y = t.container.y;
-    const o = { size, origin: CRATER_ORIGIN, fps: CRATER_FPS, inbetween: CRATER_IB };
+    const o = { size, origin: CRATER_ORIGIN, fps, inbetween: CRATER_IB };
+    // Glacier Crater: aynı krater dizisinin daha büyük, soğuk mavi ışıklı ikinci katmanı arkada (çift sıra buz dikeni)
+    if (evo) k.sheet(c.scene, SH_CRATER, x, y, { ...o, size: size * 1.4, depth: t.container.depth - 2, tint: 0x8fd8ff, alpha: 0.55, blend: k.Phaser.BlendModes.ADD });
     k.sheet(c.scene, SH_CRATER, x, y, { ...o, depth: t.container.depth - 1 });
     // halkanın ön kenarı: aynı dizi, yalnız ayak çizgisinin altı (birimin önünde)
     const front = k.sheet(c.scene, SH_CRATER, x, y, { ...o, depth: t.container.depth + 1 });
@@ -1189,15 +1765,19 @@ const iceCrater: V2Vfx = async (c, k) => {
     arrive.set(
       t,
       k.wait(c.scene, k.slow(hitMs)).then(() => {
-        c.sfx('hailPatter');
-        k.shake(c.scene, 80, 0.003);
-        const core = glow(c, k, x, y - t.h * 0.3, t.w * 0.7, 0xffffff, 0.85, k.DEPTH + 46);
+        c.sfx(evo ? 'glacierSlam' : 'hailPatter');
+        k.shake(c.scene, evo ? 240 : 80, evo ? 0.011 : 0.003);
+        if (evo) glacierFrost(c, k, t);
+        if (evo) glacierRise(c, k, t);
+        if (evo && t === c.targets[0]) colorWash(c, k, 0x3f8fd8, 0.16, 320);
+        // evolve: ışık hedefin ARKASINDA (sprite onu örter), hedef beyazlamaz
+        const core = glow(c, k, x, y - t.h * 0.3, t.w * 0.7, evo ? 0xbfeaff : 0xffffff, evo ? 0.7 : 0.85, evo ? t.container.depth - 1 : k.DEPTH + 46);
         c.scene.tweens.add({ targets: core, displayWidth: t.w * 1.6, displayHeight: t.w * 1.6, alpha: 0, duration: k.slow(220), ease: 'Quad.easeOut', onComplete: () => core.destroy() });
         const halo = glow(c, k, x, y - t.h * 0.25, t.w * 1.5, ICE_GLOW, 0.25, k.DEPTH + 20);
         fade(c, k, halo, 80, 420);
-        particles(c, k, k.DEPTH + 44, 900, Array.from({ length: 10 }, () => {
+        particles(c, k, k.DEPTH + 44, 900, Array.from({ length: evo ? 18 : 10 }, () => {
           const a = k.rnd(-Math.PI * 0.85, -Math.PI * 0.15);
-          const sp = k.rnd(160, 360);
+          const sp = k.rnd(160, evo ? 420 : 360);
           return { x: x + k.rnd(-t.w * 0.4, t.w * 0.4), y: y - k.rnd(10, t.h * 0.5), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 900, drag: 1, life: k.rnd(380, 700), age: 0, size: Math.random() < 0.4 ? 4 : 3, kind: 'ice' as const, floor: y + k.rnd(-6, 8), a: 0.95 };
         }));
         smoke(c, k, x, y - 14, { n: 4, spread: t.w * 0.4, size: [60, 96], rise: [40, 90], life: [900, 1300], alpha: 0.28, tint: [0xd8eef8, 0xc0dcec], jitter: 12, delay: [120, 320], depth: t.container.depth + 2 });
@@ -1206,6 +1786,9 @@ const iceCrater: V2Vfx = async (c, k) => {
   }
   await k.hitsAt(c, (t) => arrive.get(t) ?? Promise.resolve(), k.wait(c.scene, k.slow(hitMs)));
 };
+
+/** Ice Crater: onaylı evolve'u (Glacier Crater) varsa büyük çift kraterli hâli, yoksa taban efekt (bayt bayt eskisi). */
+const iceCrater: V2Vfx = (c, k) => iceCraterFx(c, k, isEvolved(c));
 
 /**
  * Ice Crater ÇARPMASI (olay efekti `crash_ice_crater`): itilen birim dolu hücreye / tahta kenarına çarptı. Gövdenin itme yönündeki kenarında
