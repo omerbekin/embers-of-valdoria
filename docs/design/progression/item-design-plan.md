@@ -35,7 +35,7 @@ Sahip: Lead; alan belgesi `docs/arch/areas/item-design.md`. Bu belge `items.md` 
 
 ## Set (tek blok; durum 2026-11-08)
 
-**Durum:** 9 set, 32 parça (Tur 28-29 ile +3) (`data/items.json > setItems`, bonuslar `> sets`); motor yapıldı (`src/progression/sets.ts`, `battle.ts`); parçalar Debug > Campaign > Give pilot sets ile gelir. Düşüş bayrağı `data/items.json > rareDrop.setsEnabled` KAPALI: oyuncu setleri görmez, Codex yazısı da bayrakla açılır. **Sayılar ölçülmedi** (simde denenmedi); bayrak açılmadan önce ölçülür. Aşağıda: set kuralları, set tablosu, pilot setler, kalan 4 set.
+**Durum:** 9 set, 32 parça (Tur 28-29 ile +3) (`data/items.json > setItems`, bonuslar `> sets`); motor yapıldı (`src/progression/sets.ts`, `battle.ts`); parçalar Debug > Campaign > Give pilot sets ile gelir. Düşüş bayrağı `data/items.json > rareDrop.setsEnabled` KAPALI: oyuncu setleri görmez, Codex yazısı da bayrakla açılır. **Sayılar ölçülmedi** (simde denenmedi); bayrak açılmadan önce ölçülür. **[AÇILDI Ömer 2026-11-26: bayrak true; 9 set r51'de ölçüldü ve dengesi kapandı (`docs/arch/areas/item-design.md` "SET DENGESİ KAPANDI").]** Aşağıda: set kuralları, set tablosu, pilot setler, kalan 4 set.
 
 ### Set kuralları (S1-S8, 2026-11-01)
 
@@ -108,9 +108,9 @@ Road Hound:
 - Ana stat item hariç sayılır (Skeleton ve Treant kuralı).
 - Her çağrı gibi x2 hasar alır (`formulas.summon.damageTakenMultiplier`).
 
-### Motor adımı (yapıldı, bayrak kapalı; dal agent/sets-engine)
+### Motor adımı (yapıldı, bayrak kapalı [AÇILDI Ömer 2026-11-26]; dal agent/sets-engine)
 
-Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battle.ts > bankCoal / applyCoalTicks / spawnSetHounds`. `setsEnabled` false; parçalar yalnızca Debug > Campaign > Give pilot sets ile gelir, bonuslar parçayla çalışır. Bayrak düşüşü ve Codex yazısını açar.
+Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battle.ts > bankCoal / applyCoalTicks / spawnSetHounds`. `setsEnabled` false [AÇILDI Ömer 2026-11-26: true, parçalar nadir düşüşten de gelir]; parçalar yalnızca Debug > Campaign > Give pilot sets ile gelir, bonuslar parçayla çalışır. Bayrak düşüşü ve Codex yazısını açar.
 
 **Banked Coals**
 
@@ -147,5 +147,5 @@ Kod: `src/progression/sets.ts`, `data/items.json > setItems` (parçalar), `battl
   - **Almoner's Vestments** (nötr, şifacı; Valdoria / Thornwood Hollow; Almoner's Cowl, Almoner's Robe, Mendicant's Sandals): 2 parça +5 büyü zırhı +2 MP yenilenme (Ömer r48; eski +2 / +1; parçalar boost 1,4); 3 parça **Pilgrim's Burden** (`healShorten`): taşıyanın skill şifası bir dostu iyileştirince o dostun en uzun süreli silinebilir debuff'ı 1 tur kısalır, 1 turu kalan biter.
   - Equip best: Pilgrim's Burden kural değeri yalnız dosta şifa skill'i olan sınıfa (`setValue.ruleNeedsHeal`); ikinci el set parçası çift elli silahla zorlanmaz.
 - **Sadak / Focus Orb:** ikinci el item'i, `pairs` alanı (`bow` / `charm`), ailesi silahınki (bows / charms). Yay yalnız Sadak, tılsım yalnız Focus Orb, çift el hiçbirini almaz; uymayan ikinci el silah değişiminde torbaya çıkar. Sadak yalnız Archer, Focus Orb Gambler + Hexer. 4'er taban (Common -> Epic), örtük stat yok, Block affix'i çıkmaz. İmza affix'lerden **Spare Arrow** yapıldı (Ömer 2026-11-07 C1, `b_sparearrow`, B kademe, yalnız Sadak: `pairsOnly: bow`; 0 MP temel saldırının vuruşu %8-12 (ilvl 1 -> 41) şansla aynı hedefe bir kez daha, `fx:basicRepeat`); diğerleri (Long Fletching, Weighted Odds, Ill Portent, Grave Wick) YAPILMADI. Sırtta sadak çizimi (poz bağlantı noktası) yapılmadı.
-- **Equip best:** torba ya da ekipmanda set parçası varsa her set için "setin en iyi parçaları + kalanı açgözlü" planı denenir, toplam puan (yuva puanları + `setBonusScore`) yüksekse seçilir. Değerleme `items.json > setValue` (sınıf satırı 2,5 IP, kural 4 IP, statlar affix IP'leriyle), PROVIZYON. r49 (2026-11-26): set parçasının boost fazlası puana yalnız `setValue.boostWeight` payıyla girer (0,25; yalnız seçim).
+- **Equip best:** torba ya da ekipmanda set parçası varsa her set için "setin en iyi parçaları + kalanı açgözlü" planı denenir, toplam puan (yuva puanları + `setBonusScore`) yüksekse seçilir. Değerleme `items.json > setValue` (sınıf satırı 2,5 IP, kural 4 IP, statlar affix IP'leriyle), PROVIZYON. r49 (2026-11-26): set parçasının boost fazlası puana yalnız `setValue.boostWeight` payıyla girer (0,25; yalnız seçim). r51 equip-final (2026-11-26): `fitShare` 0,75 (set parçasının sabit affix'inde sınıf uyumu eksiğinin %75'i geri verilir), `modFit` (set bonusu stat'ı affix `needs` uyumuyla), `ruleIPBy` (kural başına değer, yoksa `ruleIP`); bkz. `docs/arch/areas/item-design.md` "Equip best set seçimi KAPANDI".
 

@@ -57,9 +57,9 @@ const bigHp = (c: Combatant) => {
 };
 
 describe('set verisi ve katalog', () => {
-  it('parçalar geçerli, ana katalogda ve bayrak kapalı', () => {
+  it('parçalar geçerli, ana katalogda ve bayrak açık (Ömer 2026-11-26)', () => {
     expect(validateItems()).toEqual([]);
-    expect(RARE.setsEnabled).toBe(false);
+    expect(RARE.setsEnabled).toBe(true);
     expect(SET_ITEMS).toHaveLength(SETS.reduce((n, x) => n + x.slots.length, 0));
     for (const d of SET_ITEMS) {
       expect(itemDef(d.id)).toBe(d);
@@ -466,7 +466,14 @@ describe('ipucu ve Codex', () => {
   });
 
   it('Codex: bayrakla açılır; metin parça adlarını ve kuralları yazar', () => {
-    expect(buildMechanics().some((a) => a.id === 'set-items')).toBe(false);
+    expect(buildMechanics().some((a) => a.id === 'set-items')).toBe(RARE.setsEnabled); // AÇILDI Ömer 2026-11-26
+    const was = RARE.setsEnabled;
+    try {
+      RARE.setsEnabled = false;
+      expect(buildMechanics().some((a) => a.id === 'set-items')).toBe(false);
+    } finally {
+      RARE.setsEnabled = was;
+    }
     const art = setsArticle();
     expect(art.search).toContain('ashguard helm');
     expect(art.search).toContain('banked coals');

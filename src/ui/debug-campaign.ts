@@ -753,7 +753,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Items',
     icon: 'burst',
     label: 'Give pilot sets',
-    hint: "Put all Ashguard Vigil and Wayfarer's Oath pieces into the bag (they do not drop yet)",
+    hint: "Put every piece of all 9 sets into the bag (sets also drop from won battles)",
     run: () => {
       setState(grantPilotSets(ensureState()));
       document.dispatchEvent(new CustomEvent('gear:refresh'));

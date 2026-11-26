@@ -116,7 +116,7 @@ describe('Codex düzeni (sol menü + liste + madde)', () => {
     const stun = wiki.statuses.find((s) => s.id === 'stun');
     if (stun?.usedBySkills[0]) expect(filterEntries(entries.statuses, stun.usedBySkills[0].name).some((e) => e.id === 'stun')).toBe(true);
   });
-  it('Banked Coals durumu setsEnabled kapalıyken Codex listesinde yok', () => {
+  it('Banked Coals durumu Codex listesinde yalnız setsEnabled açıkken (AÇILDI 2026-11-26)', () => {
     const wiki = buildWiki(files());
     expect(wiki.statuses.some((s) => s.id === 'banked_coals')).toBe(RARE.setsEnabled);
   });

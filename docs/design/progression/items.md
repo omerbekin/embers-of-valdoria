@@ -41,7 +41,7 @@ Her değişiklikten sonra: sayı değiştiyse `data/patch-notes.json`'a satır, 
 
 ## 4. Düşüş (sefer ve Endless ortak tablo)
 - **Nadirlik** (`dropRarity.weights`): Common 64, Uncommon 25, Rare 8,5, Epic 2,5. Kayma `shift`: perIlvl 0,015 + elit 0,15 / boss 0,3 / hazine 0,15, en çok 0,5 (kademe i ağırlığı x(1 + kayma x i)). Legendary bu tabloda yok.
-- **Legendary / set** (`rareDrop`): her kazanılan savaşta bir zar; taban şans normal 0,01, elit 0,03, boss 0,06; her düşüşsüz zaferde +0,005 (pity); split set 0,75 / legendary 0,25; `setsEnabled` bugün false (set düşüşü kapalı, parçalar Debug'dan); Endless: 15. dalgadan sonra dalga başına +0,002, Legendary 11. dalgadan, Endless tüccarı 11. dalgadan %10 şansla Legendary (fiyat x3).
+- **Legendary / set** (`rareDrop`): her kazanılan savaşta bir zar; taban şans normal 0,01, elit 0,03, boss 0,06; her düşüşsüz zaferde +0,005 (pity); split set 0,75 / legendary 0,25; `setsEnabled` true (AÇILDI Ömer 2026-11-26; önce false idi, parçalar yalnız Debug'dan); Endless: 15. dalgadan sonra dalga başına +0,002, Legendary 11. dalgadan, Endless tüccarı 11. dalgadan %10 şansla Legendary (fiyat x3).
 - **Sayı ve altın** (`loot`): sefer düşüşü x`dropMult` (0,65); takım üyesi başına beklenen item normal 0,5, elit 0,75, boss 1; en az item elit 1, boss 1, sandık 1; elit en az Uncommon, boss en az Rare; sandık 2 + 0,5 x takım - 1. Altın x ilvl: normal 3,4, elit 6,8, boss 13,6, sandık 25. Tekrar oynanan düğümde altın, düşüş ve nadirlik tavanı ilk zaferle aynı (`repeat`).
 - Düşen item sayısı ve nadirlik zorluktan bağımsızdır.
 - **Torba:** 30 yuva (`items.bag`), dolunca fazlası Spoils kartında geride kalır; Gear'da Discard her zaman var.

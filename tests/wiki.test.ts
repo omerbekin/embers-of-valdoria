@@ -3,6 +3,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content, describeStat } from '../src/engine';
+import { RARE } from '../src/progression/rare';
 import { battleRulesArticle, buildWiki, hiddenSetSkill, SET_ONLY_STATUSES, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
@@ -36,9 +37,9 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
 
   it('tüm class ve çağrılar kartlarıyla, sprite/avatar/logo/skill/pasifleriyle yer alır', () => {
     expect(wiki.classes.map((c) => c.id).sort()).toEqual(Object.keys(content.classes).filter((id) => !content.classes[id]!.hidden).sort());
-    expect(wiki.summons.map((c) => c.id).sort()).toEqual(Object.keys(content.summons).sort());
+    expect(wiki.summons.map((c) => c.id).sort()).toEqual(Object.keys({ ...content.summons, ...(RARE.setsEnabled ? content.setSummons : {}) }).sort()); // Road Hound: set birimi, bayrakla (AÇILDI 2026-11-26)
     for (const u of [...wiki.classes, ...wiki.summons]) {
-      const def = content.classes[u.id] ?? content.summons[u.id]!;
+      const def = content.classes[u.id] ?? content.summons[u.id] ?? content.setSummons[u.id]!;
       expect(u.spriteUrl, `${u.id} sprite`).not.toBeNull();
       expect(u.avatarUrl, `${u.id} avatar`).not.toBeNull();
       expect(u.logo).toBe(def.logo);
@@ -58,7 +59,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
 
   it('skill yuvası (1-4) sahibin skills dizisine uyar; Melee/Ranged/Support/Self etiketi veriden türer', () => {
     for (const u of [...wiki.classes, ...wiki.summons]) {
-      const def = content.classes[u.id] ?? content.summons[u.id]!;
+      const def = content.classes[u.id] ?? content.summons[u.id] ?? content.setSummons[u.id]!;
       expect(u.skills.map((s) => s.slot), u.id).toEqual(def.skills.map((_, i) => i + 1));
       for (const s of u.skills) {
         const sk = content.skills[s.id]!;
@@ -97,7 +98,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   });
 
   it('tüm durumlar ve zeminler ikon, renk ve açıklamayla listelenir', () => {
-    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => !SET_ONLY_STATUSES.includes(id) && !content.statuses[id]!.retired).sort()); // Banked Coals: setsEnabled kapalıyken gizli; retired (kitten çıkmış) durumlar gizli
+    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => (RARE.setsEnabled || !SET_ONLY_STATUSES.includes(id)) && !content.statuses[id]!.retired).sort()); // Banked Coals: setsEnabled kapalıyken gizli; retired (kitten çıkmış) durumlar gizli
     expect(wiki.grounds.map((g) => g.id).sort()).toEqual(Object.keys(content.grounds).sort());
     for (const s of wiki.statuses) {
       expect(s.icon).not.toBe('');

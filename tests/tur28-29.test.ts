@@ -234,7 +234,7 @@ describe('5. yeni setler: veri', () => {
       stormhall_saga: { hpAdd: 8, critAdd: 0.02 },
       // Ömer r50 (Odran C "kutsal ateş"): MP yenilenme gitti, kritik + Potency; sayı veriden (balance-tester ayarlar)
       relics_of_saint_odran: { critAdd: 0.05, potencyAdd: SETS.find((x) => x.id === 'relics_of_saint_odran')!.bonuses['2']!.mods!.potencyAdd! },
-      almoners_vestments: { magicArmorAdd: 5, mpRegenAdd: 2 }, // r48 Ömer: 2 -> 5, 1 -> 2
+      almoners_vestments: { ...SETS.find((x) => x.id === 'almoners_vestments')!.bonuses['2']!.mods! }, // r51 sets-final: veriden (5 -> 15, 2 -> 3)
     };
     const cls: Record<string, string> = { stormhall_saga: 'skald', relics_of_saint_odran: 'mage', almoners_vestments: 'druid' };
     for (const [id, two] of Object.entries(want)) {

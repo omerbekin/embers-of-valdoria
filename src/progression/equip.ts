@@ -28,6 +28,17 @@ export function setBoostShare(d: Pick<ItemDef, 'rarity' | 'boost' | 'set'>, affi
 }
 
 /**
+ * Set parçası affix'inin sınıf uyumu (items.json > setValue.fitShare; yoksa 0 = eski davranış). r51 equip-final (2026-11-26):
+ * set parçasının affix'leri sabittir (sınıfa göre zar atılmaz) ve set savaşta bütün olarak Epic'e eşitlendi; düşük uyumlu sabit affix
+ * (ör. Gambler'da Odran's Ring Elemental damage x0,1) puanı savaş değerinden çok düşürüyordu. Uyum = fit + (1 - fit) x pay. Setsiz item değişmez.
+ */
+export function setFit(d: Pick<ItemDef, 'set'>, fit: number): number {
+  if (!d.set || fit >= 1) return fit;
+  const s = ITEMS.setValue?.fitShare ?? 0;
+  return fit + (1 - fit) * s;
+}
+
+/**
  * Örneğin (zarlarıyla) sınıfa değeri: affix IP'si x uyum + Legendary etkisi + taban değeri (silah gücü, örtük stat; Item Güçlendirme 2026-10-17).
  * `slot` ikinci else silah gücünün yalnızca `offhandShare` kadarı sayılır.
  */
@@ -35,7 +46,7 @@ export function instanceScore(classId: string, inst: Pick<ItemInstance, 'id'> & 
   const d = itemDef(inst.id);
   if (!d) return 0;
   let score = effectIP(d) + baseIP(d, instanceIlvl(inst), slot === 'offhand' && d.slot === 'weapon' ? (ITEMS.weaponPower?.offhandShare ?? 0) : 1);
-  for (const a of rolledAffixes(inst, classId)) score += affixIP(a.id, a.values) * affixFit(classId, a) * setBoostShare(d, a.id);
+  for (const a of rolledAffixes(inst, classId)) score += affixIP(a.id, a.values) * setFit(d, affixFit(classId, a)) * setBoostShare(d, a.id);
   return Math.round(score * 1000) / 1000;
 }
 

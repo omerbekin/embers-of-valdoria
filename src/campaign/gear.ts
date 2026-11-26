@@ -150,7 +150,7 @@ export function grantAllLegendaries(s: CampaignState): CampaignState {
   return t;
 }
 
-/** Debug: pilot setlerin tüm parçalarını torbaya koyar (setsEnabled kapalıyken de: bonuslar parçayla çalışır, düşüş ve Codex bayrakla). Torba sınırı yok; zarlı; seviye = taban ilvl. */
+/** Debug: pilot setlerin tüm parçalarını torbaya koyar (bayraktan bağımsız: bonuslar parçayla çalışır, düşüş ve Codex bayrakla; bayrak AÇILDI Ömer 2026-11-26). Torba sınırı yok; zarlı; seviye = taban ilvl. */
 export function grantPilotSets(s: CampaignState): CampaignState {
   const have = new Set([...s.inventory.map((i) => i.id), ...s.roster.flatMap((h) => SLOT_IDS.map((k) => h.equipment[k]?.id))]);
   const t = clone(s);

@@ -1348,9 +1348,11 @@ function itemsArticle(): WikiArticle {
   return { ...itemsArticleBody(), gear };
 }
 
-/** Set item'leri (Ömer 2026-11-03; veriden): düşüş kuralları + her setin parçaları ve eşikleri. setsEnabled kapalıyken Codex listesinde yok. */
+/** Set item'leri (Ömer 2026-11-03; veriden): düşüş kuralları + her setin parçaları ve eşikleri. setsEnabled kapalıyken Codex listesinde yok (AÇILDI Ömer 2026-11-26). */
 export function setsArticle(): WikiArticle {
-  const blocks = SETS.flatMap((s) => [
+  // Harita bayrağı kapalıysa o haritanın setleri de yazılmaz (Drowned Reach / Hollow Crown sayfalarıyla aynı kapı; 2026-11-26 set açılışı)
+  const mapShown = (name: string) => (name === 'The Drowned Reach' ? drownedReachShown() : name === 'The Hollow Crown' ? hollowCrownShown() : true);
+  const blocks = SETS.filter((s) => mapShown(s.map)).flatMap((s) => [
     p(`${s.name}: ${s.pieceNames.join(', ')}. Found in ${s.map}; ${s.dropper} drops it most often.${s.kind === 'class' ? ' Only the classes named below can wear it.' : ''}`),
     list(...(setTip({ set: s.id })?.rows.map((r) => r.text) ?? [])),
   ]);

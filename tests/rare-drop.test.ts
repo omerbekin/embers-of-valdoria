@@ -15,7 +15,7 @@ describe('veri ve şans', () => {
     expect(RARE.chance).toEqual({ battle: 0.01, elite: 0.03, boss: 0.06 });
     expect(RARE.pityPerMiss).toBe(0.005);
     expect(RARE.split).toEqual({ set: 0.75, legendary: 0.25 });
-    expect(RARE.setsEnabled).toBe(false);
+    expect(RARE.setsEnabled).toBe(true); // AÇILDI Ömer 2026-11-26
     expect(RARE.chapterLegendaryMult['1']).toBe(0.5);
     expect(RARE.endless.legendaryFromWave).toBe(11);
     expect(rareChance('battle', 0)).toBeCloseTo(0.01, 9);

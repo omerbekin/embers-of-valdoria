@@ -19,7 +19,7 @@ describe('seferde nadir düşüşün item seviyesi', () => {
         s.lootState.rareMisses = 30; // nadir şansı yüksek: düşüş çabuk bulunur
         s.inventory = []; // torba boş: düşüşlerin hepsi torbaya girer
         const drop = grantLoot(s, 'road', 'battle', activeHeroes(s));
-        if (!drop.rare?.length) continue;
+        if (!drop.rare?.length || itemDef(drop.rare[0]!)?.set) continue; // set parçası (setler açık, 2026-11-26) bu testin konusu değil
         found = true;
         const rare = s.inventory.find((i) => i.id === drop.rare![0])!;
         const def = itemDef(rare.id)!;

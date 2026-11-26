@@ -98,7 +98,7 @@ describe('Set pilot data (Ömer 2026-11-01 plan, 2026-11-03 picks; no engine yet
     expect(ITEMS.items.some((i) => /ashguard|wayfarer/i.test(i.id))).toBe(false);
   });
 
-  it('Ömer\'in son pilot seçimleri veride; setsEnabled kapalı', () => {
+  it('Ömer\'in son pilot seçimleri veride; setsEnabled AÇILDI 2026-11-26', () => {
     const [a, w] = ITEMS.sets as Array<{ pieceNames: string[]; bonuses: Record<string, Record<string, unknown>> }>;
     expect(a!.pieceNames).toEqual(['Ashguard Helm', 'Ashguard Hauberk', 'Ashguard Gauntlets', 'Ashguard Greaves']);
     // Sayılar r41 n_sets (2026-11-23) set bonus turunda değişti: yalnız yapı sabit, değerler veriden

@@ -1,7 +1,8 @@
 // Set item kuralları (Ömer 2026-11-03, docs/design/progression/item-design-plan.md "Set kuralları"; pilot: Ashguard Vigil + Wayfarer's Oath). Saf.
-// Tüm sayılar data/items.json > sets. Bonuslar parçayı taşıyan herkeste çalışır; setsEnabled yalnızca düşüşü ve Codex'i açar (parçalar bugün yalnızca debug'dan gelir).
+// Tüm sayılar data/items.json > sets. Bonuslar parçayı taşıyan herkeste çalışır; setsEnabled düşüşü ve Codex'i açar (AÇILDI Ömer 2026-11-26; parçalar nadir düşüşten ve Debug > Give pilot sets'ten gelir).
 import { classes, grounds, skills, statuses } from '../engine/content';
 import type { Attribute, ItemEffects, PassivePatch } from '../engine/types';
+import { affixFit } from './affix-fit';
 import { ITEMS, SLOT_IDS, canEquip, itemDef, type Equipment, type ItemDef } from './items';
 
 /** 3 parça sınıf satırı: pasifin bir alanı `from` -> `to` (Ağaç üstüne farkı eklenir: PassivePatch). */
@@ -125,7 +126,7 @@ export function setDropPools(mapName: string, nodeName: string | undefined, part
 }
 
 /** Set bonusu stat adları: [ad, yüzde mi (0-1 oran -> %)]. Yeni anahtar = buraya satır. */
-const MOD_FMT: Record<string, [string, boolean]> = {
+export const MOD_FMT: Record<string, [string, boolean]> = {
   armorAdd: ['Armor', false],
   magicArmorAdd: ['Magic Armor', false],
   hpRegenAdd: ['HP Regen', false],
@@ -138,6 +139,12 @@ const MOD_FMT: Record<string, [string, boolean]> = {
   critMultAdd: ['Crit damage', true],
   accuracyAdd: ['Accuracy', true],
   surviveAdd: ['Lucky Escape chance', true],
+  // Affix havuzları (stats.ts > AFFIX_ADD): Odran 2 parça Potency (2026-11-26, set açılışı denetimi: ipucu ham anahtar yazıyordu)
+  damageAdd: ['Damage', true],
+  healPowerAdd: ['Healing given', true],
+  shieldPowerAdd: ['Shields given', true],
+  dotPowerAdd: ['Damage over time', true],
+  potencyAdd: ['Potency', true],
 };
 const pctText = (x: number) => `${Math.round(x * 1000) / 10}%`;
 const signed = (v: number, text: string) => `${v < 0 ? '-' : '+'}${text}`;
@@ -273,6 +280,17 @@ export function modIP(key: string, value: number): number {
   return 0;
 }
 
+/**
+ * Set bonusu stat'ının sınıfa uyumu: o stat'ı taşıyan ilk affix'in `needs` kuralı (affixFit; ör. MP yenilenmesi MP'siz sınıfa 0,3).
+ * items.json > setValue.modFit true değilse 1 (eski davranış). r51 equip-final (2026-11-26).
+ */
+function modFit(key: string, classId: string): number {
+  if (!ITEMS.setValue?.modFit) return 1;
+  for (const [id, a] of Object.entries(ITEMS.affixDefs))
+    for (const p of a.parts) if (p.to === `mod:${key}`) return affixFit(classId, { id, def: a });
+  return 1;
+}
+
 /** Sınıfın kitinde dosta şifa veren skill var mı (Pilgrim's Burden değeri). */
 function healsAllies(classId: string): boolean {
   return (classes[classId]?.skills ?? []).some((id) => {
@@ -286,13 +304,14 @@ function healsAllies(classId: string): boolean {
  * items.json > setValue düz değerleriyle. Yalnızca seçim içindir (güç loadout'tan gelir).
  */
 export function setBonusScore(equipment: Partial<Equipment> | undefined, classId: string): number {
-  const v: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[] } = ITEMS.setValue ?? { classRowIP: 0, ruleIP: 0 };
+  const v: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[]; ruleIPBy?: Record<string, number> } = ITEMS.setValue ?? { classRowIP: 0, ruleIP: 0 };
   let ip = 0;
   for (const { bonus } of activeSetBonuses(equipment)) {
-    for (const [k, x] of Object.entries(bonus.mods ?? {})) ip += modIP(k, x);
+    for (const [k, x] of Object.entries(bonus.mods ?? {})) ip += modIP(k, x) * modFit(k, classId);
     if (bonus.byClass?.[classId]) ip += v.classRowIP;
     // Pilgrim's Burden gibi şifa kuralı (setValue.ruleNeedsHeal): dosta şifa skill'i olmayan sınıfa değersiz
-    if (bonus.rule && (!v.ruleNeedsHeal?.includes(bonus.rule) || healsAllies(classId))) ip += v.ruleIP;
+    // Kural değeri (r51 equip-final): setValue.ruleIPBy[kural] varsa o, yoksa düz ruleIP (her kuralın savaş değeri farklı; yalnız seçim)
+    if (bonus.rule && (!v.ruleNeedsHeal?.includes(bonus.rule) || healsAllies(classId))) ip += v.ruleIPBy?.[bonus.rule] ?? v.ruleIP;
   }
   return Math.round(ip * 1000) / 1000;
 }

@@ -9,6 +9,7 @@ import { ASSET_NAV, WIKI_ALIASES } from '../src/wiki/assets/nav';
 import { buildLegacy, type LegacyFiles } from '../src/wiki/assets/legacy-catalog';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { BACKUP_VFX, VFX_KINDS } from '../src/ui/vfx-kinds';
+import { RARE } from '../src/progression/rare';
 import { buildWiki, SET_ONLY_STATUSES } from '../src/wiki/catalog';
 import { ITEM_ICON_NAMES, REWARD_ICON } from '../src/game/item-icons';
 import { inScope, versionKeys } from '../src/game/asset-versions';
@@ -152,7 +153,7 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
   it('tüm durumlar ve zeminler listelenir (Wiki > Statuses & Grounds ile aynı veri)', () => {
     expect(catalog.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).sort());
     expect(catalog.grounds.map((g) => g.id).sort()).toEqual(Object.keys(content.grounds).sort());
-    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => !SET_ONLY_STATUSES.includes(id) && !content.statuses[id]!.retired).sort()); // Banked Coals: setsEnabled kapalıyken gizli; retired durumlar gizli
+    expect(wiki.statuses.map((s) => s.id).sort()).toEqual(Object.keys(content.statuses).filter((id) => (RARE.setsEnabled || !SET_ONLY_STATUSES.includes(id)) && !content.statuses[id]!.retired).sort()); // Banked Coals: setsEnabled kapalıyken gizli; retired durumlar gizli
   });
 });
 

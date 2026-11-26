@@ -277,7 +277,7 @@ export interface ItemsData {
   uniques: unknown[];
   sets: unknown[];
   /** Equip best'in set bonusu değerlemesi (Item Points; yalnızca seçim, güç değil): sınıf satırı (3. parça) ve motor kuralı (4. parça) başına düz değer. Stat bonusları affix IP'lerinden. */
-  setValue?: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[]; boostWeight?: number };
+  setValue?: { classRowIP: number; ruleIP: number; ruleNeedsHeal?: string[]; boostWeight?: number; fitShare?: number; modFit?: boolean; ruleIPBy?: Record<string, number> };
   /** Set parçaları (Ömer 2026-11-03 pilot): ana katalogdan ayrı; havuzlara girmez, yalnızca nadir düşüşün set dalı ve debug verir. */
   setItems?: ItemDef[];
   traits: Record<string, unknown>;
@@ -1226,6 +1226,12 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
   // Equip best set boost payı (r49): 0 (boost'suz IP) ile 1 (tam boost'lu IP) arası
   const bw = data.setValue?.boostWeight;
   if (bw !== undefined && !(typeof bw === 'number' && bw >= 0 && bw <= 1)) errors.push('setValue.boostWeight must be 0-1');
+  const fs = data.setValue?.fitShare;
+  if (fs !== undefined && !(typeof fs === 'number' && fs >= 0 && fs <= 1)) errors.push('setValue.fitShare must be 0-1');
+  for (const [rule, ip] of Object.entries(data.setValue?.ruleIPBy ?? {})) {
+    if (!((data.sets ?? []) as Array<{ bonuses?: Record<string, { rule?: string }> }>).some((st) => Object.values(st.bonuses ?? {}).some((b) => b.rule === rule))) errors.push(`setValue.ruleIPBy: unknown rule ${rule}`);
+    if (!(typeof ip === 'number' && Number.isFinite(ip) && ip >= 0)) errors.push(`setValue.ruleIPBy.${rule} must be a number >= 0`);
+  }
   for (const s of data.slots) if (!(s.weight > 0) || !s.name) errors.push(`slot ${s.id}: bad weight/name`);
   if (data.rarities.map((r) => r.id).join() !== RARITY_IDS.join()) errors.push(`rarities must be ${RARITY_IDS.join(', ')}`);
   data.rarities.forEach((r, i) => {
